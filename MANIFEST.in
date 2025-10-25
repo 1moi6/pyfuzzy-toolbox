@@ -1,0 +1,42 @@
+# Include essential files
+include LICENSE
+include README.md
+include CHANGELOG.md
+include pyproject.toml
+include setup.py
+
+# Include package data
+recursive-include fuzzy_systems *.py
+recursive-include fuzzy_systems *.pyi
+
+# Include examples (important for users!)
+recursive-include examples *.py
+recursive-include examples *.ipynb
+recursive-include examples *.md
+
+# Include documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+
+# Exclude unnecessary files
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store
+recursive-exclude * .git*
+recursive-exclude * *.swp
+recursive-exclude * *.swo
+recursive-exclude * *~
+
+# Exclude build artifacts
+global-exclude *.egg-info
+global-exclude .tox
+global-exclude build
+global-exclude dist
+
+# Exclude tests from distribution (keep them in repo only)
+prune tests
+
+# Exclude development files
+exclude .gitignore
+exclude .pre-commit-config.yaml
+exclude tox.ini
