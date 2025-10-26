@@ -13,7 +13,7 @@
 
 Explore **11 Colab-ready notebooks** covering fundamentals, inference systems, and machine learning:
 
-**👉 [Access Interactive Notebooks](../notebooks_colab/)**
+**👉 [Access Interactive Notebooks](notebooks_colab/)**
 
 Topics include:
 - 🔰 Fundamentals: Membership functions, fuzzy sets, operators
