@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "pyfuzzy-toolbox: A Comprehensive Python Library for Fuzzy Systems"
+authors:
+  - family-names: "Cecconello"
+    given-names: "Moiseis"
+    email: "moiseis@gmail.com"
+version: 1.0.0
+date-released: 2025-01-26
+url: "https://github.com/1moi6/pyfuzzy-toolbox"
+repository-code: "https://github.com/1moi6/pyfuzzy-toolbox"
+license: MIT
+keywords:
+  - fuzzy logic
+  - fuzzy inference
+  - mamdani
+  - sugeno
+  - anfis
+  - wang-mendel
+  - p-fuzzy systems
+  - fuzzy ode
+  - machine learning
+  - control systems
+abstract: >
+  A comprehensive Python library for fuzzy systems including:
+  inference (Mamdani and Sugeno/TSK), learning (ANFIS, Wang-Mendel,
+  metaheuristics), and dynamics (p-fuzzy systems, fuzzy ODEs).
+  Features ultra-simplified API with 80% less code than traditional
+  libraries, extensive examples, and interactive Colab notebooks.

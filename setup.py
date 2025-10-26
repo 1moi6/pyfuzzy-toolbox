@@ -63,7 +63,7 @@ setup(
     version=VERSION,
     author='Moiseis Cecconello',
     author_email='moiseis@gmail.com',
-    description='Comprehensive Fuzzy Logic library: Inference, Learning, Dynamics',
+    description='A comprehensive Python library for fuzzy systems: inference (Mamdani, Sugeno), learning (ANFIS, Wang-Mendel), and dynamics (p-fuzzy, fuzzy ODEs)',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
     url='https://github.com/1moi6/pyfuzzy-toolbox',

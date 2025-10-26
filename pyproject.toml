@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyfuzzy-toolbox"
 dynamic = ["version"]
-description = "Comprehensive Fuzzy Logic library: Inference, Learning, Dynamics"
+description = "A comprehensive Python library for fuzzy systems: inference (Mamdani, Sugeno), learning (ANFIS, Wang-Mendel), and dynamics (p-fuzzy, fuzzy ODEs)"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
