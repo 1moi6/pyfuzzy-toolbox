@@ -824,6 +824,128 @@ class FuzzyInferenceSystem:
 
         return pd.DataFrame(rules_data)
 
+    def info(self, show_terms=True, show_rules_summary=True, show_usage_example=True):
+        """
+        Exibe informações completas sobre o sistema fuzzy.
+
+        Parâmetros:
+            show_terms: Se True, mostra os termos de cada variável
+            show_rules_summary: Se True, mostra resumo das regras
+            show_usage_example: Se True, mostra exemplo de uso do add_rule
+
+        Exemplo:
+            >>> system.info()
+            >>> system.info(show_terms=False)
+        """
+        print(f"\n{'=' * 70}")
+        print(f"📊 INFORMAÇÕES DO SISTEMA: {self.name}")
+        print(f"{'=' * 70}\n")
+
+        # Informações básicas
+        print(f"🔧 Tipo: {self.__class__.__name__}")
+        print(f"📝 Nome: {self.name}")
+        print()
+
+        # Variáveis de entrada
+        print(f"📥 VARIÁVEIS DE ENTRADA ({len(self.input_variables)}):")
+        print(f"{'─' * 70}")
+        for i, (var_name, var) in enumerate(self.input_variables.items(), 1):
+            print(f"  {i}. '{var_name}'")
+            print(f"     Universo: {var.universe}")
+            if show_terms:
+                print(f"     Termos ({len(var.terms)}):", end='')
+                terms_str = ', '.join([f"'{t}'" for t in var.terms.keys()])
+                print(f" {terms_str}")
+            else:
+                print(f"     Termos: {len(var.terms)}")
+            print()
+
+        # Variáveis de saída
+        print(f"📤 VARIÁVEIS DE SAÍDA ({len(self.output_variables)}):")
+        print(f"{'─' * 70}")
+        for i, (var_name, var) in enumerate(self.output_variables.items(), 1):
+            print(f"  {i}. '{var_name}'")
+            print(f"     Universo: {var.universe}")
+            if show_terms:
+                print(f"     Termos ({len(var.terms)}):", end='')
+                terms_str = ', '.join([f"'{t}'" for t in var.terms.keys()])
+                print(f" {terms_str}")
+            else:
+                print(f"     Termos: {len(var.terms)}")
+            print()
+
+        # Regras
+        if show_rules_summary:
+            print(f"📋 REGRAS:")
+            print(f"{'─' * 70}")
+            print(f"  Total: {len(self.rule_base.rules)} regras")
+            if len(self.rule_base.rules) > 0:
+                # Contar operadores
+                operators = {}
+                weights = []
+                for rule in self.rule_base.rules:
+                    op = rule.operator
+                    operators[op] = operators.get(op, 0) + 1
+                    weights.append(rule.weight)
+
+                print(f"  Operadores: {dict(operators)}")
+                print(f"  Peso médio: {sum(weights)/len(weights):.2f}")
+                print(f"  Peso mín/máx: {min(weights):.2f} / {max(weights):.2f}")
+            print()
+
+        # Configurações
+        print(f"⚙️  CONFIGURAÇÕES:")
+        print(f"{'─' * 70}")
+        if hasattr(self, 'defuzzification_method'):
+            print(f"  Defuzzificação: {self.defuzzification_method}")
+        if hasattr(self, 'aggregation_method'):
+            print(f"  Agregação: {self.aggregation_method}")
+        print()
+
+        # Exemplo de uso
+        if show_usage_example and len(self.input_variables) > 0 and len(self.output_variables) > 0:
+            print(f"💡 EXEMPLO DE USO:")
+            print(f"{'─' * 70}")
+
+            # Pegar primeiro termo de cada variável
+            input_vars = list(self.input_variables.keys())
+            output_vars = list(self.output_variables.keys())
+
+            first_input_terms = []
+            for var_name in input_vars:
+                terms = list(self.input_variables[var_name].terms.keys())
+                first_input_terms.append(terms[0] if terms else '???')
+
+            first_output_terms = []
+            for var_name in output_vars:
+                terms = list(self.output_variables[var_name].terms.keys())
+                first_output_terms.append(terms[0] if terms else '???')
+
+            # Mostrar exemplo de add_rule com tupla plana
+            all_terms = first_input_terms + first_output_terms
+            terms_str = ', '.join([f"'{t}'" for t in all_terms])
+
+            print(f"  # Adicionar uma regra (sintaxe recomendada - tupla plana):")
+            print(f"  system.add_rule({terms_str})")
+            print()
+
+            print(f"  # Adicionar múltiplas regras:")
+            print(f"  system.add_rules([")
+            print(f"      ({terms_str}),")
+            print(f"      # ... mais regras ...")
+            print(f"  ])")
+            print()
+
+            # Mostrar exemplo de evaluate
+            input_example = {var: f"{self.input_variables[var].universe[0]}"
+                           for var in input_vars}
+            input_str = ', '.join([f"{k}={v}" for k, v in input_example.items()])
+            print(f"  # Avaliar o sistema:")
+            print(f"  result = system.evaluate({{{input_str}}})")
+            print()
+
+        print(f"{'=' * 70}\n")
+
     def print_rules(self, style='table', show_stats=True):
         """
         Imprime as regras do sistema de forma formatada.
