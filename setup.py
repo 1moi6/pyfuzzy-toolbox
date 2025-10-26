@@ -61,8 +61,8 @@ EXTRAS_REQUIRE['all'] = list(set(sum(EXTRAS_REQUIRE.values(), [])))
 setup(
     name='pyfuzzy-toolbox',  # Nome no PyPI (com hífen)
     version=VERSION,
-    author='Fuzzy Systems Contributors',
-    author_email='fuzzy.systems@example.com',
+    author='Moiseis Cecconello',
+    author_email='moiseis@gmail.com',
     description='Comprehensive Fuzzy Logic library: Inference, Learning, Dynamics',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
