@@ -3,20 +3,21 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fuzzy-systems"
+name = "pyfuzzy-toolbox"
 dynamic = ["version"]
 description = "Comprehensive Fuzzy Logic library: Inference, Learning, Dynamics"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Fuzzy Systems Contributors", email = "fuzzy.systems@example.com"}
+    {name = "Moiseis Cecconello", email = "moiseis@gmail.com"}
 ]
 maintainers = [
-    {name = "Fuzzy Systems Contributors", email = "fuzzy.systems@example.com"}
+    {name = "Moiseis Cecconello", email = "moiseis@gmail.com"}
 ]
 keywords = [
     "fuzzy logic",
+    "p-fuzzy systems",
     "fuzzy inference",
     "mamdani",
     "sugeno",
@@ -82,11 +83,11 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/fuzzy-systems"
-Documentation = "https://github.com/yourusername/fuzzy-systems#readme"
-Repository = "https://github.com/yourusername/fuzzy-systems"
-"Bug Tracker" = "https://github.com/yourusername/fuzzy-systems/issues"
-Changelog = "https://github.com/yourusername/fuzzy-systems/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/1moi6/pyfuzzy-toolbox"
+Documentation = "https://github.com/1moi6/pyfuzzy-toolbox#readme"
+Repository = "https://github.com/1moi6/pyfuzzy-toolbox"
+"Bug Tracker" = "https://github.com/1moi6/pyfuzzy-toolbox/issues"
+Changelog = "https://github.com/1moi6/pyfuzzy-toolbox/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 packages = ["fuzzy_systems"]

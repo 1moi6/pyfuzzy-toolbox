@@ -1,9 +1,9 @@
-# Fuzzy Systems
+# pyfuzzy-toolbox
 
-[![PyPI version](https://badge.fury.io/py/fuzzy-systems.svg)](https://badge.fury.io/py/fuzzy-systems)
-[![Python Versions](https://img.shields.io/pypi/pyversions/fuzzy-systems.svg)](https://pypi.org/project/fuzzy-systems/)
+[![PyPI version](https://badge.fury.io/py/pyfuzzy-toolbox.svg)](https://badge.fury.io/py/pyfuzzy-toolbox)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pyfuzzy-toolbox.svg)](https://pypi.org/project/pyfuzzy-toolbox/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://pepy.tech/badge/fuzzy-systems)](https://pepy.tech/project/fuzzy-systems)
+[![Downloads](https://pepy.tech/badge/pyfuzzy-toolbox)](https://pepy.tech/project/pyfuzzy-toolbox)
 
 **Fuzzy Systems** é uma biblioteca Python completa para Sistemas Fuzzy, desenvolvida com foco em aplicações didáticas e profissionais. Vai além da inferência básica, incluindo aprendizado, equações diferenciais fuzzy e sistemas p-fuzzy.
 
@@ -71,24 +71,31 @@ print(f"Fan speed: {result['fan_speed']:.1f}%")
 
 ```bash
 # Instalação básica
-pip install fuzzy-systems
+pip install pyfuzzy-toolbox
 
-# Com dependências de machine learning
-pip install fuzzy-systems[ml]
+# Com dependências de machine learning (ANFIS, Wang-Mendel, etc.)
+pip install pyfuzzy-toolbox[ml]
 
-# Com dependências de desenvolvimento
-pip install fuzzy-systems[dev]
+# Com dependências de desenvolvimento (testes, formatação, etc.)
+pip install pyfuzzy-toolbox[dev]
 
-# Instalação completa
-pip install fuzzy-systems[all]
+# Instalação completa (todas as dependências)
+pip install pyfuzzy-toolbox[all]
 ```
 
-### Do código fonte
+**Nota:** O nome do pacote no PyPI é `pyfuzzy-toolbox`, mas o import é `fuzzy_systems`:
+
+```python
+import fuzzy_systems as fs  # Nome do import
+```
+
+### Do código fonte (desenvolvimento)
 
 ```bash
-git clone https://github.com/yourusername/fuzzy-systems.git
-cd fuzzy-systems
-pip install -e .
+git clone https://github.com/1moi6/pyfuzzy-toolbox.git
+cd pyfuzzy-toolbox
+pip install -e .          # Instalação editável
+pip install -e .[dev]     # Com dependências de desenvolvimento
 ```
 
 ## Início Rápido
@@ -615,11 +622,11 @@ MIT License - veja o arquivo `LICENSE` para detalhes.
 Se você usar este toolbox em trabalhos acadêmicos, por favor cite:
 
 ```bibtex
-@software{fuzzy_systems,
-  title = {Fuzzy Systems: A Comprehensive Python Library for Fuzzy Systems},
+@software{pyfuzzy_toolbox,
+  title = {pyfuzzy-toolbox: A Comprehensive Python Library for Fuzzy Systems},
   author = {Fuzzy Systems Contributors},
   year = {2024},
-  url = {https://github.com/yourusername/fuzzy_systems},
+  url = {https://github.com/1moi6/pyfuzzy-toolbox},
   note = {Includes inference, learning, fuzzy differential equations, and p-fuzzy systems}
 }
 ```

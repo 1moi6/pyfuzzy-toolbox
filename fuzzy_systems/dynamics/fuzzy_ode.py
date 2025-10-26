@@ -26,8 +26,19 @@ import numpy as np
 from typing import Callable, List, Tuple, Union, Optional, Dict
 from dataclasses import dataclass
 from scipy.integrate import solve_ivp
-from joblib import Parallel, delayed
 import warnings
+
+# Importação opcional de joblib para paralelização
+try:
+    from joblib import Parallel, delayed
+    HAS_JOBLIB = True
+except ImportError:
+    HAS_JOBLIB = False
+    warnings.warn(
+        "joblib not found. Parallel processing disabled. "
+        "Install with: pip install fuzzy-systems[ml]",
+        ImportWarning
+    )
 
 # Integração com core
 from ..core import FuzzySet, triangular, trapezoidal, gaussian
@@ -666,11 +677,18 @@ class FuzzyODESolver:
         # 2. Cria grid
         y0_grid, params_grid = self._create_grid(y0_intervals, params_intervals)
 
-        # 3. Resolve EDOs em paralelo
-        solutions = Parallel(n_jobs=self.n_jobs, backend='loky')(
-            delayed(self._solve_single_ode)(y0, params)
-            for y0, params in zip(y0_grid, params_grid)
-        )
+        # 3. Resolve EDOs (paralelo se joblib disponível, senão serial)
+        if HAS_JOBLIB and self.n_jobs != 1:
+            solutions = Parallel(n_jobs=self.n_jobs, backend='loky')(
+                delayed(self._solve_single_ode)(y0, params)
+                for y0, params in zip(y0_grid, params_grid)
+            )
+        else:
+            # Fallback: processamento serial
+            solutions = [
+                self._solve_single_ode(y0, params)
+                for y0, params in zip(y0_grid, params_grid)
+            ]
 
         # 4. Empilha soluções (ignora NaNs)
         valid_solutions = [sol for sol in solutions if not np.any(np.isnan(sol))]
@@ -762,6 +780,9 @@ print("\nCaracterísticas:")
 print("  • Integração completa com fuzzy_systems.core")
 print("  • Suporte a FuzzySet, triangular, gaussiana, trapezoidal")
 print("  • Método de α-níveis vetorizado")
-print("  • Paralelização automática (joblib)")
+if HAS_JOBLIB:
+    print("  • Paralelização automática (joblib)")
+else:
+    print("  • Processamento serial (instale joblib para paralelização)")
 print("  • Condições iniciais e parâmetros fuzzy")
 print("  • Visualização de envelopes por α-nível")

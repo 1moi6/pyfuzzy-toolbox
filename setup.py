@@ -4,7 +4,6 @@ Setup script for Fuzzy Systems
 
 from setuptools import setup, find_packages
 import os
-import sys
 
 # Lê o README para descrição longa
 def read_file(filename):
@@ -15,10 +14,18 @@ def read_file(filename):
             return f.read()
     return ''
 
-# Import version from package
-sys.path.insert(0, os.path.dirname(__file__))
-from fuzzy_systems import __version__
-VERSION = __version__
+# Lê a versão sem importar o módulo (evita dependências no setup)
+def get_version():
+    """Extrai __version__ do __init__.py sem importar o módulo."""
+    version_file = os.path.join(os.path.dirname(__file__), 'fuzzy_systems', '__init__.py')
+    with open(version_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.startswith('__version__'):
+                # Extrai a string entre aspas
+                return line.split('=')[1].strip().strip('"').strip("'")
+    raise RuntimeError('Unable to find version string.')
+
+VERSION = get_version()
 
 # Dependências principais
 INSTALL_REQUIRES = [
@@ -44,6 +51,7 @@ EXTRAS_REQUIRE = {
     'ml': [
         'scikit-learn>=0.24',
         'pandas>=1.2',
+        'joblib>=1.0',
     ],
 }
 
@@ -51,14 +59,14 @@ EXTRAS_REQUIRE = {
 EXTRAS_REQUIRE['all'] = list(set(sum(EXTRAS_REQUIRE.values(), [])))
 
 setup(
-    name='fuzzy-systems',  # Nome no PyPI (com hífen)
+    name='pyfuzzy-toolbox',  # Nome no PyPI (com hífen)
     version=VERSION,
     author='Fuzzy Systems Contributors',
     author_email='fuzzy.systems@example.com',
     description='Comprehensive Fuzzy Logic library: Inference, Learning, Dynamics',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/fuzzy-systems',  # TODO: Atualizar com URL real do GitHub
+    url='https://github.com/1moi6/pyfuzzy-toolbox',
     packages=find_packages(exclude=['tests', 'docs']),
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -85,10 +93,10 @@ setup(
     zip_safe=False,
     license='MIT',
     project_urls={
-        'Homepage': 'https://github.com/yourusername/fuzzy-systems',
-        'Bug Tracker': 'https://github.com/yourusername/fuzzy-systems/issues',
-        'Source Code': 'https://github.com/yourusername/fuzzy-systems',
-        'Changelog': 'https://github.com/yourusername/fuzzy-systems/blob/main/CHANGELOG.md',
-        'Documentation': 'https://github.com/yourusername/fuzzy-systems#readme',
+        'Homepage': 'https://github.com/1moi6/pyfuzzy-toolbox',
+        'Bug Tracker': 'https://github.com/1moi6/pyfuzzy-toolbox/issues',
+        'Source Code': 'https://github.com/1moi6/pyfuzzy-toolbox',
+        'Changelog': 'https://github.com/1moi6/pyfuzzy-toolbox/blob/main/CHANGELOG.md',
+        'Documentation': 'https://github.com/1moi6/pyfuzzy-toolbox#readme',
     },
 )

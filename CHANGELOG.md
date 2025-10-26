@@ -134,9 +134,9 @@ First stable release of fuzzy-systems, a comprehensive Python library for fuzzy 
 - Migration guides will be provided
 
 ### Support
-- Report bugs: https://github.com/yourusername/fuzzy-systems/issues
-- Feature requests: https://github.com/yourusername/fuzzy-systems/issues
-- Questions: https://github.com/yourusername/fuzzy-systems/discussions
+- Report bugs: https://github.com/1moi6/fuzzy-systems/issues
+- Feature requests: https://github.com/1moi6/fuzzy-systems/issues
+- Questions: https://github.com/1moi6/fuzzy-systems/discussions
 
 ---
 
