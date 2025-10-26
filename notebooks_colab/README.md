@@ -23,7 +23,8 @@ Este diretório contém versões Colab-ready dos notebooks, convertidos para usa
 notebooks_colab/
 ├── 01_fundamentals/        # Conceitos básicos de lógica fuzzy
 ├── 02_inference/           # Sistemas de inferência (Mamdani, Sugeno)
-└── 03_learning/            # Aprendizado e otimização (Wang-Mendel, ANFIS, PSO)
+├── 03_learning/            # Aprendizado e otimização (Wang-Mendel, ANFIS, PSO)
+└── 04_dynamics/            # Sistemas dinâmicos p-fuzzy (discretos e contínuos)
 ```
 
 ---
@@ -203,6 +204,55 @@ notebooks_colab/
 
 ---
 
+## 🌊 04_dynamics/ - Sistemas Dinâmicos p-Fuzzy
+
+### 01_pfuzzy_discrete_predator_prey.ipynb
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb)
+
+**Conteúdo:**
+- Sistema p-fuzzy discreto: $x_{n+1} = x_n + f(x_n)$
+- Modelo predador-presa (Lotka-Volterra discreto)
+- 16 regras fuzzy baseadas no livro de Barros & Bassanezi
+- Espaço de fase e dinâmica temporal
+- Múltiplas condições iniciais
+- Exportação de resultados para CSV
+
+**Conceitos:**
+- 🔢 **Sistemas discretos**: Evolução por passos
+- 🦊 **Dinâmica populacional**: Interação entre espécies
+- 📊 **Espaço de fase**: Visualização de trajetórias
+- 🎯 **Regras linguísticas**: "SE presas=altas E predadores=baixos ENTÃO..."
+
+**Tempo estimado:** 50-65 minutos
+
+---
+
+### 02_pfuzzy_continuous_predator_prey.ipynb
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb)
+
+**Conteúdo:**
+- Sistema p-fuzzy contínuo: $\frac{dx}{dt} = f(x)$
+- Modelo Lotka-Volterra fuzzy contínuo
+- Integração numérica: Euler vs Runge-Kutta 4ª ordem (RK4)
+- Campo vetorial (quiver plot)
+- Ciclos oscilatórios predador-presa
+- Comparação de métodos de integração
+
+**Conceitos:**
+- 📐 **EDOs Fuzzy**: Equações diferenciais com regras fuzzy
+- ⚙️ **Integração numérica**: RK4 vs Euler
+- 🌀 **Ciclos oscilatórios**: Comportamento periódico
+- 🧭 **Campo vetorial**: Direção do fluxo no espaço de fase
+
+**Destaques:**
+- ✅ **Precisão RK4**: 4 avaliações por passo
+- ✅ **Interpretabilidade**: Regras linguísticas ao invés de parâmetros
+- ✅ **Flexibilidade**: Fácil incorporar conhecimento especialista
+
+**Tempo estimado:** 60-75 minutos
+
+---
+
 ## 🚀 Como Usar
 
 ### No Google Colab
@@ -281,6 +331,8 @@ from fuzzy_systems.learning import WangMendel, ANFIS, PSO
 | **Wang-Mendel** | 03_learning/01-03 | Aprendizado | Gera regras automaticamente |
 | **ANFIS** | 03_learning/04 | Neuro-Fuzzy | Refina MFs via backpropagation |
 | **PSO** | 03_learning/05 | Metaheurística | Otimiza parâmetros sem gradientes |
+| **p-Fuzzy Discreto** | 04_dynamics/01 | Dinâmica | Sistemas discretos com regras fuzzy |
+| **p-Fuzzy Contínuo** | 04_dynamics/02 | Dinâmica | EDOs com regras fuzzy, integração RK4 |
 
 ---
 
