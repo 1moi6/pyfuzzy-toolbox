@@ -40,10 +40,10 @@ system.add_term('temperature', 'hot', 'triangular', (20, 40, 40))
 system.add_term('fan_speed', 'slow', 'triangular', (0, 0, 50))
 system.add_term('fan_speed', 'fast', 'triangular', (50, 100, 100))
 
-# Add rules
+# Add rules (flat tuple syntax)
 system.add_rules([
-    (['cold'], ['slow']),
-    (['hot'], ['fast'])
+    ('cold', 'slow'),
+    ('hot', 'fast')
 ])
 
 # Evaluate!
@@ -137,11 +137,11 @@ system.add_term('ventilador', 'lento', 'triangular', (0, 0, 50))
 system.add_term('ventilador', 'medio', 'triangular', (25, 50, 75))
 system.add_term('ventilador', 'rapido', 'triangular', (50, 100, 100))
 
-# Adicionar regras (forma simples com listas)
+# Adicionar regras (sintaxe de tupla plana)
 system.add_rules([
-    (['fria'], ['lento']),
-    (['morna'], ['medio']),
-    (['quente'], ['rapido'])
+    ('fria', 'lento'),
+    ('morna', 'medio'),
+    ('quente', 'rapido')
 ])
 
 # Avaliar
@@ -164,10 +164,10 @@ system.add_term('x', 'alto', 'triangular', (5, 10, 10))
 # Saída = função linear: a*x + b
 system.add_output('y', order=1)  # Ordem 1 (linear)
 
-# Regras com coeficientes
+# Regras com coeficientes (sintaxe de tupla plana)
 system.add_rules([
-    (['baixo'], [2.0, 1.0]),   # y = 2*x + 1
-    (['alto'], [0.5, 3.0])      # y = 0.5*x + 3
+    ('baixo', 2.0, 1.0),   # y = 2*x + 1
+    ('alto', 0.5, 3.0)     # y = 0.5*x + 3
 ])
 
 resultado = system.evaluate({'x': 7})
