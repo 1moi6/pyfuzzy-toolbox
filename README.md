@@ -9,6 +9,23 @@
 
 ## 🚀 Quick Start
 
+### 📓 Interactive Notebooks (Recommended for Learning)
+
+Explore **11 Colab-ready notebooks** covering fundamentals, inference systems, and machine learning:
+
+**👉 [Access Interactive Notebooks](../notebooks_colab/)**
+
+Topics include:
+- 🔰 Fundamentals: Membership functions, fuzzy sets, operators
+- 🎛️ Inference Systems: Mamdani, Sugeno (order 0 and 1)
+- 🧠 Learning: Wang-Mendel, ANFIS, PSO optimization
+
+All notebooks can be opened directly in Google Colab with a single click!
+
+---
+
+### ⚡ Quick Code Example
+
 ```python
 import fuzzy_systems as fs
 
