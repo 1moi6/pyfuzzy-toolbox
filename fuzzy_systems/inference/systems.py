@@ -127,108 +127,160 @@ class FuzzyInferenceSystem:
             )
 
     def add_rule(self,
-                 antecedents: Union[Dict[str, str], List, Tuple, FuzzyRule],
-                 consequents: Optional[Union[Dict[str, Union[str, float]], List, Tuple]] = None,
+                 *args,
                  operator: str = 'AND',
-                 weight: float = 1.0) -> None:
+                 weight: float = 1.0,
+                 **kwargs) -> None:
         """
         Adiciona uma regra ao sistema.
 
         Aceita múltiplos formatos:
 
-        Forma 1 - Tuplas/Listas ordenadas (Mais Simples):
+        Forma 1 - Tupla/Lista Plana como argumentos (Mais Simples e Recomendado):
+            >>> # Para 2 entradas e 2 saídas: add_rule(in1, in2, out1, out2)
+            >>> system.add_rule('fria', 'seca', 'lento', 'baixa')
+            >>> system.add_rule('quente', 'umida', 'rapido', 'alta')
+            >>>
+            >>> # Com operador e peso
+            >>> system.add_rule('media', 'media', 'medio', 'media', operator='OR', weight=0.8)
+
+        Forma 2 - Tupla/Lista Plana única:
+            >>> system.add_rule(('quente', 'umida', 'rapido', 'alta'))
+            >>> system.add_rule(['fria', 'seca', 'lento', 'baixa'])
+
+        Forma 3 - Tuplas/Listas Separadas:
             >>> system.add_rule(['fria', 'seca'], ['lento'])
             >>> system.add_rule(('quente', 'umida'), ('rapido',))
 
-        Forma 2 - Dicionários (Mais Explícito):
+        Forma 4 - Dicionários (Mais Explícito):
             >>> system.add_rule(
             ...     {'temperatura': 'fria', 'umidade': 'seca'},
             ...     {'ventilador': 'lento'}
             ... )
 
-        Forma 3 - FuzzyRule completo (Compatibilidade):
+        Forma 5 - FuzzyRule completo (Compatibilidade):
             >>> system.add_rule(fis.FuzzyRule(...))
 
         Parâmetros:
-            antecedents: Premissas (dict, list, tuple ou FuzzyRule)
-            consequents: Conclusões (dict, list, tuple) - não usado se antecedents for FuzzyRule
+            *args: Termos da regra (in1, in2, ..., out1, out2, ...)
+                   ou (antecedents, consequents) ou FuzzyRule
             operator: 'AND' ou 'OR'
             weight: Peso da regra (0 a 1)
 
-        Nota: Quando usar listas/tuplas, a ordem segue a ordem de adição das variáveis
+        Nota: Quando usar lista/tupla, a ordem segue a ordem de adição das variáveis.
+              Para tupla plana: primeiros N elementos são entradas, restantes são saídas.
         """
-        # Forma 3: FuzzyRule completo
-        if isinstance(antecedents, FuzzyRule):
-            self.rule_base.add_rule(antecedents)
+        # Extrair antecedents e consequents de args
+        if len(args) == 0:
+            raise ValueError("add_rule requer pelo menos 1 argumento")
+
+        # Forma 5: FuzzyRule completo
+        if len(args) == 1 and isinstance(args[0], FuzzyRule):
+            self.rule_base.add_rule(args[0])
             return
 
-        # Forma 1: Listas/Tuplas ordenadas
-        if isinstance(antecedents, (list, tuple)):
-            if consequents is None:
-                raise ValueError("Quando usar lista/tupla, deve fornecer consequents")
+        input_vars = list(self.input_variables.keys())
+        output_vars = list(self.output_variables.keys())
+        n_inputs = len(input_vars)
+        n_outputs = len(output_vars)
+        total_expected = n_inputs + n_outputs
 
-            # Converte para dicionários usando ordem das variáveis
-            input_vars = list(self.input_variables.keys())
-            output_vars = list(self.output_variables.keys())
+        # Forma 1: Múltiplos argumentos (tupla plana desempacotada)
+        if len(args) >= total_expected and all(isinstance(arg, (str, int, float)) for arg in args[:total_expected]):
+            # É tupla plana desempacotada!
+            ant_terms = args[:n_inputs]
+            cons_terms = args[n_inputs:total_expected]
 
-            if len(antecedents) != len(input_vars):
-                raise ValueError(
-                    f"Número de antecedentes ({len(antecedents)}) não corresponde "
-                    f"ao número de variáveis de entrada ({len(input_vars)})"
-                )
+            # Converte para dicionários
+            ant_dict = {input_vars[i]: ant_terms[i] for i in range(n_inputs)}
+            cons_dict = {output_vars[i]: cons_terms[i] for i in range(n_outputs)}
 
-            # Converte antecedentes
-            ant_dict = {input_vars[i]: antecedents[i] for i in range(len(antecedents))}
-
-            # Converte consequentes
-            if isinstance(consequents, (list, tuple)):
-                if len(consequents) != len(output_vars):
-                    raise ValueError(
-                        f"Número de consequentes ({len(consequents)}) não corresponde "
-                        f"ao número de variáveis de saída ({len(output_vars)})"
-                    )
-                cons_dict = {output_vars[i]: consequents[i] for i in range(len(consequents))}
-            elif isinstance(consequents, dict):
-                cons_dict = consequents
-            else:
-                # Valor único (float, int, etc) para Sugeno - assume primeira saída
-                if len(output_vars) != 1:
-                    raise ValueError(
-                        f"Consequente único fornecido mas sistema tem {len(output_vars)} saídas. "
-                        "Use lista/tupla ou dicionário."
-                    )
-                cons_dict = {output_vars[0]: consequents}
-
-            # Cria e adiciona regra
             rule = FuzzyRule(ant_dict, cons_dict, operator, weight)
             self.rule_base.add_rule(rule)
             return
 
-        # Forma 2: Dicionários
-        if isinstance(antecedents, dict):
-            if consequents is None:
-                raise ValueError("Quando usar dicionário, deve fornecer consequents")
+        # Forma 2: Um argumento que é lista/tupla (tupla plana empacotada)
+        if len(args) == 1 and isinstance(args[0], (list, tuple)):
+            antecedents = args[0]
 
-            # Permite consequente único (float/int) para Sugeno
-            if isinstance(consequents, dict):
-                cons_dict = consequents
+            # Checa se é tupla plana
+            if len(antecedents) == total_expected:
+                ant_terms = antecedents[:n_inputs]
+                cons_terms = antecedents[n_inputs:]
+
+                # Converte para dicionários
+                ant_dict = {input_vars[i]: ant_terms[i] for i in range(n_inputs)}
+                cons_dict = {output_vars[i]: cons_terms[i] for i in range(n_outputs)}
+
+                rule = FuzzyRule(ant_dict, cons_dict, operator, weight)
+                self.rule_base.add_rule(rule)
+                return
             else:
-                # Valor único - converte para dicionário com primeira saída
-                output_vars = list(self.output_variables.keys())
-                if len(output_vars) != 1:
-                    raise ValueError(
-                        f"Consequente único fornecido mas sistema tem {len(output_vars)} saídas. "
-                        "Use dicionário."
-                    )
-                cons_dict = {output_vars[0]: consequents}
+                raise ValueError(
+                    f"Tupla/lista deve ter {total_expected} elementos "
+                    f"({n_inputs} entradas + {n_outputs} saídas). Recebeu: {len(antecedents)}"
+                )
 
-            rule = FuzzyRule(antecedents, cons_dict, operator, weight)
-            self.rule_base.add_rule(rule)
-            return
+        # Forma 3: Dois argumentos (antecedents, consequents)
+        if len(args) == 2:
+            antecedents = args[0]
+            consequents = args[1]
+
+            # Listas/Tuplas separadas
+            if isinstance(antecedents, (list, tuple)) and isinstance(consequents, (list, tuple, dict)):
+                # Converte antecedentes
+                if len(antecedents) != n_inputs:
+                    raise ValueError(
+                        f"Número de antecedentes ({len(antecedents)}) não corresponde "
+                        f"ao número de variáveis de entrada ({n_inputs})"
+                    )
+                ant_dict = {input_vars[i]: antecedents[i] for i in range(n_inputs)}
+
+                # Converte consequentes
+                if isinstance(consequents, (list, tuple)):
+                    if len(consequents) != n_outputs:
+                        raise ValueError(
+                            f"Número de consequentes ({len(consequents)}) não corresponde "
+                            f"ao número de variáveis de saída ({n_outputs})"
+                        )
+                    cons_dict = {output_vars[i]: consequents[i] for i in range(n_outputs)}
+                elif isinstance(consequents, dict):
+                    cons_dict = consequents
+                else:
+                    # Valor único para Sugeno
+                    if n_outputs != 1:
+                        raise ValueError(
+                            f"Consequente único mas sistema tem {n_outputs} saídas"
+                        )
+                    cons_dict = {output_vars[0]: consequents}
+
+                rule = FuzzyRule(ant_dict, cons_dict, operator, weight)
+                self.rule_base.add_rule(rule)
+                return
+
+            # Forma 4: Dicionários
+            elif isinstance(antecedents, dict) and isinstance(consequents, (dict, int, float)):
+                if isinstance(consequents, dict):
+                    cons_dict = consequents
+                else:
+                    # Valor único - converte para dicionário
+                    if n_outputs != 1:
+                        raise ValueError(
+                            f"Consequente único mas sistema tem {n_outputs} saídas"
+                        )
+                    cons_dict = {output_vars[0]: consequents}
+
+                rule = FuzzyRule(antecedents, cons_dict, operator, weight)
+                self.rule_base.add_rule(rule)
+                return
 
         raise TypeError(
-            f"Formato de antecedents inválido: {type(antecedents)}. "
-            f"Use dict, list, tuple ou FuzzyRule"
+            f"Formato inválido. Use:\n"
+            f"  - add_rule(in1, in2, ..., out1, out2, ...)\n"
+            f"  - add_rule((in1, in2, ..., out1, out2, ...))\n"
+            f"  - add_rule([in1, in2], [out1, out2])\n"
+            f"  - add_rule({{'var': 'termo'}}, {{'var': 'termo'}})\n"
+            f"Recebeu: {len(args)} argumentos"
         )
 
     def add_rules(self,
@@ -237,12 +289,26 @@ class FuzzyInferenceSystem:
         Adiciona múltiplas regras ao sistema.
 
         Aceita lista de:
+        - Tuplas/Listas Planas (Mais Simples): [('B', 'B', 'crescimento', 'declinio'), ...]
+        - Tuplas/Listas Separadas: [(antecedentes, consequentes), ...]
         - FuzzyRule objects
-        - Tuplas/Listas: [(antecedentes, consequentes), ...]
         - Dicionários: [{'if': {...}, 'then': {...}}, ...]
 
         Exemplos:
-            >>> # Lista de tuplas
+            >>> # Lista de tuplas PLANAS (RECOMENDADO - mais simples!)
+            >>> system.add_rules([
+            ...     ('B', 'B', 'crescimento', 'declinio'),
+            ...     ('B', 'MB', 'crescimento', 'crescimento'),
+            ...     ('MB', 'B', 'estavel', 'estavel')
+            ... ])
+
+            >>> # Com operadores e pesos diferentes
+            >>> system.add_rules([
+            ...     ('B', 'B', 'crescimento', 'declinio', 'AND', 1.0),
+            ...     ('MB', 'MB', 'estavel', 'estavel', 'OR', 0.8)
+            ... ])
+
+            >>> # Lista de tuplas separadas (formato antigo)
             >>> system.add_rules([
             ...     (['fria', 'seca'], ['lento']),
             ...     (['quente', 'umida'], ['rapido'])
@@ -250,23 +316,50 @@ class FuzzyInferenceSystem:
 
             >>> # Lista de dicionários
             >>> system.add_rules([
-            ...     {'temperatura': 'fria'}, {'ventilador': 'lento'}),
-            ...     ({'temperatura': 'quente'}, {'ventilador': 'rapido'})
+            ...     {'if': {'temperatura': 'fria'}, 'then': {'ventilador': 'lento'}},
+            ...     {'if': {'temperatura': 'quente'}, 'then': {'ventilador': 'rapido'}}
             ... ])
 
         Parâmetros:
             rules: Lista de regras em diversos formatos
         """
+        input_vars = list(self.input_variables.keys())
+        output_vars = list(self.output_variables.keys())
+        n_inputs = len(input_vars)
+        n_outputs = len(output_vars)
+        total_expected = n_inputs + n_outputs
+
         for rule_data in rules:
             if isinstance(rule_data, FuzzyRule):
+                # Formato: FuzzyRule object
                 self.rule_base.add_rule(rule_data)
-            elif isinstance(rule_data, (tuple, list)) and len(rule_data) >= 2:
-                # Formato: (antecedentes, consequentes[, operator[, weight]])
-                antecedents = rule_data[0]
-                consequents = rule_data[1]
-                operator = rule_data[2] if len(rule_data) > 2 else 'AND'
-                weight = rule_data[3] if len(rule_data) > 3 else 1.0
-                self.add_rule(antecedents, consequents, operator, weight)
+
+            elif isinstance(rule_data, (tuple, list)):
+                # Detectar se é tupla plana ou separada
+                rule_len = len(rule_data)
+
+                # Caso 1: Tupla plana (n_inputs + n_outputs) ou com operator/weight
+                if rule_len == total_expected or rule_len == total_expected + 1 or rule_len == total_expected + 2:
+                    # É tupla plana!
+                    operator = rule_data[total_expected] if rule_len > total_expected else 'AND'
+                    weight = rule_data[total_expected + 1] if rule_len > total_expected + 1 else 1.0
+
+                    # Usar add_rule que já suporta tupla plana
+                    self.add_rule(rule_data[:total_expected], operator=operator, weight=weight)
+
+                # Caso 2: Tupla separada (antecedentes, consequentes[, operator[, weight]])
+                elif rule_len >= 2:
+                    antecedents = rule_data[0]
+                    consequents = rule_data[1]
+                    operator = rule_data[2] if rule_len > 2 else 'AND'
+                    weight = rule_data[3] if rule_len > 3 else 1.0
+                    self.add_rule(antecedents, consequents, operator, weight)
+                else:
+                    raise ValueError(
+                        f"Tupla/lista deve ter pelo menos 2 elementos (antecedentes, consequentes) "
+                        f"ou {total_expected} elementos (tupla plana). Recebeu: {rule_len}"
+                    )
+
             elif isinstance(rule_data, dict):
                 # Formato: {'if': {...}, 'then': {...}, 'op': '...', 'weight': ...}
                 if 'if' not in rule_data or 'then' not in rule_data:
