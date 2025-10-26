@@ -203,7 +203,7 @@ Consulte `examples/README.md` para guia completo.
 @software{pyfuzzy_toolbox,
   title = {pyfuzzy-toolbox: A Comprehensive Python Library for Fuzzy Systems},
   author = {Fuzzy Systems Contributors},
-  year = {2024},
+  year = {2025},
   url = {https://github.com/1moi6/pyfuzzy-toolbox},
   note = {Includes inference, learning, fuzzy differential equations, and p-fuzzy systems}
 }
