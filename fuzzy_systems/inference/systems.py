@@ -126,251 +126,224 @@ class FuzzyInferenceSystem:
                 f"recebido: {type(name_or_variable)}"
             )
 
-    def add_rule(self,
-                 *args,
-                 operator: str = 'AND',
-                 weight: float = 1.0,
-                 **kwargs) -> None:
+    def add_rule(self, 
+             rule_input: Union[Dict[str, Union[str, float]], List[Union[str, int]], Tuple[Union[str, int], ...]],
+             operator: str = 'AND',
+             weight: float = 1.0) -> None:
         """
-        Adiciona uma regra ao sistema.
-
-        Aceita múltiplos formatos:
-
-        Forma 1 - Tupla/Lista Plana como argumentos (Mais Simples e Recomendado):
-            >>> # Para 2 entradas e 2 saídas: add_rule(in1, in2, out1, out2)
-            >>> system.add_rule('fria', 'seca', 'lento', 'baixa')
-            >>> system.add_rule('quente', 'umida', 'rapido', 'alta')
-            >>>
-            >>> # Com operador e peso
-            >>> system.add_rule('media', 'media', 'medio', 'media', operator='OR', weight=0.8)
-
-        Forma 2 - Tupla/Lista Plana única:
-            >>> system.add_rule(('quente', 'umida', 'rapido', 'alta'))
-            >>> system.add_rule(['fria', 'seca', 'lento', 'baixa'])
-
-        Forma 3 - Tuplas/Listas Separadas:
-            >>> system.add_rule(['fria', 'seca'], ['lento'])
-            >>> system.add_rule(('quente', 'umida'), ('rapido',))
-
-        Forma 4 - Dicionários (Mais Explícito):
-            >>> system.add_rule(
-            ...     {'temperatura': 'fria', 'umidade': 'seca'},
-            ...     {'ventilador': 'lento'}
-            ... )
-
-        Forma 5 - FuzzyRule completo (Compatibilidade):
-            >>> system.add_rule(fis.FuzzyRule(...))
-
-        Parâmetros:
-            *args: Termos da regra (in1, in2, ..., out1, out2, ...)
-                   ou (antecedents, consequents) ou FuzzyRule
-            operator: 'AND' ou 'OR'
-            weight: Peso da regra (0 a 1)
-
-        Nota: Quando usar lista/tupla, a ordem segue a ordem de adição das variáveis.
-              Para tupla plana: primeiros N elementos são entradas, restantes são saídas.
+        Adds a rule to the system in a simplified way.
+        
+        Parameters:
+            rule_input: Can be:
+                - Dict: {'var1': 'term1', ..., 'out1': 'term_out1', 'operator': 'OR', 'weight': 0.8}
+                - List/Tuple of strings: ['term_in1', ..., 'term_out1', ...]
+                - List/Tuple of integers: [idx_in1, ..., idx_out1, ...]
+            operator: 'AND' or 'OR' (default: 'AND')
+            weight: Rule weight between 0 and 1 (default: 1.0)
         """
-        # Extrair antecedents e consequents de args
-        if len(args) == 0:
-            raise ValueError("add_rule requer pelo menos 1 argumento")
-
-        # Forma 5: FuzzyRule completo
-        if len(args) == 1 and isinstance(args[0], FuzzyRule):
-            self.rule_base.add_rule(args[0])
-            return
-
         input_vars = list(self.input_variables.keys())
         output_vars = list(self.output_variables.keys())
         n_inputs = len(input_vars)
         n_outputs = len(output_vars)
         total_expected = n_inputs + n_outputs
-
-        # Forma 1: Múltiplos argumentos (tupla plana desempacotada)
-        if len(args) >= total_expected and all(isinstance(arg, (str, int, float)) for arg in args[:total_expected]):
-            # É tupla plana desempacotada!
-            ant_terms = args[:n_inputs]
-            cons_terms = args[n_inputs:total_expected]
-
-            # Converte para dicionários
-            ant_dict = {input_vars[i]: ant_terms[i] for i in range(n_inputs)}
-            cons_dict = {output_vars[i]: cons_terms[i] for i in range(n_outputs)}
-
-            rule = FuzzyRule(ant_dict, cons_dict, operator, weight)
-            self.rule_base.add_rule(rule)
-            return
-
-        # Forma 2: Um argumento que é lista/tupla (tupla plana empacotada)
-        if len(args) == 1 and isinstance(args[0], (list, tuple)):
-            antecedents = args[0]
-
-            # Checa se é tupla plana
-            if len(antecedents) == total_expected:
-                ant_terms = antecedents[:n_inputs]
-                cons_terms = antecedents[n_inputs:]
-
-                # Converte para dicionários
-                ant_dict = {input_vars[i]: ant_terms[i] for i in range(n_inputs)}
-                cons_dict = {output_vars[i]: cons_terms[i] for i in range(n_outputs)}
-
-                rule = FuzzyRule(ant_dict, cons_dict, operator, weight)
-                self.rule_base.add_rule(rule)
-                return
-            else:
+        
+        # Detect if Sugeno system
+        is_sugeno = isinstance(self, SugenoSystem)
+        
+        if isinstance(rule_input, dict):
+            antecedents = {}
+            consequents = {}
+            
+            # Extract operator and weight if present
+            rule_operator = rule_input.get('operator', operator)
+            rule_weight = rule_input.get('weight', weight)
+            
+            # Validate operator
+            if not isinstance(rule_operator, str) or rule_operator not in ['AND', 'OR']:
+                raise ValueError(f"'operator' must be 'AND' or 'OR'. Received: {rule_operator}")
+            
+            # Validate weight
+            if not isinstance(rule_weight, (int, float)):
+                raise ValueError(f"'weight' must be numeric. Received: {rule_weight}")
+            rule_weight = float(rule_weight)
+            
+            # Process variables
+            for var, term in rule_input.items():
+                if var in ['operator', 'weight']:
+                    continue
+                    
+                if var in self.input_variables:
+                    antecedents[var] = term
+                elif var in self.output_variables:
+                    if is_sugeno:
+                        consequents[var] = term
+                    else:
+                        if not isinstance(term, str):
+                            raise ValueError(
+                                f"In Mamdani, consequent must be linguistic term (string). "
+                                f"Received: {term}"
+                            )
+                        consequents[var] = term
+                else:
+                    raise ValueError(f"Variable '{var}' not found in system")
+            
+            # Validate number of variables
+            if len(antecedents) != n_inputs:
+                raise ValueError(f"Expected {n_inputs} input variables, received {len(antecedents)}")
+            if len(consequents) != n_outputs:
+                raise ValueError(f"Expected {n_outputs} output variables, received {len(consequents)}")
+        
+        elif isinstance(rule_input, (list, tuple)):
+            if len(rule_input) != total_expected:
                 raise ValueError(
-                    f"Tupla/lista deve ter {total_expected} elementos "
-                    f"({n_inputs} entradas + {n_outputs} saídas). Recebeu: {len(antecedents)}"
+                    f"List must have {total_expected} elements ({n_inputs} inputs + {n_outputs} outputs). "
+                    f"Received {len(rule_input)}"
                 )
-
-        # Forma 3: Dois argumentos (antecedents, consequents)
-        if len(args) == 2:
-            antecedents = args[0]
-            consequents = args[1]
-
-            # Listas/Tuplas separadas
-            if isinstance(antecedents, (list, tuple)) and isinstance(consequents, (list, tuple, dict)):
-                # Converte antecedentes
-                if len(antecedents) != n_inputs:
-                    raise ValueError(
-                        f"Número de antecedentes ({len(antecedents)}) não corresponde "
-                        f"ao número de variáveis de entrada ({n_inputs})"
-                    )
-                ant_dict = {input_vars[i]: antecedents[i] for i in range(n_inputs)}
-
-                # Converte consequentes
-                if isinstance(consequents, (list, tuple)):
-                    if len(consequents) != n_outputs:
-                        raise ValueError(
-                            f"Número de consequentes ({len(consequents)}) não corresponde "
-                            f"ao número de variáveis de saída ({n_outputs})"
-                        )
-                    cons_dict = {output_vars[i]: consequents[i] for i in range(n_outputs)}
-                elif isinstance(consequents, dict):
-                    cons_dict = consequents
+            
+            input_items = rule_input[:n_inputs]
+            output_items = rule_input[n_inputs:]
+            
+            # For inputs: detect if indices or names
+            use_index_inputs = all(isinstance(item, int) for item in input_items)
+            
+            if use_index_inputs:
+                antecedents = {}
+                for i, idx in enumerate(input_items):
+                    var_name = input_vars[i]
+                    term_name = self._index_to_term(var_name, idx, is_input=True)
+                    antecedents[var_name] = term_name
+            else:
+                antecedents = {input_vars[i]: input_items[i] for i in range(n_inputs)}
+            
+            # For outputs: behavior depends on system type
+            if is_sugeno:
+                # Sugeno: accepts direct values
+                consequents = {output_vars[i]: output_items[i] for i in range(n_outputs)}
+            else:
+                # Mamdani: convert indices to terms if needed
+                use_index_outputs = all(isinstance(item, int) for item in output_items)
+                if use_index_outputs:
+                    consequents = {}
+                    for i, idx in enumerate(output_items):
+                        var_name = output_vars[i]
+                        term_name = self._index_to_term(var_name, idx, is_input=False)
+                        consequents[var_name] = term_name
                 else:
-                    # Valor único para Sugeno
-                    if n_outputs != 1:
-                        raise ValueError(
-                            f"Consequente único mas sistema tem {n_outputs} saídas"
-                        )
-                    cons_dict = {output_vars[0]: consequents}
+                    consequents = {output_vars[i]: output_items[i] for i in range(n_outputs)}
+            
+            rule_operator = operator
+            rule_weight = weight
+        
+        else:
+            raise TypeError(f"rule_input must be dict, list or tuple. Received {type(rule_input).__name__}")
+        
+        # Create and add rule
+        rule = FuzzyRule(antecedents, consequents, rule_operator, rule_weight)
+        self.rule_base.add_rule(rule)
+        self._remove_duplicate_rules()
 
-                rule = FuzzyRule(ant_dict, cons_dict, operator, weight)
-                self.rule_base.add_rule(rule)
-                return
-
-            # Forma 4: Dicionários
-            elif isinstance(antecedents, dict) and isinstance(consequents, (dict, int, float)):
-                if isinstance(consequents, dict):
-                    cons_dict = consequents
-                else:
-                    # Valor único - converte para dicionário
-                    if n_outputs != 1:
-                        raise ValueError(
-                            f"Consequente único mas sistema tem {n_outputs} saídas"
-                        )
-                    cons_dict = {output_vars[0]: consequents}
-
-                rule = FuzzyRule(antecedents, cons_dict, operator, weight)
-                self.rule_base.add_rule(rule)
-                return
-
-        raise TypeError(
-            f"Formato inválido. Use:\n"
-            f"  - add_rule(in1, in2, ..., out1, out2, ...)\n"
-            f"  - add_rule((in1, in2, ..., out1, out2, ...))\n"
-            f"  - add_rule([in1, in2], [out1, out2])\n"
-            f"  - add_rule({{'var': 'termo'}}, {{'var': 'termo'}})\n"
-            f"Recebeu: {len(args)} argumentos"
-        )
-
-    def add_rules(self,
-                  rules: Union[List[FuzzyRule], List[Tuple], List[List], List[Dict]]) -> None:
+    def _index_to_term(self, var_name: str, idx: int, is_input: bool) -> str:
         """
-        Adiciona múltiplas regras ao sistema.
+        Converts index to term name in a linguistic variable.
+        
+        Parameters:
+            var_name: Variable name
+            idx: Term index (0-based)
+            is_input: True if input variable, False if output
+        
+        Returns:
+            Term name corresponding to the index
+        """
+        var_dict = self.input_variables if is_input else self.output_variables
+        
+        if var_name not in var_dict:
+            raise ValueError(f"Variable '{var_name}' not found")
+        
+        variable = var_dict[var_name]
+        term_names = list(variable.terms.keys())
+        
+        if not isinstance(idx, int):
+            raise TypeError(f"With indices, expected integer, received {type(idx).__name__}: {idx}")
+        
+        if idx < 0 or idx >= len(term_names):
+            raise IndexError(
+                f"Index {idx} out of range for variable '{var_name}'. "
+                f"Available terms: {len(term_names)} (indices 0-{len(term_names)-1})"
+            )
+        
+        return term_names[idx]
 
-        Aceita lista de:
-        - Tuplas/Listas Planas (Mais Simples): [('B', 'B', 'crescimento', 'declinio'), ...]
-        - Tuplas/Listas Separadas: [(antecedentes, consequentes), ...]
-        - FuzzyRule objects
-        - Dicionários: [{'if': {...}, 'then': {...}}, ...]
 
-        Exemplos:
-            >>> # Lista de tuplas PLANAS (RECOMENDADO - mais simples!)
-            >>> system.add_rules([
-            ...     ('B', 'B', 'crescimento', 'declinio'),
-            ...     ('B', 'MB', 'crescimento', 'crescimento'),
-            ...     ('MB', 'B', 'estavel', 'estavel')
-            ... ])
-
-            >>> # Com operadores e pesos diferentes
-            >>> system.add_rules([
-            ...     ('B', 'B', 'crescimento', 'declinio', 'AND', 1.0),
-            ...     ('MB', 'MB', 'estavel', 'estavel', 'OR', 0.8)
-            ... ])
-
-            >>> # Lista de tuplas separadas (formato antigo)
-            >>> system.add_rules([
-            ...     (['fria', 'seca'], ['lento']),
-            ...     (['quente', 'umida'], ['rapido'])
-            ... ])
-
-            >>> # Lista de dicionários
-            >>> system.add_rules([
-            ...     {'if': {'temperatura': 'fria'}, 'then': {'ventilador': 'lento'}},
-            ...     {'if': {'temperatura': 'quente'}, 'then': {'ventilador': 'rapido'}}
-            ... ])
-
-        Parâmetros:
-            rules: Lista de regras em diversos formatos
+    def add_rules(self, 
+              rules: List[Union[Dict[str, Union[str, float]], List[Union[str, int]], Tuple[Union[str, int], ...]]],
+              operator: str = 'AND',
+              weight: float = 1.0) -> None:
+        """
+        Adds multiple rules to the system in a simplified way.
+        
+        Parameters:
+            rules: List of rules
+            operator: Default operator for all rules
+            weight: Default weight for all rules
         """
         input_vars = list(self.input_variables.keys())
         output_vars = list(self.output_variables.keys())
         n_inputs = len(input_vars)
         n_outputs = len(output_vars)
-        total_expected = n_inputs + n_outputs
-
-        for rule_data in rules:
-            if isinstance(rule_data, FuzzyRule):
-                # Formato: FuzzyRule object
-                self.rule_base.add_rule(rule_data)
-
-            elif isinstance(rule_data, (tuple, list)):
-                # Detectar se é tupla plana ou separada
-                rule_len = len(rule_data)
-
-                # Caso 1: Tupla plana (n_inputs + n_outputs) ou com operator/weight
-                if rule_len == total_expected or rule_len == total_expected + 1 or rule_len == total_expected + 2:
-                    # É tupla plana!
-                    operator = rule_data[total_expected] if rule_len > total_expected else 'AND'
-                    weight = rule_data[total_expected + 1] if rule_len > total_expected + 1 else 1.0
-
-                    # Usar add_rule que já suporta tupla plana
-                    self.add_rule(rule_data[:total_expected], operator=operator, weight=weight)
-
-                # Caso 2: Tupla separada (antecedentes, consequentes[, operator[, weight]])
-                elif rule_len >= 2:
-                    antecedents = rule_data[0]
-                    consequents = rule_data[1]
-                    operator = rule_data[2] if rule_len > 2 else 'AND'
-                    weight = rule_data[3] if rule_len > 3 else 1.0
-                    self.add_rule(antecedents, consequents, operator, weight)
+        total_vars = n_inputs + n_outputs
+        
+        for rule_input in rules:
+            if isinstance(rule_input, dict):
+                self.add_rule(rule_input, operator=operator, weight=weight)
+                continue
+            
+            if isinstance(rule_input, (list, tuple)):
+                rule_length = len(rule_input)
+                
+                if rule_length == total_vars:
+                    rule_operator = operator
+                    rule_weight = weight
+                    actual_rule = rule_input
+                    
+                elif rule_length == total_vars + 1:
+                    extra = rule_input[-1]
+                    
+                    if isinstance(extra, str) and extra in ['AND', 'OR']:
+                        rule_operator = extra
+                        rule_weight = weight
+                        actual_rule = rule_input[:-1]
+                    elif isinstance(extra, (int, float)):
+                        rule_operator = operator
+                        rule_weight = float(extra)
+                        actual_rule = rule_input[:-1]
+                    else:
+                        raise ValueError(f"Extra element must be operator or weight. Received: {extra}")
+                
+                elif rule_length == total_vars + 2:
+                    penultimate = rule_input[-2]
+                    ultimate = rule_input[-1]
+                    
+                    if isinstance(penultimate, str) and penultimate in ['AND', 'OR']:
+                        if isinstance(ultimate, (int, float)):
+                            rule_operator = penultimate
+                            rule_weight = float(ultimate)
+                            actual_rule = rule_input[:-2]
+                        else:
+                            raise ValueError(f"Last element must be numeric weight. Received: {ultimate}")
+                    else:
+                        raise ValueError(f"Penultimate must be operator. Received: {penultimate}")
+                
                 else:
                     raise ValueError(
-                        f"Tupla/lista deve ter pelo menos 2 elementos (antecedentes, consequentes) "
-                        f"ou {total_expected} elementos (tupla plana). Recebeu: {rule_len}"
+                        f"Rule must have {total_vars} variables (or +1/+2 for operator/weight). "
+                        f"Received {rule_length} elements."
                     )
-
-            elif isinstance(rule_data, dict):
-                # Formato: {'if': {...}, 'then': {...}, 'op': '...', 'weight': ...}
-                if 'if' not in rule_data or 'then' not in rule_data:
-                    raise ValueError("Dicionário de regra deve ter 'if' e 'then'")
-                antecedents = rule_data['if']
-                consequents = rule_data['then']
-                operator = rule_data.get('op', rule_data.get('operator', 'AND'))
-                weight = rule_data.get('weight', 1.0)
-                self.add_rule(antecedents, consequents, operator, weight)
+                
+                self.add_rule(actual_rule, operator=rule_operator, weight=rule_weight)
+            
             else:
-                raise ValueError(f"Formato de regra inválido: {type(rule_data)}")
+                raise TypeError(f"Each rule must be dict, list or tuple")
+
 
     def add_term(self,
                  variable_name: str,
@@ -1363,6 +1336,283 @@ class FuzzyInferenceSystem:
         import os
         os.remove(temp_csv)
 
+    def _remove_duplicate_rules(self) -> None:
+        """
+        Removes duplicate rules from the rule base.
+        Two rules are considered duplicates if they have the same antecedents and consequents.
+        """
+        seen = []
+        unique_rules = []
+        
+        for rule in self.rule_base.rules:
+            # Create a hashable representation of the rule
+            rule_signature = (
+                tuple(sorted(rule.antecedents.items())),
+                tuple(sorted(rule.consequent.items())),
+                rule.operator
+            )
+            
+            if rule_signature not in seen:
+                seen.append(rule_signature)
+                unique_rules.append(rule)
+        
+        # Update rule base with unique rules
+        self.rule_base.rules = unique_rules
+
+    def plot_rule_matrix(self, figsize=(14, 8), cmap='RdYlGn', 
+                         title='Fuzzy Rule Base Visualization'):
+        """
+        Visualizes the fuzzy rule base as a colored matrix.
+        
+        Parameters:
+            figsize: Figure size
+            cmap: Color map ('RdYlGn', 'viridis', 'coolwarm', etc.)
+            title: Plot title
+        
+        Returns:
+            fig, ax: Matplotlib figure and axes objects
+        
+        Example:
+            >>> sistema.plot_rule_matrix(figsize=(14, 10), cmap='coolwarm')
+            >>> plt.show()
+        """
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from matplotlib.colors import LinearSegmentedColormap
+    
+        # Define modern color palettes
+        color_palettes = {
+            'custom': ['#E8F4F8', '#B8E0F0', '#6BB6D6', '#3E8FB0', '#1E5A7A'],  # Modern blue
+            'ocean': ['#F0F9FF', '#BAE6FD', '#7DD3FC', '#38BDF8', '#0EA5E9'],   # Sky blue
+            'sunset': ['#FFF7ED', '#FFEDD5', '#FED7AA', '#FB923C', '#F97316'],  # Warm orange
+            'forest': ['#F0FDF4', '#BBF7D0', '#86EFAC', '#4ADE80', '#22C55E'],  # Fresh green
+            'purple': ['#FAF5FF', '#E9D5FF', '#D8B4FE', '#C084FC', '#A855F7'],  # Soft purple
+            'minimal': ['#F9FAFB', '#E5E7EB', '#D1D5DB', '#9CA3AF', '#6B7280']  # Modern gray
+        }
+        
+        # Create custom colormap
+        if cmap in color_palettes:
+            colors = color_palettes[cmap]
+            custom_cmap = LinearSegmentedColormap.from_list('modern', colors, N=256)
+        else:
+            custom_cmap = cmap
+        
+        rules = self.rule_base.rules
+        
+        if len(rules) == 0:
+            print("⚠️  No rules to visualize!")
+            return None, None
+        
+        # Collect rule information
+        input_vars = list(self.input_variables.keys())
+        output_vars = list(self.output_variables.keys())
+        all_vars = input_vars + output_vars
+        n_vars = len(all_vars)
+        n_rules = len(rules)
+        
+        # Collect all unique terms per variable
+        terms_by_var = {}
+        for var in all_vars:
+            if var in self.input_variables:
+                terms_by_var[var] = list(self.input_variables[var].terms.keys())
+            else:
+                terms_by_var[var] = list(self.output_variables[var].terms.keys())
+        
+        # Create data matrix (rules x variables)
+        data_matrix = np.zeros((n_rules, n_vars))
+        text_matrix = [['' for _ in range(n_vars)] for _ in range(n_rules)]
+        
+        # Fill matrix
+        for i, rule in enumerate(rules):
+            for j, var in enumerate(all_vars):
+                if var in input_vars:
+                    # Input variable
+                    if var in rule.antecedents:
+                        term = rule.antecedents[var]
+                        text_matrix[i][j] = term
+                        if term in terms_by_var[var]:
+                            data_matrix[i][j] = terms_by_var[var].index(term)
+                else:
+                    # Output variable
+                    if var in rule.consequent:
+                        term = rule.consequent[var]
+                        # For Sugeno, can be number or list
+                        if isinstance(term, (int, float)):
+                            text_matrix[i][j] = f"{term:.1f}"
+                            data_matrix[i][j] = term
+                        elif isinstance(term, list):
+                            text_matrix[i][j] = f"{term[0]:.1f}..."
+                            data_matrix[i][j] = term[0]
+                        else:
+                            text_matrix[i][j] = str(term)
+                            if term in terms_by_var[var]:
+                                data_matrix[i][j] = terms_by_var[var].index(term)
+        
+        # Normalize data for colormap
+        data_normalized = np.zeros_like(data_matrix)
+        for j in range(n_vars):
+            col_data = data_matrix[:, j]
+            if col_data.max() > col_data.min():
+                data_normalized[:, j] = (col_data - col_data.min()) / (col_data.max() - col_data.min())
+            else:
+                data_normalized[:, j] = 0.5
+        
+        # Create figure
+        fig, ax = plt.subplots(figsize=figsize)
+        
+        # Plot matrix with colors
+        im = ax.imshow(data_normalized, cmap=custom_cmap, aspect='auto', vmin=0, vmax=1)
+        
+        # Configure axes
+        ax.set_xticks(np.arange(n_vars))
+        ax.set_yticks(np.arange(n_rules))
+        ax.set_xticklabels(all_vars, fontsize=11, fontweight='bold')
+        ax.set_yticklabels([f'R{i+1}' for i in range(n_rules)], fontsize=10)
+        
+        # Rotate x-axis labels
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+        
+        # Add text to cells
+        for i in range(n_rules):
+            for j in range(n_vars):
+                ax.text(j, i, text_matrix[i][j],
+                       ha="center", va="center", color="black",
+                       fontsize=9, fontweight='bold',
+                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', 
+                                alpha=0.7, edgecolor='none'))
+        
+        # Add separation lines
+        for i in range(n_rules + 1):
+            ax.axhline(i - 0.5, color='white', linewidth=2)
+        for j in range(n_vars + 1):
+            ax.axvline(j - 0.5, color='white', linewidth=2)
+        
+        # Highlight separation between inputs and outputs
+        sep_line = len(input_vars) - 0.5
+        ax.axvline(sep_line, color='black', linewidth=3, linestyle='--', alpha=0.6)
+        
+        # Add section labels
+        ax.text(len(input_vars)/2 - 0.5, -0.7, 'ANTECEDENTS (IF)', 
+               ha='center', fontsize=12, fontweight='bold', color='navy')
+        ax.text(len(input_vars) + len(output_vars)/2 - 0.5, -0.7, 'CONSEQUENTS (THEN)', 
+               ha='center', fontsize=12, fontweight='bold', color='darkred')
+        
+        # Title and adjustments
+        ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+        ax.set_xlabel('')
+        ax.set_ylabel('Rules', fontsize=12, fontweight='bold')
+        
+        # Colorbar
+        cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        cbar.set_label('Term Intensity', rotation=270, labelpad=20, fontsize=10)
+        
+        plt.tight_layout()
+        return fig, ax
+    
+    def plot_rule_matrix_2d(self, figsize=(10, 8), cmap='RdYlGn'):
+        """
+        Visualizes fuzzy rules as 2D matrix (for 2 inputs).
+        Rows = first input, Columns = second input.
+        
+        Parameters:
+            figsize: Figure size
+            cmap: Color map
+        
+        Returns:
+            fig, ax: Matplotlib figure and axes objects
+        """
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from matplotlib.colors import LinearSegmentedColormap
+    
+        # Define modern color palettes
+        color_palettes = {
+            'custom': ['#E8F4F8', '#B8E0F0', '#6BB6D6', '#3E8FB0', '#1E5A7A'],  # Modern blue
+            'ocean': ['#F0F9FF', '#BAE6FD', '#7DD3FC', '#38BDF8', '#0EA5E9'],   # Sky blue
+            'sunset': ['#FFF7ED', '#FFEDD5', '#FED7AA', '#FB923C', '#F97316'],  # Warm orange
+            'forest': ['#F0FDF4', '#BBF7D0', '#86EFAC', '#4ADE80', '#22C55E'],  # Fresh green
+            'purple': ['#FAF5FF', '#E9D5FF', '#D8B4FE', '#C084FC', '#A855F7'],  # Soft purple
+            'minimal': ['#F9FAFB', '#E5E7EB', '#D1D5DB', '#9CA3AF', '#6B7280']  # Modern gray
+        }
+        
+        # Create custom colormap
+        if cmap in color_palettes:
+            colors = color_palettes[cmap]
+            custom_cmap = LinearSegmentedColormap.from_list('modern', colors, N=256)
+        else:
+            custom_cmap = cmap
+        
+        rules = self.rule_base.rules
+        input_vars = list(self.input_variables.keys())
+        output_vars = list(self.output_variables.keys())
+        
+        if len(input_vars) != 2:
+            print("⚠️  Function requires exactly 2 input variables!")
+            return None, None
+        
+        var1_name, var2_name = input_vars
+        output_name = output_vars[0]
+        
+        # Get terms
+        terms1 = list(self.input_variables[var1_name].terms.keys())
+        terms2 = list(self.input_variables[var2_name].terms.keys())
+        output_terms = list(self.output_variables[output_name].terms.keys())
+        
+        # Create matrix
+        n1, n2 = len(terms1), len(terms2)
+        matrix = np.full((n1, n2), np.nan)
+        text_matrix = [['' for _ in range(n2)] for _ in range(n1)]
+        
+        # Fill with rules
+        for rule in rules:
+            if var1_name in rule.antecedents and var2_name in rule.antecedents:
+                term1 = rule.antecedents[var1_name]
+                term2 = rule.antecedents[var2_name]
+                output_term = rule.consequent[output_name]
+                
+                i = terms1.index(term1)
+                j = terms2.index(term2)
+                
+                if output_term in output_terms:
+                    matrix[i][j] = output_terms.index(output_term)
+                    text_matrix[i][j] = output_term
+        
+        # Plot
+        fig, ax = plt.subplots(figsize=figsize)
+        
+        # Normalize for colormap
+        matrix_norm = (matrix - np.nanmin(matrix)) / (np.nanmax(matrix) - np.nanmin(matrix))
+        
+        im = ax.imshow(matrix_norm, cmap=custom_cmap, aspect='auto', vmin=0, vmax=1)
+        
+        # Labels
+        ax.set_xticks(np.arange(n2))
+        ax.set_yticks(np.arange(n1))
+        ax.set_xticklabels(terms2, fontsize=11)
+        ax.set_yticklabels(terms1, fontsize=11)
+        
+        ax.set_xlabel(var2_name.upper(), fontsize=12, fontweight='bold')
+        ax.set_ylabel(var1_name.upper(), fontsize=12, fontweight='bold')
+        ax.set_title(f'Rule Matrix: {output_name.upper()}', fontsize=14, fontweight='bold')
+        
+        # Text in cells
+        for i in range(n1):
+            for j in range(n2):
+                if text_matrix[i][j]:
+                    ax.text(j, i, text_matrix[i][j], ha="center", va="center",
+                           color="black", fontsize=10, fontweight='bold',
+                           bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        # Grid
+        for i in range(n1 + 1):
+            ax.axhline(i - 0.5, color='white', linewidth=2)
+        for j in range(n2 + 1):
+            ax.axvline(j - 0.5, color='white', linewidth=2)
+        
+        plt.tight_layout()
+        return fig, ax
+
+
     def __repr__(self) -> str:
         n_inputs = len(self.input_variables)
         n_outputs = len(self.output_variables)
@@ -1654,7 +1904,46 @@ class SugenoSystem(FuzzyInferenceSystem):
             'fuzzified_inputs': fuzzified,
             'activated_rules': activated_rules
         }
-
+    def add_output(self,
+                    name_or_variable: Union[str, LinguisticVariable],
+                    universe: Optional[Tuple[float, float]] = None) -> LinguisticVariable:
+            """
+            Adds output variable to Sugeno system.
+            
+            NOTE: For Sugeno systems, universe of discourse is OPTIONAL, since
+            outputs are crisp functions (not fuzzy sets). If provided, it's used
+            only for documentation and optional boundary validation.
+            
+            Parameters:
+                name_or_variable: Variable name or LinguisticVariable object
+                universe: Universe of discourse (optional for Sugeno)
+            
+            Returns:
+                Created or provided linguistic variable
+            
+            Examples:
+                # With universe (recommended for documentation)
+                sugeno.add_output('temperature', (0, 100))
+                
+                # Without universe (valid for Sugeno)
+                sugeno.add_output('temperature')
+            """
+            if isinstance(name_or_variable, LinguisticVariable):
+                variable = name_or_variable
+                self.output_variables[variable.name] = variable
+                return variable
+            
+            name = name_or_variable
+            
+            # For Sugeno, universe is optional
+            if universe is None:
+                universe = (0.0, 1.0)  # Dummy placeholder
+                print(f"Info: Output variable '{name}' created without defined universe. "
+                    f"For Sugeno, outputs are direct crisp values.")
+            
+            variable = LinguisticVariable(name, universe)
+            self.output_variables[name] = variable
+            return variable
 
 class TSKSystem(SugenoSystem):
     """

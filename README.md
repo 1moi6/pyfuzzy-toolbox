@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://pepy.tech/badge/pyfuzzy-toolbox)](https://pepy.tech/project/pyfuzzy-toolbox)
 
-**Fuzzy Systems** é uma biblioteca Python completa para Sistemas Fuzzy, desenvolvida com foco em aplicações didáticas e profissionais. Vai além da inferência básica, incluindo aprendizado, equações diferenciais fuzzy e sistemas p-fuzzy.
+**Fuzzy Systems** is a comprehensive Python library for Fuzzy Systems, developed with a focus on educational and professional applications. It goes beyond basic inference, including learning, fuzzy differential equations, and p-fuzzy systems.
 
 ## 🚀 Quick Start
 
@@ -51,170 +51,170 @@ result = system.evaluate(temperature=25)
 print(f"Fan speed: {result['fan_speed']:.1f}%")
 ```
 
-## Características
+## Features
 
-### ✅ Implementado (v1.0.0)
+### ✅ Implemented (v1.0.0)
 
-**Sistemas de Inferência Fuzzy:**
-- ✅ **Sistemas Mamdani**: Inferência fuzzy clássica com defuzzificação
-- ✅ **Sistemas Sugeno/TSK**: Inferência com saídas funcionais (ordem 0 e 1)
-- ✅ **Funções de Pertinência**: Triangular, trapezoidal, gaussiana, sino, sigmoide, singleton
-- ✅ **Operadores Fuzzy**: Múltiplas t-normas e s-normas (min, max, produto, etc.)
-- ✅ **Defuzzificação**: Centroide, bisector, mean of maximum, e mais
-- ✅ **API Ultra Simplificada**: 60-80% menos código que bibliotecas tradicionais
+**Fuzzy Inference Systems:**
+- ✅ **Mamdani Systems**: Classic fuzzy inference with defuzzification
+- ✅ **Sugeno/TSK Systems**: Inference with functional outputs (order 0 and 1)
+- ✅ **Membership Functions**: Triangular, trapezoidal, gaussian, bell, sigmoid, singleton
+- ✅ **Fuzzy Operators**: Multiple t-norms and s-norms (min, max, product, etc.)
+- ✅ **Defuzzification**: Centroid, bisector, mean of maximum, and more
+- ✅ **Ultra Simplified API**: 60-80% less code than traditional libraries
 
-**Aprendizado e Otimização:**
-- ✅ **ANFIS**: Adaptive Neuro-Fuzzy Inference System com estabilidade de Lyapunov
-- ✅ **Wang-Mendel**: Geração automática de regras a partir de dados
-- ✅ **MamdaniLearning**: Otimização de sistemas Mamdani com gradiente e metaheurísticas
+**Learning and Optimization:**
+- ✅ **ANFIS**: Adaptive Neuro-Fuzzy Inference System with Lyapunov stability
+- ✅ **Wang-Mendel**: Automatic rule generation from data
+- ✅ **MamdaniLearning**: Mamdani system optimization with gradient and metaheuristics
 - ✅ **Metaheuristics**: PSO, Differential Evolution, Genetic Algorithms
-- ✅ **Import/Export de Regras**: Salvar e carregar regras em JSON, CSV, TXT
+- ✅ **Rule Import/Export**: Save and load rules in JSON, CSV, TXT
 
-**Sistemas Dinâmicos:**
-- ✅ **Fuzzy ODE Solver**: Resolver EDOs com incerteza fuzzy (α-level method)
-- ✅ **p-Fuzzy Systems**: Sistemas dinâmicos discretos e contínuos
+**Dynamic Systems:**
+- ✅ **Fuzzy ODE Solver**: Solve ODEs with fuzzy uncertainty (α-level method)
+- ✅ **p-Fuzzy Systems**: Discrete and continuous dynamic systems
 
-**Integração:**
-- ✅ **MamdaniSystem ↔ MamdaniLearning**: Conversão bidirecional entre sistemas
+**Integration:**
+- ✅ **MamdaniSystem ↔ MamdaniLearning**: Bidirectional conversion between systems
 
-**Exemplos e Documentação:**
-- ✅ **16 exemplos** organizados por complexidade
-- ✅ **Notebooks interativos** Jupyter
-- ✅ **Documentação completa** com guias de aprendizado
+**Examples and Documentation:**
+- ✅ **16 examples** organized by complexity
+- ✅ **Interactive Jupyter notebooks**
+- ✅ **Complete documentation** with learning guides
 
-## 📦 Instalação
+## 📦 Installation
 
-### Do PyPI (Recomendado)
+### From PyPI (Recommended)
 
 ```bash
-# Instalação básica
+# Basic installation
 pip install pyfuzzy-toolbox
 
-# Com dependências de machine learning (ANFIS, Wang-Mendel, etc.)
+# With machine learning dependencies (ANFIS, Wang-Mendel, etc.)
 pip install pyfuzzy-toolbox[ml]
 
-# Com dependências de desenvolvimento (testes, formatação, etc.)
+# With development dependencies (testing, formatting, etc.)
 pip install pyfuzzy-toolbox[dev]
 
-# Instalação completa (todas as dependências)
+# Complete installation (all dependencies)
 pip install pyfuzzy-toolbox[all]
 ```
 
-**Nota:** O nome do pacote no PyPI é `pyfuzzy-toolbox`, mas o import é `fuzzy_systems`:
+**Note:** The package name on PyPI is `pyfuzzy-toolbox`, but the import is `fuzzy_systems`:
 
 ```python
-import fuzzy_systems as fs  # Nome do import
+import fuzzy_systems as fs  # Import name
 ```
 
-### Do código fonte (desenvolvimento)
+### From source (development)
 
 ```bash
 git clone https://github.com/1moi6/pyfuzzy-toolbox.git
 cd pyfuzzy-toolbox
-pip install -e .          # Instalação editável
-pip install -e .[dev]     # Com dependências de desenvolvimento
+pip install -e .          # Editable installation
+pip install -e .[dev]     # With development dependencies
 ```
 
-## 💡 Exemplos de Uso
+## 💡 Usage Examples
 
-### Exemplo Básico: Controle de Ventilador
+### Basic Example: Fan Control
 
 ```python
 import fuzzy_systems as fs
 
-# Criar sistema
+# Create system
 system = fs.MamdaniSystem()
 
-# Adicionar variável de entrada
-system.add_input('temperatura', (0, 40))
-system.add_term('temperatura', 'fria', 'triangular', (0, 0, 20))
-system.add_term('temperatura', 'morna', 'triangular', (10, 20, 30))
-system.add_term('temperatura', 'quente', 'triangular', (20, 40, 40))
+# Add input variable
+system.add_input('temperature', (0, 40))
+system.add_term('temperature', 'cold', 'triangular', (0, 0, 20))
+system.add_term('temperature', 'warm', 'triangular', (10, 20, 30))
+system.add_term('temperature', 'hot', 'triangular', (20, 40, 40))
 
-# Adicionar variável de saída
-system.add_output('ventilador', (0, 100))
-system.add_term('ventilador', 'lento', 'triangular', (0, 0, 50))
-system.add_term('ventilador', 'medio', 'triangular', (25, 50, 75))
-system.add_term('ventilador', 'rapido', 'triangular', (50, 100, 100))
+# Add output variable
+system.add_output('fan_speed', (0, 100))
+system.add_term('fan_speed', 'slow', 'triangular', (0, 0, 50))
+system.add_term('fan_speed', 'medium', 'triangular', (25, 50, 75))
+system.add_term('fan_speed', 'fast', 'triangular', (50, 100, 100))
 
-# Adicionar regras (sintaxe de tupla plana)
+# Add rules (flat tuple syntax)
 system.add_rules([
-    ('fria', 'lento'),
-    ('morna', 'medio'),
-    ('quente', 'rapido')
+    ('cold', 'slow'),
+    ('warm', 'medium'),
+    ('hot', 'fast')
 ])
 
-# Avaliar
-resultado = system.evaluate({'temperatura': 25})
-print(f"Velocidade: {resultado['ventilador']:.1f}%")
+# Evaluate
+result = system.evaluate({'temperature': 25})
+print(f"Speed: {result['fan_speed']:.1f}%")
 ```
 
-### Sistema Sugeno/TSK
+### Sugeno/TSK System
 
 ```python
 import fuzzy_systems as fs
 
-# Sistema Sugeno com saídas funcionais
+# Sugeno system with functional outputs
 system = fs.SugenoSystem()
 
 system.add_input('x', (0, 10))
-system.add_term('x', 'baixo', 'triangular', (0, 0, 5))
-system.add_term('x', 'alto', 'triangular', (5, 10, 10))
+system.add_term('x', 'low', 'triangular', (0, 0, 5))
+system.add_term('x', 'high', 'triangular', (5, 10, 10))
 
-# Saída = função linear: a*x + b
-system.add_output('y', order=1)  # Ordem 1 (linear)
+# Output = linear function: a*x + b
+system.add_output('y', order=1)  # Order 1 (linear)
 
-# Regras com coeficientes (sintaxe de tupla plana)
+# Rules with coefficients (flat tuple syntax)
 system.add_rules([
-    ('baixo', 2.0, 1.0),   # y = 2*x + 1
-    ('alto', 0.5, 3.0)     # y = 0.5*x + 3
+    ('low', 2.0, 1.0),   # y = 2*x + 1
+    ('high', 0.5, 3.0)   # y = 0.5*x + 3
 ])
 
-resultado = system.evaluate({'x': 7})
+result = system.evaluate({'x': 7})
 ```
 
-### Aprendizado com ANFIS
+### Learning with ANFIS
 
 ```python
 import fuzzy_systems as fs
 import numpy as np
 
-# Dados de treinamento
+# Training data
 X_train = np.random.uniform(0, 10, (100, 2))
 y_train = np.sin(X_train[:, 0]) + np.cos(X_train[:, 1])
 
-# Criar e treinar ANFIS
+# Create and train ANFIS
 anfis = fs.learning.ANFIS(n_inputs=2, n_terms=3)
 anfis.fit(X_train, y_train, epochs=50)
 
-# Predizer
+# Predict
 X_test = np.array([[5.0, 3.0]])
 y_pred = anfis.predict(X_test)
 ```
 
-## 📚 Documentação e Exemplos
+## 📚 Documentation and Examples
 
-### Exemplos Organizados por Nível
+### Examples Organized by Level
 
 ```
 examples/
-├── 01_inference/      # ⭐ Iniciante - Sistemas básicos
-├── 02_learning/       # ⭐⭐ Intermediário - Aprendizado
-├── 03_dynamics/       # ⭐⭐⭐ Avançado - Sistemas dinâmicos
-└── 04_complete/       # ⭐⭐⭐ Profissional - Aplicações completas
+├── 01_inference/      # ⭐ Beginner - Basic systems
+├── 02_learning/       # ⭐⭐ Intermediate - Learning
+├── 03_dynamics/       # ⭐⭐⭐ Advanced - Dynamic systems
+└── 04_complete/       # ⭐⭐⭐ Professional - Complete applications
 ```
 
-Consulte `examples/README.md` para guia completo.
+See `examples/README.md` for complete guide.
 
-## 🎯 Características Principais
+## 🎯 Main Features
 
-- **Inferência Fuzzy**: Mamdani e Sugeno/TSK
-- **Aprendizado**: ANFIS, Wang-Mendel, otimização com PSO/DE/GA
-- **Sistemas Dinâmicos**: EDOs fuzzy, p-fuzzy
-- **API Simples**: Menos código, mais produtividade
-- **Bem Documentado**: 16 exemplos + notebooks interativos
+- **Fuzzy Inference**: Mamdani and Sugeno/TSK
+- **Learning**: ANFIS, Wang-Mendel, optimization with PSO/DE/GA
+- **Dynamic Systems**: Fuzzy ODEs, p-fuzzy
+- **Simple API**: Less code, more productivity
+- **Well Documented**: 16 examples + interactive notebooks
 
-## 📝 Citação
+## 📝 Citation
 
 ```bibtex
 @software{pyfuzzy_toolbox,
@@ -226,9 +226,9 @@ Consulte `examples/README.md` para guia completo.
 }
 ```
 
-## 📄 Licença
+## 📄 License
 
-MIT License - veja [LICENSE](LICENSE) para detalhes.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
