@@ -1,875 +1,640 @@
 """
-Método de Wang-Mendel para Geração Automática de Regras Fuzzy
-================================================================
+Wang-Mendel Method for Automatic Fuzzy Rule Generation
+=======================================================
 
-Este módulo implementa o algoritmo de Wang-Mendel (1992) para gerar
-automaticamente regras fuzzy a partir de dados.
+This module implements the Wang-Mendel algorithm (1992) for automatically
+generating fuzzy rules from data.
 
-Referência:
-    Wang, L. X., & Mendel, J. M. (1992). "Generating fuzzy rules by
-    learning from examples." IEEE Transactions on Systems, Man, and
-    Cybernetics, 22(6), 1414-1427.
+Reference:
+Wang, L. X., & Mendel, J. M. (1992). "Generating fuzzy rules by
+learning from examples." IEEE Transactions on Systems, Man, and
+Cybernetics, 22(6), 1414-1427.
 
-O algoritmo possui 5 passos:
-1. Particionar os domínios das variáveis (fuzzificação)
-2. Gerar regras candidatas dos dados
-3. Atribuir grau a cada regra
-4. Resolver conflitos (manter regra com maior grau)
-5. Criar sistema fuzzy final
+The algorithm consists of 5 steps:
+1. Partition variable domains (fuzzification)
+2. Generate candidate rules from data
+3. Assign degree to each rule
+4. Resolve conflicts (keep rule with highest degree)
+5. Create final fuzzy system
+
+UPDATED: Unified class with structure-based output scaling (2025)
 """
 
 import numpy as np
-from typing import Dict, List, Tuple, Optional, Union
+from typing import Dict, List, Tuple, Optional, Union, Literal
 from ..core.fuzzification import LinguisticVariable, FuzzySet
 from ..inference.systems import MamdaniSystem
 
 
-class WangMendelRegression:
+class WangMendelLearning:
     """
-    Wang-Mendel para Regressão Fuzzy.
-
-    Aceita qualquer sistema Mamdani (SISO, MISO, SIMO, MIMO) e aprende
-    regras automaticamente a partir de dados de regressão.
-
-    Exemplo:
-        >>> import fuzzy_systems as fs
-        >>> import numpy as np
-        >>>
-        >>> # Criar sistema SISO
-        >>> system = fs.MamdaniSystem()
-        >>> system.add_input('x', (0, 10))
-        >>> system.add_output('y', (-1, 1))
-        >>>
-        >>> # Adicionar termos
-        >>> for name, params in [('baixo', (0,0,5)), ('medio', (0,5,10)), ('alto', (5,10,10))]:
-        >>>     system.add_term('x', name, 'triangular', params)
-        >>>     system.add_term('y', name, 'triangular', (-1 if name=='baixo' else (0 if name=='medio' else 1),
-        >>>                                                -1 if name=='baixo' else (0 if name=='medio' else 1),
-        >>>                                                0 if name=='baixo' else (1 if name=='medio' else 1)))
-        >>>
-        >>> # Dados de treino
-        >>> X_train = np.linspace(0, 10, 50).reshape(-1, 1)
-        >>> y_train = np.sin(X_train).reshape(-1, 1)
-        >>>
-        >>> # Treinar
-        >>> wm = fs.learning.WangMendelRegression(system, X_train, y_train)
-        >>> system_trained = wm.fit()
-        >>>
-        >>> # Predizer
+    Unified Wang-Mendel Learning Algorithm.
+    
+    Supports both regression and classification tasks with a single interface.
+    The task type can be specified explicitly or auto-detected from data.
+    
+    For classification, outputs can be automatically scaled based on the
+    achievable range of the membership functions (not data-dependent).
+    
+    Parameters:
+        system: Mamdani system with variables and terms already configured
+        X: Input data (n_samples, n_features)
+        y: Output data (n_samples, n_outputs) or (n_samples,)
+        task: 'auto', 'regression', or 'classification'
+              If 'auto', detects based on y (one-hot → classification)
+        scale_classification: If True, scales classification outputs based on
+                            achievable range determined by membership function structure
+        verbose_init: If True, prints output range information during initialization
+    
+    Attributes:
+        task: Detected or specified task type ('regression' or 'classification')
+        is_classification: Boolean indicating if task is classification
+        classes_: Unique classes (only for classification)
+        n_classes: Number of classes (only for classification)
+        output_ranges: Achievable output ranges per variable (only for classification)
+    
+    Example (Regression):
+        >>> system = MamdaniSystem()
+        >>> # ... configure system ...
+        >>> wm = WangMendelLearning(system, X_train, y_train, task='regression')
+        >>> wm.fit(verbose=True)
         >>> y_pred = wm.predict(X_test)
+    
+    Example (Classification with one-hot):
+        >>> system = MamdaniSystem()
+        >>> # ... configure system with binary outputs per class ...
+        >>> y_onehot = OneHotEncoder().fit_transform(y_train)
+        >>> wm = WangMendelLearning(system, X_train, y_onehot, task='auto')
+        >>> wm.fit(verbose=True)
+        >>> y_pred_classes = wm.predict(X_test)  # Returns class indices
+        >>> y_proba = wm.predict_proba(X_test)   # Returns probabilities
     """
-
-    def __init__(self,
+    
+    def __init__(self, 
                  system: MamdaniSystem,
-                 X_train: np.ndarray,
-                 y_train: np.ndarray):
+                 X: np.ndarray,
+                 y: np.ndarray,
+                 task: Literal['auto', 'regression', 'classification'] = 'auto',
+                 scale_classification: bool = True,
+                 verbose_init: bool = False):
         """
-        Inicializa o Wang-Mendel para regressão.
-
-        Parâmetros:
-            system: Sistema Mamdani (SISO, MISO, SIMO ou MIMO) já configurado
-                   com variáveis e termos fuzzy
-            X_train: Dados de entrada (n_amostras, n_entradas)
-            y_train: Dados de saída (n_amostras, n_saidas)
+        Initialize Wang-Mendel learning algorithm.
+        
+        Parameters:
+            system: Pre-configured Mamdani system
+            X: Input array (n_samples, n_features)
+            y: Output array (n_samples, n_outputs) or (n_samples,)
+            task: 'auto' (detect), 'regression', or 'classification'
+            scale_classification: If True, scales classification outputs to [0, 1]
+                                based on membership function structure
+            verbose_init: If True, prints achievable output ranges
         """
         self.system = system
-
-        # Garantir formato 2D
-        if X_train.ndim == 1:
-            X_train = X_train.reshape(-1, 1)
-        if y_train.ndim == 1:
-            y_train = y_train.reshape(-1, 1)
-
-        self.X_train = X_train
-        self.y_train = y_train
-
-        # Extrair informações do sistema
-        self.input_vars = list(system.input_variables.values())
-        self.output_vars = list(system.output_variables.values())
+        self.X = np.atleast_2d(X)
+        self.y = np.atleast_2d(y) if y.ndim == 1 else y
+        self.scale_classification = scale_classification
+        self._verbose_init = verbose_init
+        
+        # Variable names
         self.input_names = list(system.input_variables.keys())
         self.output_names = list(system.output_variables.keys())
-
-        self.n_inputs = len(self.input_vars)
-        self.n_outputs = len(self.output_vars)
-
-        # Validações
-        if X_train.shape[1] != self.n_inputs:
+        
+        # Validation
+        if self.X.shape[1] != len(self.input_names):
             raise ValueError(
-                f"X_train tem {X_train.shape[1]} colunas, mas sistema tem {self.n_inputs} entradas"
+                f"Number of features ({self.X.shape[1]}) does not match "
+                f"number of system inputs ({len(self.input_names)})"
             )
-        if y_train.shape[1] != self.n_outputs:
+        
+        if self.y.shape[1] != len(self.output_names):
             raise ValueError(
-                f"y_train tem {y_train.shape[1]} colunas, mas sistema tem {self.n_outputs} saídas"
+                f"Number of outputs in data ({self.y.shape[1]}) does not match "
+                f"number of system outputs ({len(self.output_names)})"
             )
-        if len(X_train) != len(y_train):
-            raise ValueError(
-                f"X_train ({len(X_train)} amostras) e y_train ({len(y_train)} amostras) "
-                "devem ter o mesmo número de amostras"
-            )
-
-        # Armazenamento de regras
-        self.regras_dict_list = [{} for _ in range(self.n_outputs)]
-        self.conflitos_list = [0] * self.n_outputs
-        self._gerar_regras_done = False
-
-    def fit(self, verbose: bool = True, n_examples: int = 5) -> MamdaniSystem:
-        """
-        Executa o algoritmo de Wang-Mendel.
-
-        Passos:
-        1. Gera regras a partir dos dados
-        2. Resolve conflitos
-        3. Adiciona regras ao sistema
-
-        Parâmetros:
-            verbose: Se True, imprime informações
-            n_examples: Número de exemplos de regras a mostrar
-
-        Retorna:
-            O sistema Mamdani treinado
-        """
-        self.generate_rules(verbose=verbose, n_examples=n_examples)
-        self.add_rules_to_system(verbose=verbose)
-        return self.system
-
-    def generate_rules(self, verbose: bool = True, n_examples: int = 5) -> None:
-        """
-        Gera regras para cada saída usando o algoritmo de Wang-Mendel.
-
-        Para sistemas MIMO: Cada saída é tratada independentemente.
-        Conflitos são resolvidos por saída.
-        """
-        if verbose:
-            print("=" * 70)
-            print("WANG-MENDEL REGRESSÃO - GERANDO REGRAS")
-            print("=" * 70)
-            print(f"\n📊 Configuração:")
-            print(f"   • Entradas:  {self.n_inputs} ({self.input_names})")
-            print(f"   • Saídas:    {self.n_outputs} ({self.output_names})")
-            print(f"   • Amostras:  {len(self.X_train)}\n")
-
-        # Resetar regras
-        self.regras_dict_list = [{} for _ in range(self.n_outputs)]
-        self.conflitos_list = [0] * self.n_outputs
-
-        # Para cada amostra de treino
-        for idx, (x_sample, y_sample) in enumerate(zip(self.X_train, self.y_train)):
-            # ANTECEDENTE: Encontrar melhor termo para cada entrada
-            best_terms = []
-            max_mus = []
-
-            for i, var in enumerate(self.input_vars):
-                x_val = x_sample[i]
-                max_mu = -1
-                best_term = list(var.terms.keys())[0]  # Default: primeiro termo
-
-                for term_name, fuzzy_set in var.terms.items():
-                    mu = fuzzy_set.membership(x_val)
-                    if mu > max_mu:
-                        max_mu = mu
-                        best_term = term_name
-
-                best_terms.append(best_term)
-                max_mus.append(max(max_mu, 0))
-
-            # Calcular grau da regra
-            grau_regra = np.prod(max_mus)
-            chave = tuple(best_terms)
-
-            # CONSEQUENTE: Para cada saída (independente)
-            for out_idx, var_out in enumerate(self.output_vars):
-                y_val = y_sample[out_idx]
-
-                # Encontrar melhor termo de saída
-                max_mu_out = -1
-                output_term = list(var_out.terms.keys())[0]  # Default
-
-                for term_name, fuzzy_set in var_out.terms.items():
-                    mu = fuzzy_set.membership(y_val)
-                    if mu > max_mu_out:
-                        max_mu_out = mu
-                        output_term = term_name
-
-                # Verificar conflito
-                if chave in self.regras_dict_list[out_idx]:
-                    output_antigo, grau_antigo = self.regras_dict_list[out_idx][chave]
-                    if grau_regra > grau_antigo:
-                        self.regras_dict_list[out_idx][chave] = (output_term, grau_regra)
-                        self.conflitos_list[out_idx] += 1
-                    else:
-                        self.conflitos_list[out_idx] += 1
-                else:
-                    self.regras_dict_list[out_idx][chave] = (output_term, grau_regra)
-
-        # Verbose output
-        if verbose:
-            print("=" * 70)
-            print("REGRAS GERADAS POR SAÍDA")
-            print("=" * 70)
-            for out_idx, (var_out, regras_dict) in enumerate(zip(self.output_vars, self.regras_dict_list)):
-                print(f"\n📤 Saída: {var_out.name}")
-                print(f"   ✅ Regras geradas: {len(regras_dict)}")
-                print(f"   ⚠️  Conflitos resolvidos: {self.conflitos_list[out_idx]}")
-
-                if n_examples > 0 and len(regras_dict) > 0:
-                    print(f"\n   📋 Exemplos de regras (mostrando {min(n_examples, len(regras_dict))}):")
-                    for i, (antecedente, (consequente, grau)) in enumerate(list(regras_dict.items())[:n_examples]):
-                        condicoes = [f"{self.input_names[j]} = {termo}" for j, termo in enumerate(antecedente)]
-                        antecedente_str = " AND ".join(condicoes)
-                        print(f"      {i+1}. IF {antecedente_str}")
-                        print(f"         THEN {var_out.name} = {consequente} (grau={grau:.3f})")
-
-                    if len(regras_dict) > n_examples:
-                        print(f"      ... (e mais {len(regras_dict) - n_examples} regras)")
-            print()
-
-        self._gerar_regras_done = True
-
-    def add_rules_to_system(self, verbose: bool = True) -> MamdaniSystem:
-        """
-        Adiciona as regras geradas ao sistema fornecido.
-
-        Para sistemas MIMO, cada regra deve ter consequentes para TODAS as saídas.
-        Este método combina as regras de diferentes saídas com o mesmo antecedente.
-
-        Parâmetros:
-            verbose: Se True, imprime informações
-
-        Retorna:
-            O mesmo sistema, agora com as regras adicionadas
-        """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute generate_rules() primeiro!")
-
-        if verbose:
-            print("=" * 70)
-            print("ADICIONANDO REGRAS AO SISTEMA")
-            print("=" * 70)
-            print()
-
-        # Limpar regras existentes
-        self.system.rule_base.rules = []
-
-        # Combinar regras de todas as saídas
-        # Mapear: antecedente -> [consequente_saida_0, consequente_saida_1, ...]
-        combined_rules = {}
-
-        for out_idx, regras_dict in enumerate(self.regras_dict_list):
-            for antecedente, (consequente, grau) in regras_dict.items():
-                if antecedente not in combined_rules:
-                    # Inicializar com None para todas as saídas
-                    combined_rules[antecedente] = [None] * self.n_outputs
-
-                # Adicionar consequente para esta saída
-                combined_rules[antecedente][out_idx] = consequente
-
-        # Adicionar regras ao sistema
-        # ATENÇÃO: Só adicionamos regras que têm consequentes para TODAS as saídas
-        total_regras = 0
-        regras_ignoradas = 0
-
-        for antecedente, consequentes in combined_rules.items():
-            # Verificar se todas as saídas têm consequente
-            if None in consequentes:
-                regras_ignoradas += 1
-                if verbose and regras_ignoradas <= 3:
-                    print(f"   ⚠️  Ignorando regra incompleta: {antecedente} -> {consequentes}")
-                continue
-
-            # Criar regra completa
-            antecedentes_lista = list(antecedente)
-            self.system.add_rules([(antecedentes_lista, consequentes)])
-            total_regras += 1
-
-        if verbose:
-            if regras_ignoradas > 3:
-                print(f"   ⚠️  ... e mais {regras_ignoradas - 3} regras incompletas ignoradas")
-            print()
-            print(f"✅ {total_regras} regras completas adicionadas ao sistema!")
-            if regras_ignoradas > 0:
-                print(f"⚠️  {regras_ignoradas} regras incompletas foram ignoradas")
-            print()
-            print(f"   Entradas: {self.input_names}")
-            print(f"   Saídas: {self.output_names}")
-
-        return self.system
-
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Faz predições usando o sistema treinado.
-
-        Parâmetros:
-            X: Dados de entrada (n_amostras, n_entradas)
-
-        Retorna:
-            Predições (n_amostras, n_saidas)
-        """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute fit() antes de predict()")
-
-        # Garantir formato 2D
-        if X.ndim == 1:
-            X = X.reshape(-1, 1)
-
-        y_pred = []
-        for x_sample in X:
-            # Criar dicionário de entrada
-            inputs = {self.input_names[i]: x_sample[i] for i in range(self.n_inputs)}
-
-            # Avaliar sistema
-            output = self.system.evaluate(inputs)
-
-            # Extrair valores na ordem correta
-            y_vals = [output[name] for name in self.output_names]
-            y_pred.append(y_vals)
-
-        return np.array(y_pred)
-
-    def get_training_stats(self) -> Dict:
-        """
-        Retorna estatísticas do treinamento.
-
-        Retorna:
-            Dicionário com estatísticas:
-            - n_samples: Número de amostras de treino
-            - n_inputs: Número de entradas
-            - n_outputs: Número de saídas
-            - input_names: Nomes das entradas
-            - output_names: Nomes das saídas
-            - rules_per_output: Lista com número de regras por saída
-            - conflicts_per_output: Lista com número de conflitos resolvidos por saída
-            - total_rules: Total de regras combinadas adicionadas ao sistema
-            - coverage: Cobertura (% de regras completas vs candidatas)
-
-        Exemplo:
-            >>> wm = WangMendelRegression(system, X_train, y_train)
-            >>> wm.fit()
-            >>> stats = wm.get_training_stats()
-            >>> print(f"Regras geradas: {stats['total_rules']}")
-            >>> print(f"Conflitos resolvidos: {sum(stats['conflicts_per_output'])}")
-        """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute fit() antes de get_training_stats()")
-
-        # Calcular total de regras candidatas
-        total_candidatas = sum(len(regras) for regras in self.regras_dict_list)
-
-        # Total de regras completas no sistema
-        total_rules = len(self.system.rule_base.rules)
-
-        # Cobertura
-        coverage = (total_rules / total_candidatas * 100) if total_candidatas > 0 else 0
-
-        return {
-            'n_samples': len(self.X_train),
-            'n_inputs': self.n_inputs,
-            'n_outputs': self.n_outputs,
-            'input_names': self.input_names,
-            'output_names': self.output_names,
-            'rules_per_output': [len(regras) for regras in self.regras_dict_list],
-            'conflicts_per_output': self.conflitos_list,
-            'total_rules': total_rules,
-            'total_candidate_rules': total_candidatas,
-            'coverage': coverage,
-        }
-
-
-class WangMendelClassification:
-    """
-    Wang-Mendel para Classificação Fuzzy.
-
-    Aceita qualquer sistema Mamdani (SISO, MISO, SIMO, MIMO) e aprende
-    regras automaticamente a partir de dados de classificação.
-
-    Detecta automaticamente one-hot encoding quando aplicável.
-
-    Exemplo:
-        >>> import fuzzy_systems as fs
-        >>> import numpy as np
-        >>>
-        >>> # Criar sistema para Iris (4 entradas, 3 saídas one-hot)
-        >>> system = fs.MamdaniSystem()
-        >>>
-        >>> # Adicionar entradas
-        >>> for name in ['sepal_len', 'sepal_wid', 'petal_len', 'petal_wid']:
-        >>>     system.add_input(name, (0, 10))
-        >>>     for term in ['baixo', 'medio', 'alto']:
-        >>>         system.add_term(name, term, 'triangular', (0, 5, 10))
-        >>>
-        >>> # Adicionar saídas (one-hot)
-        >>> for name in ['setosa', 'versicolor', 'virginica']:
-        >>>     system.add_output(name, (0, 1))
-        >>>     system.add_term(name, 'nao', 'triangular', (-0.01, 0, 0.01))
-        >>>     system.add_term(name, 'sim', 'triangular', (0.99, 1, 1.01))
-        >>>
-        >>> # Dados de treino (one-hot)
-        >>> X_train = ...  # (n_amostras, 4)
-        >>> y_train = ...  # (n_amostras, 3) com [1,0,0], [0,1,0], [0,0,1]
-        >>>
-        >>> # Treinar
-        >>> wm = fs.learning.WangMendelClassification(system, X_train, y_train)
-        >>> system_trained = wm.fit()
-        >>>
-        >>> # Predizer classes
-        >>> y_pred_classes = wm.predict(X_test)  # Retorna índices das classes
-    """
-
-    def __init__(self,
-                 system: MamdaniSystem,
-                 X_train: np.ndarray,
-                 y_train: np.ndarray):
-        """
-        Inicializa o Wang-Mendel para classificação.
-
-        Parâmetros:
-            system: Sistema Mamdani (SISO, MISO, SIMO ou MIMO) já configurado
-                   com variáveis e termos fuzzy
-            X_train: Dados de entrada (n_amostras, n_entradas)
-            y_train: Dados de saída (n_amostras, n_saidas)
-                    - Para classificação one-hot: valores 0/1 com soma=1 por linha
-                    - Para classificação binária: valores 0/1
-                    - Para multi-classe única saída: índices de classe (0, 1, 2, ...)
-        """
-        self.system = system
-
-        # Garantir formato 2D
-        if X_train.ndim == 1:
-            X_train = X_train.reshape(-1, 1)
-        if y_train.ndim == 1:
-            y_train = y_train.reshape(-1, 1)
-
-        self.X_train = X_train
-        self.y_train = y_train
-
-        # Extrair informações do sistema
-        self.input_vars = list(system.input_variables.values())
-        self.output_vars = list(system.output_variables.values())
-        self.input_names = list(system.input_variables.keys())
-        self.output_names = list(system.output_variables.keys())
-
-        self.n_inputs = len(self.input_vars)
-        self.n_outputs = len(self.output_vars)
-
-        # Validações
-        if X_train.shape[1] != self.n_inputs:
-            raise ValueError(
-                f"X_train tem {X_train.shape[1]} colunas, mas sistema tem {self.n_inputs} entradas"
-            )
-        if y_train.shape[1] != self.n_outputs:
-            raise ValueError(
-                f"y_train tem {y_train.shape[1]} colunas, mas sistema tem {self.n_outputs} saídas"
-            )
-        if len(X_train) != len(y_train):
-            raise ValueError(
-                f"X_train ({len(X_train)} amostras) e y_train ({len(y_train)} amostras) "
-                "devem ter o mesmo número de amostras"
-            )
-
-        # Armazenamento de regras
-        self.regras_dict_list = [{} for _ in range(self.n_outputs)]
-        self.conflitos_list = [0] * self.n_outputs
-        self._gerar_regras_done = False
-        self._is_one_hot = False
-
-    def fit(self, verbose: bool = True, n_examples: int = 5) -> MamdaniSystem:
-        """
-        Executa o algoritmo de Wang-Mendel para classificação.
-
-        Passos:
-        1. Detecta se é one-hot encoding
-        2. Gera regras a partir dos dados
-        3. Resolve conflitos
-        4. Adiciona regras ao sistema
-
-        Parâmetros:
-            verbose: Se True, imprime informações
-            n_examples: Número de exemplos de regras a mostrar
-
-        Retorna:
-            O sistema Mamdani treinado
-        """
-        self.generate_rules(verbose=verbose, n_examples=n_examples)
-        self.add_rules_to_system(verbose=verbose)
-        return self.system
-
-    def generate_rules(self, verbose: bool = True, n_examples: int = 5) -> None:
-        """
-        Gera regras para cada saída usando o algoritmo de Wang-Mendel.
-
-        Para sistemas MIMO, há dois modos de operação:
-
-        1. Classificação independente: Cada saída é tratada separadamente.
-           Conflitos são resolvidos por saída.
-
-        2. Classificação One-Hot (detecção automática): Se os dados parecem one-hot
-           (valores 0/1 e soma das linhas ≈ 1), trata como vetor único.
-           Conflitos são resolvidos considerando o vetor completo.
-        """
-        if verbose:
-            print("=" * 70)
-            print("WANG-MENDEL CLASSIFICAÇÃO - GERANDO REGRAS")
-            print("=" * 70)
-            print(f"\n📊 Configuração:")
-            print(f"   • Entradas:  {self.n_inputs} ({self.input_names})")
-            print(f"   • Saídas:    {self.n_outputs} ({self.output_names})")
-            print(f"   • Amostras:  {len(self.X_train)}\n")
-
-        # Detectar se é one-hot encoding
-        is_one_hot = False
-        if self.n_outputs > 1:
-            # Verificar se valores são binários (0 ou 1)
-            is_binary = np.all(np.isin(self.y_train, [0, 1]))
-
-            # Verificar se soma de cada linha é aproximadamente 1
-            row_sums = np.sum(self.y_train, axis=1)
-            sum_is_one = np.allclose(row_sums, 1.0, atol=0.1)
-
-            if is_binary and sum_is_one:
-                is_one_hot = True
-                self._is_one_hot = True
-                if verbose:
-                    print("   🔍 Detectado: Classificação One-Hot Encoding")
-                    print("      → Regras serão geradas considerando todas as saídas juntas\n")
-
-        # Resetar regras
-        self.regras_dict_list = [{} for _ in range(self.n_outputs)]
-        self.conflitos_list = [0] * self.n_outputs
-
-        if is_one_hot:
-            # Dicionário compartilhado para regras one-hot
-            regras_onehot = {}  # chave -> (lista_consequentes, grau)
-
-        # Para cada amostra de treino
-        for idx, (x_sample, y_sample) in enumerate(zip(self.X_train, self.y_train)):
-            # ANTECEDENTE: Encontrar melhor termo para cada entrada
-            best_terms = []
-            max_mus = []
-
-            for i, var in enumerate(self.input_vars):
-                x_val = x_sample[i]
-                max_mu = -1
-                best_term = list(var.terms.keys())[0]  # Default: primeiro termo
-
-                for term_name, fuzzy_set in var.terms.items():
-                    mu = fuzzy_set.membership(x_val)
-                    if mu > max_mu:
-                        max_mu = mu
-                        best_term = term_name
-
-                best_terms.append(best_term)
-                max_mus.append(max(max_mu, 0))
-
-            # Calcular grau da regra
-            grau_regra = np.prod(max_mus)
-            chave = tuple(best_terms)
-
-            if is_one_hot:
-                # MODO ONE-HOT: Tratar todas as saídas juntas
-                consequentes = []
-                for out_idx, var_out in enumerate(self.output_vars):
-                    y_val = y_sample[out_idx]
-                    # Para one-hot, y_val é 0 ou 1
-                    output_term = list(var_out.terms.keys())[int(y_val)]
-                    consequentes.append(output_term)
-
-                # Verificar conflito
-                if chave in regras_onehot:
-                    cons_antigo, grau_antigo = regras_onehot[chave]
-                    if grau_regra > grau_antigo:
-                        regras_onehot[chave] = (consequentes, grau_regra)
-                        for out_idx in range(self.n_outputs):
-                            self.conflitos_list[out_idx] += 1
-                else:
-                    regras_onehot[chave] = (consequentes, grau_regra)
-
-            else:
-                # MODO NORMAL: Cada saída independente
-                for out_idx, var_out in enumerate(self.output_vars):
-                    y_val = y_sample[out_idx]
-
-                    # Para classificação, y_val é o índice da classe
-                    output_term = list(var_out.terms.keys())[int(y_val)]
-
-                    # Verificar conflito
-                    if chave in self.regras_dict_list[out_idx]:
-                        output_antigo, grau_antigo = self.regras_dict_list[out_idx][chave]
-                        if grau_regra > grau_antigo:
-                            self.regras_dict_list[out_idx][chave] = (output_term, grau_regra)
-                            self.conflitos_list[out_idx] += 1
-                        else:
-                            self.conflitos_list[out_idx] += 1
-                    else:
-                        self.regras_dict_list[out_idx][chave] = (output_term, grau_regra)
-
-        # Copiar regras one-hot para as listas individuais
-        if is_one_hot:
-            for chave, (consequentes, grau) in regras_onehot.items():
-                for out_idx, cons in enumerate(consequentes):
-                    self.regras_dict_list[out_idx][chave] = (cons, grau)
-
-        # Verbose output
-        if verbose:
-            print("=" * 70)
-            print("REGRAS GERADAS POR SAÍDA")
-            print("=" * 70)
-            for out_idx, (var_out, regras_dict) in enumerate(zip(self.output_vars, self.regras_dict_list)):
-                print(f"\n📤 Saída: {var_out.name}")
-                print(f"   ✅ Regras geradas: {len(regras_dict)}")
-                print(f"   ⚠️  Conflitos resolvidos: {self.conflitos_list[out_idx]}")
-
-                if n_examples > 0 and len(regras_dict) > 0:
-                    print(f"\n   📋 Exemplos de regras (mostrando {min(n_examples, len(regras_dict))}):")
-                    for i, (antecedente, (consequente, grau)) in enumerate(list(regras_dict.items())[:n_examples]):
-                        condicoes = [f"{self.input_names[j]} = {termo}" for j, termo in enumerate(antecedente)]
-                        antecedente_str = " AND ".join(condicoes)
-                        print(f"      {i+1}. IF {antecedente_str}")
-                        print(f"         THEN {var_out.name} = {consequente} (grau={grau:.3f})")
-
-                    if len(regras_dict) > n_examples:
-                        print(f"      ... (e mais {len(regras_dict) - n_examples} regras)")
-            print()
-
-        self._gerar_regras_done = True
-
-    def add_rules_to_system(self, verbose: bool = True) -> MamdaniSystem:
-        """
-        Adiciona as regras geradas ao sistema fornecido.
-
-        Para sistemas MIMO, cada regra deve ter consequentes para TODAS as saídas.
-        Este método combina as regras de diferentes saídas com o mesmo antecedente.
-
-        Parâmetros:
-            verbose: Se True, imprime informações
-
-        Retorna:
-            O mesmo sistema, agora com as regras adicionadas
-        """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute generate_rules() primeiro!")
-
-        if verbose:
-            print("=" * 70)
-            print("ADICIONANDO REGRAS AO SISTEMA")
-            print("=" * 70)
-            print()
-
-        # Limpar regras existentes
-        self.system.rule_base.rules = []
-
-        # Combinar regras de todas as saídas
-        # Mapear: antecedente -> [consequente_saida_0, consequente_saida_1, ...]
-        combined_rules = {}
-
-        for out_idx, regras_dict in enumerate(self.regras_dict_list):
-            for antecedente, (consequente, grau) in regras_dict.items():
-                if antecedente not in combined_rules:
-                    # Inicializar com None para todas as saídas
-                    combined_rules[antecedente] = [None] * self.n_outputs
-
-                # Adicionar consequente para esta saída
-                combined_rules[antecedente][out_idx] = consequente
-
-        # Adicionar regras ao sistema
-        # ATENÇÃO: Só adicionamos regras que têm consequentes para TODAS as saídas
-        total_regras = 0
-        regras_ignoradas = 0
-
-        for antecedente, consequentes in combined_rules.items():
-            # Verificar se todas as saídas têm consequente
-            if None in consequentes:
-                regras_ignoradas += 1
-                if verbose and regras_ignoradas <= 3:
-                    print(f"   ⚠️  Ignorando regra incompleta: {antecedente} -> {consequentes}")
-                continue
-
-            # Criar regra completa
-            antecedentes_lista = list(antecedente)
-            self.system.add_rules([(antecedentes_lista, consequentes)])
-            total_regras += 1
-
-        if verbose:
-            if regras_ignoradas > 3:
-                print(f"   ⚠️  ... e mais {regras_ignoradas - 3} regras incompletas ignoradas")
-            print()
-            print(f"✅ {total_regras} regras completas adicionadas ao sistema!")
-            if regras_ignoradas > 0:
-                print(f"⚠️  {regras_ignoradas} regras incompletas foram ignoradas")
-            print()
-            print(f"   Entradas: {self.input_names}")
-            print(f"   Saídas: {self.output_names}")
-
-        return self.system
-
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Faz predições de classes usando o sistema treinado.
-
-        Parâmetros:
-            X: Dados de entrada (n_amostras, n_entradas)
-
-        Retorna:
-            Se one-hot: índices das classes (n_amostras,) obtidos por argmax
-            Se não one-hot: valores de saída (n_amostras, n_saidas)
-        """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute fit() antes de predict()")
-
-        # Garantir formato 2D
-        if X.ndim == 1:
-            X = X.reshape(-1, 1)
-
-        y_pred_scores = []
-        for x_sample in X:
-            # Criar dicionário de entrada
-            inputs = {self.input_names[i]: x_sample[i] for i in range(self.n_inputs)}
-
-            # Avaliar sistema
-            output = self.system.evaluate(inputs)
-
-            # Extrair valores na ordem correta
-            y_vals = [output[name] for name in self.output_names]
-            y_pred_scores.append(y_vals)
-
-        y_pred_scores = np.array(y_pred_scores)
-
-        # Se one-hot, retornar índices das classes (argmax)
-        if self._is_one_hot:
-            return np.argmax(y_pred_scores, axis=1)
+        
+        # Detect or set task type
+        self._setup_task(task)
+        
+        # Training statistics
+        self.candidate_rules: Dict[Tuple, Dict] = {}
+        self.conflicts_count = 0
+        self.final_rules: List[Dict] = []
+    
+    def _setup_task(self, task: str):
+        """Detect or validate task type."""
+        if task == 'auto':
+            self.task = self._detect_task()
+        elif task in ['regression', 'classification']:
+            self.task = task
         else:
-            return y_pred_scores
-
-    def predict_membership(self, X: np.ndarray) -> List[List[Dict[str, float]]]:
+            raise ValueError(f"task must be 'auto', 'regression', or 'classification'. Got: {task}")
+        
+        self.is_classification = (self.task == 'classification')
+        
+        # Setup classification-specific attributes
+        if self.is_classification:
+            self._setup_classification()
+        else:
+            self.classes_ = None
+            self.n_classes = None
+            self.output_ranges = None
+    
+    def _detect_task(self) -> str:
+        """Auto-detect if task is regression or classification."""
+        if self.y.shape[1] == 1:
+            return 'regression'
+        
+        # Check if y looks like one-hot encoding
+        is_binary = np.all((self.y == 0) | (self.y == 1))
+        row_sums = self.y.sum(axis=1)
+        sums_to_one = np.allclose(row_sums, 1.0)
+        
+        if is_binary and sums_to_one:
+            return 'classification'
+        else:
+            return 'regression'
+    
+    def _compute_output_range(self, var_name: str, n_samples: int = 1000) -> Tuple[float, float]:
         """
-        Faz predições retornando os graus de pertinência em cada termo linguístico.
-
-        Este método é útil para entender a incerteza e confiança das predições,
-        mostrando quanto cada valor de saída pertence a cada termo fuzzy.
-
-        Parâmetros:
-            X: Dados de entrada (n_amostras, n_entradas)
-
-        Retorna:
-            Lista de listas de dicionários:
-            - Nível 1: uma lista por amostra
-            - Nível 2: uma lista por saída
-            - Nível 3: dicionário {termo: grau_pertinência}
-
-            Exemplo para 2 amostras, 3 saídas (one-hot):
-            [
-                [  # Amostra 1
-                    {'nao': 0.8, 'sim': 0.2},  # class0
-                    {'nao': 0.1, 'sim': 0.9},  # class1
-                    {'nao': 0.7, 'sim': 0.3}   # class2
-                ],
-                [  # Amostra 2
-                    {'nao': 0.2, 'sim': 0.8},  # class0
-                    {'nao': 0.9, 'sim': 0.1},  # class1
-                    {'nao': 0.6, 'sim': 0.4}   # class2
-                ]
-            ]
-
-        Exemplo:
-            >>> wm = WangMendelClassification(system, X_train, y_train)
-            >>> wm.fit()
-            >>> memberships = wm.predict_membership(X_test)
-            >>>
-            >>> # Para primeira amostra, primeira saída:
-            >>> print(memberships[0][0])
-            {'nao': 0.8, 'sim': 0.2}
+        Compute the achievable output range for a fuzzy variable.
+        
+        This accounts for the fact that defuzzification may not reach
+        the extremes of the universe due to membership function shapes.
+        
+        Parameters:
+            var_name: Name of output variable
+            n_samples: Number of samples to test across universe
+        
+        Returns:
+            (min_achievable, max_achievable) tuple
         """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute fit() antes de predict_membership()")
-
-        # Garantir formato 2D
-        if X.ndim == 1:
-            X = X.reshape(-1, 1)
-
-        all_memberships = []
-
-        for x_sample in X:
-            # Criar dicionário de entrada
-            inputs = {self.input_names[i]: x_sample[i] for i in range(self.n_inputs)}
-
-            # Avaliar sistema
-            output = self.system.evaluate(inputs)
-
-            # Para cada saída, calcular pertinência em cada termo
-            sample_memberships = []
-            for out_name in self.output_names:
-                y_val = output[out_name]
-                var_out = self.system.output_variables[out_name]
-
-                # Calcular pertinência para cada termo desta saída
-                term_memberships = {}
-                for term_name, fuzzy_set in var_out.terms.items():
-                    membership = fuzzy_set.membership(y_val)
-                    term_memberships[term_name] = float(membership)
-
-                sample_memberships.append(term_memberships)
-
-            all_memberships.append(sample_memberships)
-
-        return all_memberships
-
+        var = self.system.output_variables[var_name]
+        x_min, x_max = var.universe
+        
+        # Sample the universe
+        x = np.linspace(x_min, x_max, n_samples)
+        
+        # Extreme 1: Only first term fully activated
+        first_term = list(var.terms.values())[0]
+        y_first = np.array([first_term.membership(xi) for xi in x])
+        if y_first.sum() > 0:
+            min_output = np.sum(x * y_first) / np.sum(y_first)
+        else:
+            min_output = x_min
+        
+        # Extreme 2: Only last term fully activated
+        last_term = list(var.terms.values())[-1]
+        y_last = np.array([last_term.membership(xi) for xi in x])
+        if y_last.sum() > 0:
+            max_output = np.sum(x * y_last) / np.sum(y_last)
+        else:
+            max_output = x_max
+        
+        return min_output, max_output
+    
+    def _setup_classification(self):
+        """Setup classification-specific attributes including output scaling."""
+        # Detect classes from one-hot encoding
+        self.n_classes = self.y.shape[1]
+        self.classes_ = np.arange(self.n_classes)
+        
+        # Store original class labels
+        self.y_labels = np.argmax(self.y, axis=1)
+        
+        # Compute achievable output ranges for scaling
+        self.output_ranges = {}
+        for var_name in self.output_names:
+            min_val, max_val = self._compute_output_range(var_name)
+            self.output_ranges[var_name] = (min_val, max_val)
+        
+        if self._verbose_init:
+            print("\n📏 Computed achievable output ranges:")
+            for var_name, (min_val, max_val) in self.output_ranges.items():
+                universe = self.system.output_variables[var_name].universe
+                print(f"   {var_name}: universe={universe}, achievable=[{min_val:.4f}, {max_val:.4f}]")
+    
+    def _scale_classification_outputs(self, outputs: np.ndarray) -> np.ndarray:
+        """
+        Scale fuzzy outputs based on achievable range of membership functions.
+        
+        This maps the natural output range of the fuzzy system (determined by
+        the structure of membership functions) to [0, 1] for each output variable.
+        
+        Parameters:
+            outputs: Raw fuzzy outputs (n_samples, n_classes)
+        
+        Returns:
+            Scaled outputs in [0, 1] (n_samples, n_classes)
+        """
+        scaled = np.zeros_like(outputs)
+        
+        for j, var_name in enumerate(self.output_names):
+            min_val, max_val = self.output_ranges[var_name]
+            
+            # Linear scaling: [min_val, max_val] → [0, 1]
+            range_val = max_val - min_val
+            if range_val < 1e-10:
+                # If range is zero, keep original values
+                scaled[:, j] = outputs[:, j]
+            else:
+                scaled[:, j] = (outputs[:, j] - min_val) / range_val
+                # Clip to [0, 1] to handle numerical errors
+                scaled[:, j] = np.clip(scaled[:, j], 0.0, 1.0)
+        
+        return scaled
+    
+    def fit(self, verbose: bool = False) -> MamdaniSystem:
+        """
+        Execute Wang-Mendel algorithm and train the system.
+        
+        Parameters:
+            verbose: If True, displays progress information
+        
+        Returns:
+            Trained Mamdani system
+        """
+        if verbose:
+            print("🔄 Starting Wang-Mendel Algorithm...")
+            print(f"   Task: {self.task.upper()}")
+            print(f"   Data: {self.X.shape[0]} samples, "
+                  f"{self.X.shape[1]} inputs, {self.y.shape[1]} outputs")
+            if self.is_classification:
+                print(f"   Classes: {self.n_classes}")
+                if self.scale_classification:
+                    print(f"   Output scaling: ENABLED (structure-based)")
+        
+        # Step 2: Generate candidate rules
+        self._generate_candidate_rules(verbose)
+        
+        # Step 4: Resolve conflicts
+        self._resolve_conflicts(verbose)
+        
+        # Step 5: Create final system
+        self._create_final_system(verbose)
+        
+        if verbose:
+            print(f"\n✅ Training completed!")
+            print(f"   Rules generated: {len(self.final_rules)}")
+            print(f"   Conflicts resolved: {self.conflicts_count}")
+        
+        return self.system
+    
+    def _generate_candidate_rules(self, verbose: bool = False):
+        """Step 2: Generate candidate rules from data."""
+        if verbose:
+            print("\n📊 Step 2: Generating candidate rules...")
+        
+        for sample_idx in range(self.X.shape[0]):
+            x_sample = self.X[sample_idx]
+            y_sample = self.y[sample_idx]
+            
+            # Find most activated fuzzy terms for inputs
+            antecedents = []
+            antecedent_degrees = []
+            
+            for i, var_name in enumerate(self.input_names):
+                var = self.system.input_variables[var_name]
+                max_degree = -1
+                best_term = None
+                
+                for term_name, fuzzy_set in var.terms.items():
+                    degree = fuzzy_set.membership(x_sample[i])
+                    if degree > max_degree:
+                        max_degree = degree
+                        best_term = term_name
+                
+                antecedents.append(best_term)
+                antecedent_degrees.append(max_degree)
+            
+            # Find most activated fuzzy terms for outputs
+            consequents = []
+            consequent_degrees = []
+            
+            for i, var_name in enumerate(self.output_names):
+                var = self.system.output_variables[var_name]
+                max_degree = -1
+                best_term = None
+                
+                for term_name, fuzzy_set in var.terms.items():
+                    degree = fuzzy_set.membership(y_sample[i])
+                    if degree > max_degree:
+                        max_degree = degree
+                        best_term = term_name
+                
+                consequents.append(best_term)
+                consequent_degrees.append(max_degree)
+            
+            # Step 3: Calculate rule degree
+            rule_degree = np.prod(antecedent_degrees) * np.prod(consequent_degrees)
+            
+            # Store candidate rule
+            antecedent_tuple = tuple(antecedents)
+            consequent_tuple = tuple(consequents)
+            rule_key = (antecedent_tuple, consequent_tuple)
+            
+            if rule_key not in self.candidate_rules:
+                self.candidate_rules[rule_key] = {
+                    'antecedents': antecedent_tuple,
+                    'consequents': consequent_tuple,
+                    'degree': rule_degree
+                }
+            else:
+                if rule_degree > self.candidate_rules[rule_key]['degree']:
+                    self.candidate_rules[rule_key]['degree'] = rule_degree
+        
+        if verbose:
+            print(f"   Candidate rules generated: {len(self.candidate_rules)}")
+    
+    def _resolve_conflicts(self, verbose: bool = False):
+        """Step 4: Resolve conflicts between rules."""
+        if verbose:
+            print("\n🔍 Step 4: Resolving conflicts...")
+        
+        rules_by_antecedent = {}
+        
+        for rule_key, rule_data in self.candidate_rules.items():
+            antecedent_tuple = rule_data['antecedents']
+            
+            if antecedent_tuple not in rules_by_antecedent:
+                rules_by_antecedent[antecedent_tuple] = []
+            
+            rules_by_antecedent[antecedent_tuple].append(rule_data)
+        
+        for antecedent, rules in rules_by_antecedent.items():
+            if len(rules) > 1:
+                self.conflicts_count += len(rules) - 1
+                rules.sort(key=lambda r: r['degree'], reverse=True)
+                self.final_rules.append(rules[0])
+            else:
+                self.final_rules.append(rules[0])
+        
+        if verbose:
+            print(f"   Conflicts found: {self.conflicts_count}")
+            print(f"   Final rules: {len(self.final_rules)}")
+    
+    def _create_final_system(self, verbose: bool = False):
+        """Step 5: Add rules to system."""
+        if verbose:
+            print("\n🔧 Step 5: Creating final system...")
+        
+        rules_to_add = []
+        
+        for rule in self.final_rules:
+            rule_dict = {}
+            
+            for i, term in enumerate(rule['antecedents']):
+                rule_dict[self.input_names[i]] = term
+            
+            for i, term in enumerate(rule['consequents']):
+                rule_dict[self.output_names[i]] = term
+            
+            rules_to_add.append(rule_dict)
+        
+        self.system.add_rules(rules_to_add)
+        
+        if verbose:
+            print(f"   ✓ {len(rules_to_add)} rules added to system")
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Make predictions using trained system.
+        
+        Parameters:
+            X: Input array (n_samples, n_features)
+        
+        Returns:
+            For regression: predictions (n_samples, n_outputs)
+            For classification: predicted classes (n_samples,)
+        """
+        X = np.atleast_2d(X)
+        predictions = np.zeros((X.shape[0], len(self.output_names)))
+        
+        for i in range(X.shape[0]):
+            input_dict = {name: X[i, j] for j, name in enumerate(self.input_names)}
+            output_dict = self.system.evaluate(input_dict)
+            
+            for j, name in enumerate(self.output_names):
+                predictions[i, j] = output_dict[name]
+        
+        # Apply scaling for classification based on achievable range
+        if self.is_classification and self.scale_classification:
+            predictions = self._scale_classification_outputs(predictions)
+        
+        # For classification, return class indices
+        if self.is_classification:
+            return np.argmax(predictions, axis=1)
+        else:
+            return predictions
+    
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """
+        Return class probabilities (normalized scores).
+        Only available for classification tasks.
+        
+        Parameters:
+            X: Input array (n_samples, n_features)
+        
+        Returns:
+            Probability matrix (n_samples, n_classes)
+        
+        Raises:
+            ValueError: If task is regression
+        """
+        if not self.is_classification:
+            raise ValueError("predict_proba() only available for classification tasks")
+        
+        X = np.atleast_2d(X)
+        predictions = np.zeros((X.shape[0], len(self.output_names)))
+        
+        for i in range(X.shape[0]):
+            input_dict = {name: X[i, j] for j, name in enumerate(self.input_names)}
+            output_dict = self.system.evaluate(input_dict)
+            
+            for j, name in enumerate(self.output_names):
+                predictions[i, j] = output_dict[name]
+        
+        # Apply scaling
+        if self.scale_classification:
+            predictions = self._scale_classification_outputs(predictions)
+        
+        # Normalize to sum to 1
+        row_sums = predictions.sum(axis=1, keepdims=True)
+        return predictions / (row_sums + 1e-10)
+    
     def get_training_stats(self) -> Dict:
-        """
-        Retorna estatísticas do treinamento.
-
-        Retorna:
-            Dicionário com estatísticas:
-            - n_samples: Número de amostras de treino
-            - n_inputs: Número de entradas
-            - n_outputs: Número de saídas
-            - input_names: Nomes das entradas
-            - output_names: Nomes das saídas
-            - is_one_hot: Se foi detectado one-hot encoding
-            - rules_per_output: Lista com número de regras por saída
-            - conflicts_per_output: Lista com número de conflitos resolvidos por saída
-            - total_rules: Total de regras combinadas adicionadas ao sistema
-            - coverage: Cobertura (% de regras completas vs candidatas)
-            - class_distribution: Distribuição das classes no treino (para one-hot)
-
-        Exemplo:
-            >>> wm = WangMendelClassification(system, X_train, y_train)
-            >>> wm.fit()
-            >>> stats = wm.get_training_stats()
-            >>> print(f"One-hot: {stats['is_one_hot']}")
-            >>> print(f"Regras: {stats['total_rules']}")
-            >>> print(f"Distribuição: {stats['class_distribution']}")
-        """
-        if not self._gerar_regras_done:
-            raise RuntimeError("Execute fit() antes de get_training_stats()")
-
-        # Calcular total de regras candidatas
-        total_candidatas = sum(len(regras) for regras in self.regras_dict_list)
-
-        # Total de regras completas no sistema
-        total_rules = len(self.system.rule_base.rules)
-
-        # Cobertura
-        coverage = (total_rules / total_candidatas * 100) if total_candidatas > 0 else 0
-
-        # Distribuição de classes (para one-hot)
-        class_distribution = None
-        if self._is_one_hot:
-            # Contar quantas amostras por classe
-            class_counts = np.sum(self.y_train, axis=0)
-            class_distribution = {
-                self.output_names[i]: int(class_counts[i])
-                for i in range(self.n_outputs)
-            }
-
-        return {
-            'n_samples': len(self.X_train),
-            'n_inputs': self.n_inputs,
-            'n_outputs': self.n_outputs,
-            'input_names': self.input_names,
-            'output_names': self.output_names,
-            'is_one_hot': self._is_one_hot,
-            'rules_per_output': [len(regras) for regras in self.regras_dict_list],
-            'conflicts_per_output': self.conflitos_list,
-            'total_rules': total_rules,
-            'total_candidate_rules': total_candidatas,
-            'coverage': coverage,
-            'class_distribution': class_distribution,
+        """Return training statistics."""
+        stats = {
+            'task': self.task,
+            'n_samples': self.X.shape[0],
+            'n_features': self.X.shape[1],
+            'n_outputs': self.y.shape[1],
+            'candidate_rules': len(self.candidate_rules),
+            'final_rules': len(self.final_rules),
+            'conflicts_resolved': self.conflicts_count
         }
+        
+        if self.is_classification:
+            stats['n_classes'] = self.n_classes
+            stats['classes'] = self.classes_.tolist()
+            if self.output_ranges:
+                stats['output_ranges'] = {
+                    var: {'min': float(min_val), 'max': float(max_val)}
+                    for var, (min_val, max_val) in self.output_ranges.items()
+                }
+        
+        return stats
+
+    def predict_membership(self, X: np.ndarray) -> Dict[str, np.ndarray]:
+        """
+        Return membership degrees for each output in its linguistic terms.
+        
+        This is useful for understanding which linguistic terms are activated
+        for each prediction and with what degree.
+        
+        Parameters:
+            X: Input array (n_samples, n_features)
+        
+        Returns:
+            Dictionary mapping output variable names to membership arrays.
+            Each array has shape (n_samples, n_terms) where n_terms is the
+            number of linguistic terms for that output variable.
+        
+        Example:
+            >>> memberships = wm.predict_membership(X_test)
+            >>> # For classification with outputs 'setosa', 'versicolor', 'virginica'
+            >>> # each having terms 'no' and 'yes':
+            >>> memberships['setosa']  # shape: (n_samples, 2)
+            >>> # [[0.05, 0.95],   # Sample 1: 5% 'no', 95% 'yes'
+            >>> #  [0.82, 0.18],   # Sample 2: 82% 'no', 18% 'yes'
+            >>> #  ...]
+        
+        Raises:
+            ValueError: If called before training (no rules exist)
+        """
+        if len(self.final_rules) == 0:
+            raise ValueError("Model must be trained before calling predict_membership()")
+        
+        X = np.atleast_2d(X)
+        n_samples = X.shape[0]
+        
+        # Initialize membership dictionary
+        memberships = {}
+        
+        # Get raw fuzzy outputs first
+        raw_outputs = np.zeros((n_samples, len(self.output_names)))
+        
+        for i in range(n_samples):
+            input_dict = {name: X[i, j] for j, name in enumerate(self.input_names)}
+            output_dict = self.system.evaluate(input_dict)
+            
+            for j, name in enumerate(self.output_names):
+                raw_outputs[i, j] = output_dict[name]
+        
+        # For each output variable, compute membership in each term
+        for j, var_name in enumerate(self.output_names):
+            var = self.system.output_variables[var_name]
+            term_names = list(var.terms.keys())
+            n_terms = len(term_names)
+            
+            # Initialize membership array for this variable
+            var_memberships = np.zeros((n_samples, n_terms))
+            
+            # Compute membership for each sample
+            for i in range(n_samples):
+                output_value = raw_outputs[i, j]
+                
+                for k, term_name in enumerate(term_names):
+                    fuzzy_set = var.terms[term_name]
+                    var_memberships[i, k] = fuzzy_set.membership(output_value)
+            
+            memberships[var_name] = var_memberships
+        
+        return memberships
+
+
+    def predict_membership_detailed(self, X: np.ndarray) -> List[Dict]:
+        """
+        Return detailed membership information for each sample.
+        
+        Returns a list of dictionaries, one per sample, with complete
+        membership information for all output variables and their terms.
+        
+        Parameters:
+            X: Input array (n_samples, n_features)
+        
+        Returns:
+            List of dictionaries, each containing:
+            - 'sample_id': Sample index
+            - 'raw_outputs': Raw fuzzy output values
+            - 'memberships': Dict of {var_name: {term_name: membership_degree}}
+            - 'dominant_terms': Dict of {var_name: (term_name, membership_degree)}
+        
+        Example:
+            >>> details = wm.predict_membership_detailed(X_test[:2])
+            >>> print(details[0])
+            {
+                'sample_id': 0,
+                'raw_outputs': {'setosa': 0.75, 'versicolor': 0.25, 'virginica': 0.18},
+                'memberships': {
+                    'setosa': {'no': 0.05, 'yes': 0.95},
+                    'versicolor': {'no': 0.75, 'yes': 0.25},
+                    'virginica': {'no': 0.82, 'yes': 0.18}
+                },
+                'dominant_terms': {
+                    'setosa': ('yes', 0.95),
+                    'versicolor': ('no', 0.75),
+                    'virginica': ('no', 0.82)
+                }
+            }
+        """
+        if len(self.final_rules) == 0:
+            raise ValueError("Model must be trained before calling predict_membership_detailed()")
+        
+        X = np.atleast_2d(X)
+        n_samples = X.shape[0]
+        
+        detailed_results = []
+        
+        for i in range(n_samples):
+            # Get raw outputs
+            input_dict = {name: X[i, j] for j, name in enumerate(self.input_names)}
+            output_dict = self.system.evaluate(input_dict)
+            
+            # Initialize sample result
+            sample_result = {
+                'sample_id': i,
+                'raw_outputs': {},
+                'memberships': {},
+                'dominant_terms': {}
+            }
+            
+            # For each output variable
+            for var_name in self.output_names:
+                output_value = output_dict[var_name]
+                sample_result['raw_outputs'][var_name] = output_value
+                
+                var = self.system.output_variables[var_name]
+                term_memberships = {}
+                max_membership = -1
+                dominant_term = None
+                
+                # Compute membership in each term
+                for term_name, fuzzy_set in var.terms.items():
+                    membership = fuzzy_set.membership(output_value)
+                    term_memberships[term_name] = membership
+                    
+                    if membership > max_membership:
+                        max_membership = membership
+                        dominant_term = term_name
+                
+                sample_result['memberships'][var_name] = term_memberships
+                sample_result['dominant_terms'][var_name] = (dominant_term, max_membership)
+            
+            detailed_results.append(sample_result)
+        
+        return detailed_results
+
+# Aliases for backwards compatibility and convenience
+WangMendelRegression = WangMendelLearning
+WangMendelClassification = WangMendelLearning
+WM = WangMendelLearning

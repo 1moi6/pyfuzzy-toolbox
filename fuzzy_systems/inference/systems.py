@@ -495,112 +495,104 @@ class FuzzyInferenceSystem:
         )
         return self.evaluate(*args, **kwargs)
 
-    def plot_variables(self, variables=None, var_type='all', **kwargs):
+    def plot_variables(self, 
+                   variables: Optional[List[str]] = None,
+                   show_terms: bool = True,
+                   figsize: Optional[Tuple[float, float]] = None,
+                   return_axes: bool = False) -> Optional[Tuple]:
         """
-        Plota as funções de pertinência das variáveis do sistema.
-
-        Parâmetros:
-            variables: Lista de nomes de variáveis específicas a plotar.
-                      Se None, plota baseado em var_type.
-                      Exemplos: ['temperatura', 'umidade']
-                                ['temperatura']
-            var_type: Tipo de variáveis a plotar ('input', 'output', 'all')
-                     Usado apenas se variables=None
-            **kwargs: Argumentos passados para LinguisticVariable.plot()
-                - figsize: Tamanho da figura
-                - num_points: Número de pontos para plotar
-
-        Retorna:
-            fig: Figura matplotlib
-
-        Exemplos:
-            >>> # Plotar todas as variáveis
+        Plots linguistic variables and their fuzzy terms.
+        
+        Parameters:
+            variables: List of variable names to plot. If None, plots all variables.
+            show_terms: If True, displays term names on the plot
+            figsize: Figure size (width, height). If None, automatically calculated.
+            return_axes: If True, returns (fig, axes) without showing. If False, shows plot.
+        
+        Returns:
+            If return_axes=True: tuple (fig, axes)
+            If return_axes=False: None (displays plot)
+        
+        Examples:
+            >>> # Plot and show
             >>> system.plot_variables()
-
-            >>> # Plotar apenas entradas
-            >>> system.plot_variables(var_type='input')
-
-            >>> # Plotar variáveis específicas
-            >>> system.plot_variables(['temperatura', 'umidade'])
-            >>> system.plot_variables(['ventilador'])
+            
+            >>> # Get axes for customization
+            >>> fig, axes = system.plot_variables(return_axes=True)
+            >>> axes[0].set_title('My Custom Title')
+            >>> plt.show()
         """
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
-            raise ImportError(
-                "Matplotlib não está instalado. "
-                "Instale com: pip install matplotlib"
-            )
-
-        # Seleciona variáveis a plotar
-        variables_to_plot = []
-
-        if variables is not None:
-            # Plotar variáveis específicas
-            if isinstance(variables, str):
-                variables = [variables]  # Converter string única para lista
-
-            for var_name in variables:
-                # Buscar nas entradas
-                if var_name in self.input_variables:
-                    variables_to_plot.append(('Entrada', self.input_variables[var_name]))
-                # Buscar nas saídas
-                elif var_name in self.output_variables:
-                    variables_to_plot.append(('Saída', self.output_variables[var_name]))
-                else:
-                    available = list(self.input_variables.keys()) + list(self.output_variables.keys())
-                    raise ValueError(
-                        f"Variável '{var_name}' não encontrada. "
-                        f"Variáveis disponíveis: {available}"
-                    )
+        import matplotlib.pyplot as plt
+        
+        # Collect variables to plot
+        all_vars = {}
+        all_vars.update(self.input_variables)
+        all_vars.update(self.output_variables)
+        
+        if variables is None:
+            vars_to_plot = all_vars
         else:
-            # Plotar baseado em var_type
-            if var_type in ['input', 'all']:
-                variables_to_plot.extend(
-                    [('Entrada', var) for var in self.input_variables.values()]
-                )
-
-            if var_type in ['output', 'all']:
-                variables_to_plot.extend(
-                    [('Saída', var) for var in self.output_variables.values()]
-                )
-
-            if not variables_to_plot:
-                raise ValueError(
-                    f"Tipo de variável inválido: '{var_type}'. "
-                    "Use 'input', 'output' ou 'all'"
-                )
-
-        # Calcula layout dos subplots
-        n_vars = len(variables_to_plot)
-        n_cols = min(2, n_vars)
-        n_rows = (n_vars + n_cols - 1) // n_cols
-
-        # Cria figura
-        figsize = kwargs.get('figsize', (12, 4 * n_rows))
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
-
-        # Garante que axes seja sempre array
-        if n_vars == 1:
-            axes = np.array([axes])
-        axes = axes.flatten() if n_vars > 1 else axes
-
-        # Plota cada variável
-        for i, (var_type_label, var) in enumerate(variables_to_plot):
-            ax = axes[i] if n_vars > 1 else axes[0]
-            title = f'{var_type_label}: {var.name}'
-            var.plot(ax=ax, show=False, title=title, **kwargs)
-
-        # Remove axes extras
-        for i in range(n_vars, len(axes)):
-            fig.delaxes(axes[i])
-
-        plt.suptitle(f'Variáveis Linguísticas - {self.name}',
-                    fontsize=16, fontweight='bold', y=1.00)
+            vars_to_plot = {name: all_vars[name] for name in variables if name in all_vars}
+        
+        if not vars_to_plot:
+            print("⚠️  No variables to plot!")
+            return None if return_axes else None
+        
+        n_vars = len(vars_to_plot)
+        
+        # Calculate figure size
+        if figsize is None:
+            width = 12
+            height = 3 * n_vars
+            figsize = (width, height)
+        
+        # Create subplots
+        fig, axes = plt.subplots(n_vars, 1, figsize=figsize, squeeze=False)
+        axes = axes.flatten()
+        
+        # Plot each variable
+        for idx, (var_name, var) in enumerate(vars_to_plot.items()):
+            ax = axes[idx]
+            
+            # Get universe
+            x_min, x_max = var.universe
+            x = np.linspace(x_min, x_max, 1000)
+            
+            # Plot each term
+            for term_name, fuzzy_set in var.terms.items():
+                y = fuzzy_set.membership(x)
+                ax.plot(x, y, linewidth=2.5, label=term_name, alpha=0.8)
+                
+                # Add term label if requested
+                if show_terms:
+                    # Find peak of membership function
+                    max_idx = np.argmax(y)
+                    ax.text(x[max_idx], y[max_idx], term_name,
+                        ha='center', va='bottom', fontsize=9,
+                        bbox=dict(boxstyle='round,pad=0.3', 
+                                    facecolor='white', alpha=0.7, edgecolor='gray'))
+            
+            # Styling
+            ax.set_xlim(x_min, x_max)
+            ax.set_ylim(-0.05, 1.1)
+            ax.set_xlabel(var_name, fontsize=12, fontweight='bold')
+            ax.set_ylabel('Membership', fontsize=11)
+            ax.set_title(f'Variable: {var_name}', fontsize=13, fontweight='bold', pad=10)
+            ax.grid(True, alpha=0.3)
+            ax.legend(loc='upper right', fontsize=10)
+            
+            # Add horizontal line at membership=1
+            ax.axhline(y=1.0, color='black', linestyle='--', linewidth=0.8, alpha=0.3)
+        
         plt.tight_layout()
-        plt.show()
+        
+        # Return or show
+        if return_axes:
+            return fig, axes
+        else:
+            plt.show()
+            return None
 
-        return fig
 
     def plot_output(self, input_var, output_var, num_points=100, **kwargs):
         """
