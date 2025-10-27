@@ -15,6 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional metaheuristic optimizers (ACO, ABC)
 
 ---
+## [1.0.2] - 2025-10-27
+
+### Added
+- Unified `WangMendelLearning` class supporting both regression and classification
+- Automatic task detection (one-hot → classification)
+- Structure-based output scaling for classification (maps achievable fuzzy range to [0, 1])
+- `predict_membership()` method to analyze linguistic term activations
+- `predict_membership_detailed()` for comprehensive membership analysis
+- Modern color palettes for rule visualization (`plot_rule_matrix`)
+- `plot_rule_matrix_2d()` for 2-input systems
+- `return_axes` parameter in `plot_variables()` for customization
+
+### Changed
+- Simplified `add_rule()` and `add_rules()` with 3 input formats (dict, list, indices)
+- Optional universe of discourse for Sugeno output variables
+- `WangMendelRegression` and `WangMendelClassification` now aliases of unified class
+- Improved output scaling based on membership function structure (not data)
+
+### Fixed
+- Duplicate plotting issue in `plot_variables()`
+- Rule matrix visualization overlapping labels
 
 ## [1.0.0] - 2024-10-25
 

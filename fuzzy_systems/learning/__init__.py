@@ -11,7 +11,7 @@ Este módulo contém algoritmos para aprendizado e otimização:
 Status: Em desenvolvimento
 """
 
-from .wang_mendel import WangMendelRegression, WangMendelClassification
+from .wang_mendel import WangMendelRegression, WangMendelClassification, WangMendelLearning
 from .anfis import ANFIS, MetricasANFIS
 from .mamdani import MamdaniLearning
 from .metaheuristics import PSO, DE, GA, get_optimizer
@@ -19,6 +19,7 @@ from .metaheuristics import PSO, DE, GA, get_optimizer
 # TODO: Implementar FCM (Fuzzy C-Means Clustering)
 
 __all__ = [
+    'WangMendelLearning',
     'WangMendelRegression',
     'WangMendelClassification',
     'ANFIS',
