@@ -12,7 +12,7 @@ Status: Em desenvolvimento
 """
 
 from .wang_mendel import WangMendelRegression, WangMendelClassification, WangMendelLearning
-from .anfis import ANFIS, MetricasANFIS
+from .anfis import ANFIS
 from .mamdani import MamdaniLearning
 from .metaheuristics import PSO, DE, GA, get_optimizer
 
@@ -23,7 +23,6 @@ __all__ = [
     'WangMendelRegression',
     'WangMendelClassification',
     'ANFIS',
-    'MetricasANFIS',
     'MamdaniLearning',
     'PSO',
     'DE',
