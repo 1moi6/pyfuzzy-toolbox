@@ -636,7 +636,7 @@ class ANFIS:
         return rmse
 
 
-    def _gradiente_l1(self, parametro: float) -> float:
+    def _gradient_l1(self, parametro: float) -> float:
         """Subgradient penalty L1."""
         if parametro > 0:
             return 1.0
@@ -645,7 +645,7 @@ class ANFIS:
         else:
             return 0.0
 
-    def _gradiente_l2(self, parametro: float) -> float:
+    def _gradient_l2(self, parametro: float) -> float:
         """Gradient penalty L2."""
         return 2.0 * parametro
 
@@ -1569,13 +1569,20 @@ class ANFIS:
             x_range = np.linspace(x_min, x_max, 200)
             
             for mf_idx, params in enumerate(self.mf_params[input_idx]):
-                mu = [self._eval_mf(x, params) for x in x_range]
-                
+                # CORREÇÃO: Processar o array inteiro de uma vez
                 if self.mf_type == 'gaussmf':
+                    from ..core.membership import gaussian
+                    mu = gaussian(x_range, tuple(params))
                     label = f"MF{mf_idx+1} (μ={params[0]:.2f}, σ={params[1]:.2f})"
+                    
                 elif self.mf_type == 'gbellmf':
+                    from ..core.membership import generalized_bell
+                    mu = generalized_bell(x_range, tuple(params))
                     label = f"MF{mf_idx+1} (a={params[0]:.2f}, b={params[1]:.2f}, c={params[2]:.2f})"
+                    
                 elif self.mf_type == 'sigmf':
+                    from ..core.membership import sigmoid
+                    mu = sigmoid(x_range, tuple(params))
                     label = f"MF{mf_idx+1} (a={params[0]:.2f}, c={params[1]:.2f})"
                 
                 ax.plot(x_range, mu, linewidth=2, label=label)
@@ -1596,6 +1603,7 @@ class ANFIS:
         return fig
 
 
+
     def plot_regularization(self, figsize=(16, 5)):
         """
         Plots evolution of regularization penalties.
@@ -1606,36 +1614,46 @@ class ANFIS:
         Returns:
             Matplotlib figure
         """
+        # Check if there is data to plot
+        if len(self.total_cost_history) == 0:
+            print("No regularization data available. Train the model first.")
+            return None
+        
+        # Create new figure (avoid overlap)
         fig, axes = plt.subplots(1, 3, figsize=figsize)
         
         epochs = np.arange(1, len(self.total_cost_history) + 1)
         
         # Total cost
         ax = axes[0]
-        ax.plot(epochs, self.total_cost_history, 'b-', linewidth=2)
+        ax.plot(epochs, self.total_cost_history, 'b-', linewidth=2, label='Total Cost')
         ax.set_xlabel('Epoch', fontsize=12)
         ax.set_ylabel('Total Cost', fontsize=12)
         ax.set_title(f'J = MSE + λ₁L1 + λ₂L2', fontsize=13, weight='bold')
         ax.grid(True, alpha=0.3)
+        ax.legend()
         
         # L1 penalty
         ax = axes[1]
-        ax.plot(epochs, self.l1_history, 'r-', linewidth=2)
+        ax.plot(epochs, self.l1_history, 'r-', linewidth=2, label='L1')
         ax.set_xlabel('Epoch', fontsize=12)
         ax.set_ylabel('L1 Penalty', fontsize=12)
         ax.set_title(f'L1 Penalty (λ₁={self.lambda_l1})', fontsize=13, weight='bold')
         ax.grid(True, alpha=0.3)
+        ax.legend()
         
         # L2 penalty
         ax = axes[2]
-        ax.plot(epochs, self.l2_history, 'g-', linewidth=2)
+        ax.plot(epochs, self.l2_history, 'g-', linewidth=2, label='L2')
         ax.set_xlabel('Epoch', fontsize=12)
         ax.set_ylabel('L2 Penalty', fontsize=12)
         ax.set_title(f'L2 Penalty (λ₂={self.lambda_l2})', fontsize=13, weight='bold')
         ax.grid(True, alpha=0.3)
+        ax.legend()
         
         plt.tight_layout()
         return fig
+
 
 
     def _get_reg_type(self) -> str:
@@ -1746,3 +1764,405 @@ class ANFIS:
                 'recall': np.nan,
                 'f1_score': np.nan
             }
+
+    def plot_metrics(self, metrics: Union[str, List[str]] = 'all', figsize=(15, 10)):
+        """
+        Plots training and validation metrics evolution.
+        
+        Parameters:
+            metrics: Metrics to plot. Options:
+                    - 'all': plots all available metrics
+                    - List of metric names: ['rmse', 'mae', 'r2', etc.]
+                    Available metrics:
+                    - Regression: 'loss', 'rmse', 'mae', 'max_error', 'r2', 'mape'
+                    - Classification: 'accuracy', 'precision', 'recall', 'f1_score'
+                    - Training: 'gradient_norms', 'learning_rates'
+            figsize: Figure size
+            
+        Returns:
+            Matplotlib figure
+        """
+        # Define available metrics
+        regression_metrics = ['loss', 'rmse', 'mae', 'max_error', 'r2', 'mape']
+        classification_metrics = ['accuracy', 'precision', 'recall', 'f1_score']
+        training_metrics = ['gradient_norms', 'learning_rates']
+        
+        # Determine which metrics to plot
+        if metrics == 'all':
+            if self.classification:
+                plot_metrics_list = regression_metrics + classification_metrics
+            else:
+                plot_metrics_list = regression_metrics
+        else:
+            if isinstance(metrics, str):
+                plot_metrics_list = [metrics]
+            else:
+                plot_metrics_list = metrics
+        
+        # Filter only metrics that have data
+        available_metrics = []
+        for metric in plot_metrics_list:
+            if metric in training_metrics:
+                if len(self.history[metric]) > 0:
+                    available_metrics.append(metric)
+            elif metric in self.history['train'] and len(self.history['train'][metric]) > 0:
+                # Check if metric has valid data (not all NaN)
+                if not all(np.isnan(self.history['train'][metric])):
+                    available_metrics.append(metric)
+        
+        if len(available_metrics) == 0:
+            print("No metrics available to plot. Train the model first.")
+            return None
+        
+        # Calculate grid layout
+        n_metrics = len(available_metrics)
+        ncols = min(3, n_metrics)
+        nrows = int(np.ceil(n_metrics / ncols))
+        
+        # Create new figure
+        fig, axes = plt.subplots(nrows, ncols, figsize=figsize)
+        
+        # Handle single metric case
+        if n_metrics == 1:
+            axes = np.array([axes])
+        axes = axes.flatten()
+        
+        epochs = np.arange(1, len(self.history['train']['loss']) + 1)
+        
+        # Plot each metric
+        for idx, metric in enumerate(available_metrics):
+            ax = axes[idx]
+            
+            if metric in training_metrics:
+                # Training-specific metrics (gradient norms, learning rates)
+                data = self.history[metric]
+                epochs_metric = np.arange(1, len(data) + 1)
+                ax.plot(epochs_metric, data, 'b-', linewidth=2, label=metric.replace('_', ' ').title())
+                ax.set_ylabel(metric.replace('_', ' ').title(), fontsize=12)
+                
+            else:
+                # Regular metrics (train and validation)
+                train_data = self.history['train'][metric]
+                ax.plot(epochs, train_data, 'b-', linewidth=2, label='Train')
+                
+                # Plot validation if available
+                if len(self.history['val'][metric]) > 0 and not all(np.isnan(self.history['val'][metric])):
+                    val_data = self.history['val'][metric]
+                    ax.plot(epochs, val_data, 'r--', linewidth=2, label='Validation')
+                
+                ax.set_ylabel(metric.upper() if len(metric) <= 4 else metric.replace('_', ' ').title(), 
+                            fontsize=12)
+            
+            ax.set_xlabel('Epoch', fontsize=12)
+            ax.set_title(f'{metric.upper() if len(metric) <= 4 else metric.replace("_", " ").title()} Evolution', 
+                        fontsize=13, weight='bold')
+            ax.grid(True, alpha=0.3)
+            ax.legend(fontsize=10, loc='best')
+        
+        # Hide unused subplots
+        for idx in range(n_metrics, len(axes)):
+            axes[idx].axis('off')
+        
+        plt.tight_layout()
+        return fig
+
+    def rules_to_dataframe(self, input_names=None, output_name='Output', linguistic_terms=None):
+        """
+        Generates a DataFrame with fuzzy rules in linguistic terms.
+        
+        Each row represents a rule, columns represent input variables and output.
+        Cells contain the linguistic terms (e.g., "Low", "Medium", "High").
+        
+        Parameters:
+            input_names: List of input variable names. 
+                        If None, uses ['Input_1', 'Input_2', ...]
+            output_name: Name of output variable (default: 'Output')
+            linguistic_terms: Dictionary mapping input indices to lists of term names.
+                            Example: {0: ['Low', 'High'], 1: ['Small', 'Medium', 'Large']}
+                            If None, uses ['MF1', 'MF2', ...] for each input
+            
+        Returns:
+            pandas DataFrame with fuzzy rules
+            
+        Examples:
+            # Basic usage (auto-generated names)
+            df = anfis.rules_to_dataframe()
+            
+            # With custom input names
+            df = anfis.rules_to_dataframe(
+                input_names=['Temperature', 'Humidity']
+            )
+            
+            # With linguistic terms
+            df = anfis.rules_to_dataframe(
+                input_names=['Temperature', 'Humidity'],
+                output_name='Comfort',
+                linguistic_terms={
+                    0: ['Cold', 'Warm', 'Hot'],
+                    1: ['Dry', 'Normal', 'Humid']
+                }
+            )
+        """
+        import pandas as pd
+        
+        # Generate input names if not provided
+        if input_names is None:
+            input_names = [f'Input_{i+1}' for i in range(self.n_inputs)]
+        elif len(input_names) != self.n_inputs:
+            raise ValueError(f"input_names must have {self.n_inputs} elements, got {len(input_names)}")
+        
+        # Generate linguistic terms if not provided
+        if linguistic_terms is None:
+            linguistic_terms = {}
+            for i in range(self.n_inputs):
+                linguistic_terms[i] = [f'MF{j+1}' for j in range(self.n_mfs[i])]
+        
+        # Validate linguistic_terms
+        for i in range(self.n_inputs):
+            if i not in linguistic_terms:
+                linguistic_terms[i] = [f'MF{j+1}' for j in range(self.n_mfs[i])]
+            elif len(linguistic_terms[i]) != self.n_mfs[i]:
+                raise ValueError(
+                    f"linguistic_terms[{i}] must have {self.n_mfs[i]} terms, got {len(linguistic_terms[i])}"
+                )
+        
+        # Build rules table
+        rules_data = []
+        
+        for rule_idx, mf_indices in enumerate(self._rule_indices_cache):
+            rule_row = {}
+            
+            # Add input terms
+            for input_idx in range(self.n_inputs):
+                mf_idx = mf_indices[input_idx]
+                term = linguistic_terms[input_idx][mf_idx]
+                rule_row[input_names[input_idx]] = term
+            
+            # Add consequent parameters
+            consequent = self.consequent_params[rule_idx]
+            
+            # Format consequent as equation: y = p0 + p1*x1 + p2*x2 + ...
+            equation_parts = [f"{consequent[0]:.3f}"]
+            for i in range(self.n_inputs):
+                coef = consequent[i+1]
+                sign = '+' if coef >= 0 else ''
+                equation_parts.append(f"{sign}{coef:.3f}*{input_names[i]}")
+            
+            equation = ' '.join(equation_parts)
+            rule_row[output_name] = equation
+            
+            rules_data.append(rule_row)
+        
+        # Create DataFrame
+        df = pd.DataFrame(rules_data)
+        
+        # Add rule index
+        df.insert(0, 'Rule', [f'R{i+1}' for i in range(self.n_rules)])
+        
+        return df
+
+    def show_rules_table(self, input_names=None, output_name='Output', 
+                     linguistic_terms=None, cmap=None, figsize=None,
+                     value_format='.2f'):
+        """
+        Displays fuzzy rules as a colored table (DataFrame visualization).
+        
+        Each row represents a rule, columns show input linguistic terms.
+        Cells are colored according to the linguistic term (blue gradient).
+        
+        Parameters:
+            input_names: List of input variable names
+                        If None, uses ['Input_1', 'Input_2', ...]
+            output_name: Name of output variable (default: 'Output')
+            linguistic_terms: Dictionary mapping input indices to term names
+                            Example: {0: ['Low', 'High'], 1: ['Small', 'Med', 'Large']}
+                            If None, uses ['MF1', 'MF2', ...]
+            cmap: Colormap for the cells (default: plt.cm.Blues)
+            figsize: Figure size. If None, auto-calculated
+            value_format: Format string for coefficient values (default: '.2f')
+            
+        Returns:
+            Matplotlib figure
+            
+        Examples:
+            # Basic usage
+            anfis.show_rules_table()
+            
+            # With custom names
+            anfis.show_rules_table(
+                input_names=['Temp', 'Humidity'],
+                linguistic_terms={
+                    0: ['Cold', 'Warm', 'Hot'],
+                    1: ['Dry', 'Normal', 'Humid']
+                }
+            )
+        """
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle
+        import pandas as pd
+        
+        # Default colormap (blue tones)
+        if cmap is None:
+            cmap = plt.cm.Blues
+        
+        # Generate input names if not provided
+        if input_names is None:
+            input_names = [f'Input_{i+1}' for i in range(self.n_inputs)]
+        elif len(input_names) != self.n_inputs:
+            raise ValueError(f"input_names must have {self.n_inputs} elements")
+        
+        # Generate linguistic terms if not provided
+        if linguistic_terms is None:
+            linguistic_terms = {}
+            for i in range(self.n_inputs):
+                linguistic_terms[i] = [f'MF{j+1}' for j in range(self.n_mfs[i])]
+        
+        # Validate linguistic terms
+        for i in range(self.n_inputs):
+            if i not in linguistic_terms:
+                linguistic_terms[i] = [f'MF{j+1}' for j in range(self.n_mfs[i])]
+            elif len(linguistic_terms[i]) != self.n_mfs[i]:
+                raise ValueError(
+                    f"linguistic_terms[{i}] must have {self.n_mfs[i]} terms"
+                )
+        
+        # Build rules data
+        rules_data = []
+        for rule_idx, mf_indices in enumerate(self._rule_indices_cache):
+            rule_row = {}
+            
+            # Add input terms and their MF indices
+            for input_idx in range(self.n_inputs):
+                mf_idx = mf_indices[input_idx]
+                term = linguistic_terms[input_idx][mf_idx]
+                rule_row[input_names[input_idx]] = term
+                rule_row[f'_{input_names[input_idx]}_idx'] = mf_idx  # Hidden column for coloring
+            
+            # Build output formula
+            consequent = self.consequent_params[rule_idx]
+            formula_parts = []
+            
+            # Constant term
+            const = consequent[0]
+            if abs(const) > 1e-6:  # Only show if significant
+                formula_parts.append(f"{const:{value_format}}")
+            
+            # Linear terms
+            for i in range(self.n_inputs):
+                coef = consequent[i+1]
+                if abs(coef) > 1e-6:  # Only show if significant
+                    sign = '+' if coef >= 0 and len(formula_parts) > 0 else ''
+                    # Simplify coefficient display
+                    if abs(coef - 1.0) < 1e-6:
+                        formula_parts.append(f"{sign}{input_names[i]}")
+                    elif abs(coef + 1.0) < 1e-6:
+                        formula_parts.append(f"-{input_names[i]}")
+                    else:
+                        formula_parts.append(f"{sign}{coef:{value_format}}{input_names[i]}")
+            
+            # Join formula or show 0 if empty
+            formula = ''.join(formula_parts) if formula_parts else '0'
+            rule_row[output_name] = formula
+            rule_row['_rule_idx'] = rule_idx
+            
+            rules_data.append(rule_row)
+        
+        df = pd.DataFrame(rules_data)
+        
+        # Calculate figure size
+        n_rows = len(df)
+        n_cols = self.n_inputs + 1  # inputs + output (sem coluna de Rule)
+        
+        if figsize is None:
+            cell_width = 3.0
+            cell_height = 0.7
+            figsize = (n_cols * cell_width, min(n_rows * cell_height + 1.5, 20))
+        
+        # Create figure
+        fig, ax = plt.subplots(figsize=figsize)
+        ax.axis('off')
+        
+        # Table dimensions
+        col_width = 1.0 / n_cols
+        row_height = 1.0 / (n_rows + 1)  # +1 for header
+        
+        # Draw header
+        header_y = 1 - row_height
+        columns_to_show = input_names + [output_name]
+        
+        for col_idx, col_name in enumerate(columns_to_show):
+            x = col_idx * col_width
+            
+            # Header rectangle
+            rect = Rectangle((x, header_y), col_width, row_height,
+                            facecolor='#2c3e50', edgecolor='black', linewidth=1.5)
+            ax.add_patch(rect)
+            
+            # Header text
+            ax.text(x + col_width/2, header_y + row_height/2, col_name,
+                ha='center', va='center', fontsize=12, weight='bold', color='white')
+        
+        # Draw data rows
+        for row_idx in range(n_rows):
+            y = 1 - (row_idx + 2) * row_height
+            
+            # Rule ID (outside table, on the left)
+            rule_id = df.iloc[row_idx]['_rule_idx'] + 1
+            ax.text(-0.02, y + row_height/2, f'R{rule_id}',
+                ha='right', va='center', fontsize=11, weight='bold',
+                color='black', transform=ax.transData)
+            
+            # Input columns (with blue gradient colors)
+            for input_idx, input_name in enumerate(input_names):
+                col_idx = input_idx
+                x = col_idx * col_width
+                
+                # Get MF index for coloring
+                mf_idx = df.iloc[row_idx][f'_{input_name}_idx']
+                n_mfs = self.n_mfs[input_idx]
+                
+                # Color based on MF position (normalized 0.3-0.9 for better blue gradient)
+                color_val = 0.3 + (mf_idx / (n_mfs - 1) * 0.6) if n_mfs > 1 else 0.6
+                cell_color = cmap(color_val)
+                
+                # Draw cell
+                rect = Rectangle((x, y), col_width, row_height,
+                            facecolor=cell_color, edgecolor='black', linewidth=1)
+                ax.add_patch(rect)
+                
+                # Get term text
+                term = df.iloc[row_idx][input_name]
+                
+                # Determine text color based on background brightness
+                brightness = 0.299*cell_color[0] + 0.587*cell_color[1] + 0.114*cell_color[2]
+                text_color = 'white' if brightness < 0.5 else 'black'
+                
+                # Draw text
+                ax.text(x + col_width/2, y + row_height/2, term,
+                    ha='center', va='center', fontsize=11, weight='bold',
+                    color=text_color)
+            
+            # Output column (formula)
+            col_idx = self.n_inputs
+            x = col_idx * col_width
+            
+            formula = df.iloc[row_idx][output_name]
+            
+            rect = Rectangle((x, y), col_width, row_height,
+                        facecolor='#ecf0f1', edgecolor='black', linewidth=1)
+            ax.add_patch(rect)
+            
+            ax.text(x + col_width/2, y + row_height/2, formula,
+                ha='center', va='center', fontsize=10, family='monospace',
+                color='#2c3e50')
+        
+        # Set axis limits (com espaço para IDs à esquerda)
+        ax.set_xlim(-0.05, 1)
+        ax.set_ylim(0, 1)
+        
+        # Title
+        fig.suptitle('Fuzzy Rules', fontsize=16, weight='bold', y=0.98)
+        
+        plt.tight_layout()
+        return fig
+
