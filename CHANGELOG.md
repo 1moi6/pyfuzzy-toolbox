@@ -15,7 +15,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional metaheuristic optimizers (ACO, ABC)
 
 ---
-## [1.0.2] - 2025-10-27
+## [1.0.4] - 2025-10-28
+
+### ✨ Added
+
+#### Core ANFIS Implementation
+- **ANFIS class**: Adaptive Neuro-Fuzzy Inference System with 5-layer architecture
+- **Hybrid learning**: Combination of Least Squares Estimation (LSE) and Gradient Descent
+- **Multiple membership functions**: Gaussian, Generalized Bell, and Sigmoid
+- **Adaptive learning rate**: Lyapunov stability-based learning rate adjustment
+- **Regularization**: L1 (Lasso), L2 (Ridge), and Elastic Net regularization
+- **Mini-batch training**: Support for large datasets with configurable batch sizes
+- **Early stopping**: Automatic training termination based on validation performance
+
+#### Training Features
+- Forward and backward propagation
+- Automatic parameter initialization based on input data
+- Domain constraints for membership function parameters
+- Gradient norm tracking and visualization
+- Learning rate evolution monitoring
+- Training/validation split support
+
+#### Prediction and Evaluation
+- `predict()`: Fast vectorized predictions
+- `predict_proba()`: Probability predictions for classification tasks
+- `score()`: R² score for regression (scikit-learn compatible)
+- Comprehensive metrics: RMSE, MAE, R², MAPE, accuracy, precision, recall, F1-score
+
+#### Visualization Methods
+- `plot_membership_functions()`: Visualize learned membership functions with proper vectorization
+- `plot_metrics()`: Training and validation metrics evolution
+- `plot_regularization()`: L1/L2 penalty evolution
+- `plot_learning_rate_evolution()`: Adaptive learning rate tracking
+- `show_rules()`: Matrix-style rule visualization (2D heatmap)
+- `show_rules_table()`: Elegant colored table with simplified formulas and blue gradient
+
+#### Rule Interpretation
+- `rules_to_dataframe()`: Export rules to pandas DataFrame
+- `summary()`: Model architecture overview
+- Simplified consequent formulas (e.g., "-Temp+2Humidity+0.5")
+- Linguistic terms support for all inputs
+
+#### Model Persistence
+- `save()`: Save trained model to compressed .npz format
+- `load()`: Load pre-trained models
+- Full parameter preservation (premises, consequents, architecture)
+
+#### Metaheuristic Optimization
+- `fit_metaheuristic()`: Global optimization with PSO, DE, or GA
+- Alternative to gradient-based training
+- Optimizes all parameters simultaneously
+- Robust to local minima
+
+#### Data Handling
+- Robust input validation
+- NaN/Inf detection and error handling
+- Automatic dimension reshaping
+- Support for 1D and 2D inputs
+
+### 🔧 Technical Details
+
+#### Architecture
+- Input layer: Fuzzification with configurable membership functions
+- Rule layer: Product-based firing strength calculation
+- Normalization layer: Normalized firing strengths
+- Consequent layer: Takagi-Sugeno linear consequents
+- Output layer: Weighted aggregation
+
+#### Performance Optimizations
+- Vectorized operations using NumPy
+- Cached rule indices for faster computation
+- Efficient mini-batch processing
+- Optimized gradient calculations
+
+#### Dependencies
+- numpy >= 1.20.0
+- matplotlib >= 3.3.0
+- pandas >= 1.2.0
+- scikit-learn >= 0.24.0
+
+### 📚 Documentation
+- Comprehensive docstrings for all methods
+- Type hints throughout the codebase
+- Detailed examples in method documentation
+- Complete regression example with synthetic data
+
+### 🎨 Visualization Improvements
+- Fixed duplicate plotting in Jupyter notebooks
+- Removed unnecessary `plt.show()` calls
+- Blue gradient color scheme for rules table
+- Clean table layout with external rule IDs
+- Professional styling with dark headers
+
+### 🐛 Fixed
+- Duplicate plot rendering in Jupyter Notebooks
+- Membership function vectorization for proper plotting
+- Learning rate history tracking
+- Variable shadowing in `plot_metrics()`
+
+### 📝 Notes
+- **Python**: Requires Python 3.8+
+- **License**: MIT
+- **Status**: Alpha - API may change in future versions
+- **Testing**: Comprehensive testing recommended before production use
+
+### 🚀 Coming Soon (Planned for v0.2.0)
+- Grid search for hyperparameter tuning
+- Cross-validation support
+- More membership function types (Trapezoidal, Triangular)
+- CUDA/GPU acceleration
+- Additional metaheuristic algorithms
+- Model explanation tools
+- Automated feature selection
+
+
+## [1.0.3] - 2025-10-27
 
 ### Added
 - Unified `WangMendelLearning` class supporting both regression and classification
