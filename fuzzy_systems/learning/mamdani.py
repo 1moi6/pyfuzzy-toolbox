@@ -56,98 +56,535 @@ class MamdaniLearning:
     """
 
     def __init__(
-        self,
-        n_inputs: int,
-        n_mfs_input: List[int],
-        n_mfs_output: int,
-        defuzz_method: Literal['cog', 'cos'] = 'cog',
-        use_rule_weights: bool = True,
-        input_bounds: Optional[List[Tuple[float, float]]] = None,
-        output_bound: Optional[Tuple[float, float]] = None
-    ):
+            self,
+            n_inputs: int,
+            n_mfs_input: List[int],
+            n_mfs_output: int,
+            defuzz_method: Literal['cog', 'cos'] = 'cog',
+            # ============================================================
+            # Explicit control of learnable parameters
+            # ============================================================
+            learn_rules: bool = True,
+            learn_output_centroids: bool = True,
+            learn_output_sigmas: bool = False,
+            learn_input_means: bool = True,
+            learn_input_sigmas: bool = True,
+            learn_rule_weights: bool = False,
+            # ============================================================
+            # Bounds
+            # ============================================================
+            input_bounds: Optional[List[Tuple[float, float]]] = None,
+            output_bound: Optional[Tuple[float, float]] = None,
+            # ============================================================
+            # Custom initialization (optional)
+            # ============================================================
+            initial_rules: Optional[np.ndarray] = None,
+            initial_output_centroids: Optional[np.ndarray] = None,
+            initial_output_sigmas: Optional[np.ndarray] = None,
+            initial_input_means: Optional[List[np.ndarray]] = None,
+            initial_input_sigmas: Optional[List[np.ndarray]] = None,
+            initial_rule_weights: Optional[np.ndarray] = None,
+        ):
         """
-        Inicializa sistema Mamdani.
-
+        Initialize Mamdani Neuro-Fuzzy system with explicit learning control.
+        
         Args:
-            n_inputs: Número de variáveis de entrada
-            n_mfs_input: Lista com número de MFs para cada entrada
-            n_mfs_output: Número de MFs de saída
-            defuzz_method: Método de defuzzificação ('cog' ou 'cos')
-            use_rule_weights: Se True, usa pesos aprendíveis nas regras
-            input_bounds: Lista de (min, max) para cada entrada
-            output_bound: Tupla (min, max) para saída
+            n_inputs: Number of input variables
+            n_mfs_input: List with number of MFs for each input
+            n_mfs_output: Number of output MFs
+            defuzz_method: Defuzzification method ('cog' or 'cos')
+            
+            learn_rules: If True, learns rule structure (which consequent for each rule)
+            learn_output_centroids: If True, learns output centroid positions
+            learn_output_sigmas: If True, learns output widths (not used in Mamdani inference)
+            learn_input_means: If True, learns input MF centers (antecedents)
+            learn_input_sigmas: If True, learns input MF widths (antecedents)
+            learn_rule_weights: If True, uses learnable rule weights
+            
+            input_bounds: List of (min, max) for each input (for initialization)
+            output_bound: Tuple (min, max) for output (for initialization)
+            
+            initial_rules: Custom initial rule structure (n_rules,) - consequent indices
+            initial_output_centroids: Custom initial centroids (n_mfs_output,)
+            initial_output_sigmas: Custom initial widths (n_mfs_output,)
+            initial_input_means: Custom initial means [List of arrays]
+            initial_input_sigmas: Custom initial sigmas [List of arrays]
+            initial_rule_weights: Custom initial weights (n_rules,)
+            
+        Examples:
+            # Learn ONLY rule structure
+            >>> model = MamdaniLearning(
+            ...     n_inputs=2, n_mfs_input=[3, 3], n_mfs_output=3,
+            ...     learn_rules=True,
+            ...     learn_output_centroids=False,
+            ...     learn_input_means=False,
+            ...     learn_input_sigmas=False
+            ... )
+            
+            # Learn rules + centroids (hybrid mode)
+            >>> model = MamdaniLearning(
+            ...     n_inputs=2, n_mfs_input=[3, 3], n_mfs_output=3,
+            ...     learn_rules=True,
+            ...     learn_output_centroids=True,
+            ...     learn_input_means=False,
+            ...     learn_input_sigmas=False
+            ... )
+            
+            # Learn ONLY antecedents (input MFs)
+            >>> model = MamdaniLearning(
+            ...     n_inputs=2, n_mfs_input=[3, 3], n_mfs_output=3,
+            ...     learn_rules=False,
+            ...     learn_output_centroids=False,
+            ...     learn_input_means=True,
+            ...     learn_input_sigmas=True
+            ... )
         """
+        # Basic configuration
         self.n_inputs = n_inputs
         self.n_mfs_input = n_mfs_input
         self.n_mfs_output = n_mfs_output
         self.defuzz_method = defuzz_method
-        self.use_rule_weights = use_rule_weights
-
-        # Número total de regras (produto cartesiano)
         self.n_rules = int(np.prod(n_mfs_input))
-
-        # Bounds (serão definidos em _initialize_parameters se None)
+        
+        # ============================================================
+        # Learning flags
+        # ============================================================
+        self.learn_rules = learn_rules
+        self.learn_output_centroids = learn_output_centroids
+        self.learn_output_sigmas = learn_output_sigmas
+        self.learn_input_means = learn_input_means
+        self.learn_input_sigmas = learn_input_sigmas
+        self.learn_rule_weights = learn_rule_weights
+        
+        # Validation
+        self._validate_learning_config()
+        
+        # ============================================================
+        # Bounds
+        # ============================================================
         self.input_bounds = input_bounds
         self.output_bound = output_bound
-
-        # Parâmetros (inicializados em fit)
+        
+        # ============================================================
+        # Parameters (initialized later)
+        # ============================================================
+        self.consequent_indices: Optional[np.ndarray] = None  # Internal name kept
         self.input_means: List[np.ndarray] = []
         self.input_sigmas: List[np.ndarray] = []
-        self.output_centroids: np.ndarray = None
-        self.rule_weights: np.ndarray = None
-
-        # Cache para otimização metaheurística
+        self.output_centroids: Optional[np.ndarray] = None
+        self.output_sigmas: Optional[np.ndarray] = None
+        self.rule_weights: Optional[np.ndarray] = None
+        
+        # ============================================================
+        # Custom initial values
+        # ============================================================
+        self._initial_rules = initial_rules
+        self._initial_output_centroids = initial_output_centroids
+        self._initial_output_sigmas = initial_output_sigmas
+        self._initial_input_means = initial_input_means
+        self._initial_input_sigmas = initial_input_sigmas
+        self._initial_rule_weights = initial_rule_weights
+        
+        # Cache for optimization
         self._cached_activations: Optional[np.ndarray] = None
         self._cached_X: Optional[np.ndarray] = None
-
-        # Flag de treinamento
+        
+        # Status
         self._is_fitted = False
+
+
+    def _validate_learning_config(self):
+        """Validate learning configuration."""
+        # At least one parameter must be learnable
+        learnable = [
+            self.learn_rules,
+            self.learn_output_centroids,
+            self.learn_output_sigmas,
+            self.learn_input_means,
+            self.learn_input_sigmas,
+            self.learn_rule_weights
+        ]
+        
+        if not any(learnable):
+            raise ValueError(
+                "At least one parameter must be learnable. "
+                "Configure learn_* flags appropriately."
+            )
+        
+        # Warning if output_sigmas is enabled
+        if self.learn_output_sigmas:
+            warnings.warn(
+                "learn_output_sigmas=True, but output widths are NOT used "
+                "in Mamdani inference (only centroids). "
+                "Consider learn_output_sigmas=False.",
+                UserWarning
+            )
+
+
+    def get_learnable_params_info(self) -> Dict[str, Dict]:
+        """Return information about learnable parameters."""
+        info = {}
+        
+        if self.learn_rules:
+            info['rules'] = {
+                'shape': (self.n_rules,),
+                'count': self.n_rules,
+                'type': 'discrete',
+                'description': 'Rule structure (mapping rule → consequent)',
+                'affects_cache': False
+            }
+        
+        if self.learn_output_centroids:
+            info['output_centroids'] = {
+                'shape': (self.n_mfs_output,),
+                'count': self.n_mfs_output,
+                'type': 'continuous',
+                'description': 'Fuzzy consequent centers',
+                'affects_cache': False
+            }
+        
+        if self.learn_output_sigmas:
+            info['output_sigmas'] = {
+                'shape': (self.n_mfs_output,),
+                'count': self.n_mfs_output,
+                'type': 'continuous',
+                'description': 'Consequent widths (not used in inference)',
+                'affects_cache': False
+            }
+        
+        if self.learn_input_means:
+            total_means = sum(self.n_mfs_input)
+            info['input_means'] = {
+                'shape': f'List[{self.n_mfs_input}]',
+                'count': total_means,
+                'type': 'continuous',
+                'description': 'Input MF centers (antecedents)',
+                'affects_cache': True
+            }
+        
+        if self.learn_input_sigmas:
+            total_sigmas = sum(self.n_mfs_input)
+            info['input_sigmas'] = {
+                'shape': f'List[{self.n_mfs_input}]',
+                'count': total_sigmas,
+                'type': 'continuous',
+                'description': 'Input MF widths (antecedents)',
+                'affects_cache': True
+            }
+        
+        if self.learn_rule_weights:
+            info['rule_weights'] = {
+                'shape': (self.n_rules,),
+                'count': self.n_rules,
+                'type': 'continuous',
+                'description': 'Multiplicative rule weights',
+                'affects_cache': False
+            }
+        
+        # Statistics
+        total_params = sum(p['count'] for p in info.values())
+        discrete_params = sum(p['count'] for p in info.values() if p['type'] == 'discrete')
+        continuous_params = total_params - discrete_params
+        cache_affected = any(p['affects_cache'] for p in info.values())
+        
+        info['_summary'] = {
+            'total_params': total_params,
+            'discrete_params': discrete_params,
+            'continuous_params': continuous_params,
+            'cache_valid': not cache_affected,
+            'optimization_mode': self._infer_optimization_mode()
+        }
+        
+        return info
+
+
+    def _infer_optimization_mode(self) -> str:
+        """Infer optimization mode based on flags."""
+        learns_antecedents = self.learn_input_means or self.learn_input_sigmas
+        learns_consequents = (self.learn_rules or 
+                            self.learn_output_centroids or
+                            self.learn_output_sigmas)
+        
+        if learns_consequents and not learns_antecedents:
+            if self.learn_rules and not self.learn_output_centroids:
+                return 'rules_only'
+            elif self.learn_rules and self.learn_output_centroids:
+                return 'hybrid'
+            elif self.learn_output_centroids and not self.learn_rules:
+                return 'output_only'
+        elif learns_antecedents and learns_consequents:
+            return 'all'
+        elif learns_antecedents and not learns_consequents:
+            return 'antecedents_only'
+        
+        return 'custom'
+
+
+    def print_config(self):
+        """Print learning configuration in readable format."""
+        info = self.get_learnable_params_info()
+        
+        print("="*70)
+        print("LEARNING CONFIGURATION - MamdaniLearning")
+        print("="*70)
+        print(f"\nArchitecture:")
+        print(f"  Inputs:         {self.n_inputs} variables")
+        print(f"  MFs/input:      {self.n_mfs_input}")
+        print(f"  Output MFs:     {self.n_mfs_output}")
+        print(f"  Rules:          {self.n_rules} (cartesian product)")
+        print(f"  Defuzzification: {self.defuzz_method.upper()}")
+        
+        print(f"\nLearnable Parameters:")
+        for param_name, param_info in info.items():
+            if param_name == '_summary':
+                continue
+            print(f"  ✓ {param_name}:")
+            print(f"      Shape:        {param_info['shape']}")
+            print(f"      Count:        {param_info['count']}")
+            print(f"      Type:         {param_info['type']}")
+            print(f"      Description:  {param_info['description']}")
+            cache_impact = '❌ Invalidates cache' if param_info['affects_cache'] else '✅ Cache valid'
+            print(f"      Cache impact: {cache_impact}")
+        
+        summary = info['_summary']
+        print(f"\nSummary:")
+        print(f"  Total parameters:     {summary['total_params']}")
+        print(f"  Discrete parameters:  {summary['discrete_params']}")
+        print(f"  Continuous parameters: {summary['continuous_params']}")
+        cache_status = '✅ YES (100-1000x speedup)' if summary['cache_valid'] else '❌ NO'
+        print(f"  Cache valid:          {cache_status}")
+        print(f"  Optimization mode:    {summary['optimization_mode']}")
+        print("="*70)
+
+    def fit_rules(
+    self,
+    X: np.ndarray,
+    y: np.ndarray,
+    method: Literal['binary_ga', 'pso', 'ga', 'de'] = 'binary_ga',
+    pop_size: int = 100,
+    n_generations: int = 500,
+    initialization: Literal['random', 'uniform', 'gradient', 'mixed'] = 'gradient',
+    initialization_noise: float = 0.1,
+    # Binary GA parameters
+    elite_ratio: float = 0.15,
+    crossover_rate: float = 0.8,
+    crossover_type: str = 'uniform',
+    mutation_rate: float = 0.05,
+    verbose: bool = True,
+    **optimizer_kwargs
+) -> Dict[str, any]:
+        """
+        Fit rule structure using metaheuristic optimization with intelligent initialization.
+        
+        Parameters
+        ----------
+        initialization : str, default='gradient'
+            - 'gradient': Data-driven (best convergence)
+            - 'mixed': 50% gradient + 50% random (good exploration)
+            - 'random': Fully random
+            - 'uniform': Start from middle values
+        """
+        from .metaheuristics import BinaryGA, initialize_population_discrete
+        
+        # Validation
+        if not self.learn_rules:
+            raise ValueError("learn_rules=False. Set learn_rules=True to use fit_rules().")
+        if self.learn_input_means or self.learn_input_sigmas:
+            raise ValueError("fit_rules() requires fixed input parameters.")
+        
+        X = np.atleast_2d(X)
+        y = np.atleast_1d(y)
+        
+        if not self._is_fitted:
+            self._initialize_parameters(X, y)
+        
+        # Cache activations
+        if verbose:
+            print("="*70)
+            print("RULE STRUCTURE OPTIMIZATION")
+            print("="*70)
+        
+        membership_values = self._fuzzify_inputs(X)
+        firing_strengths = self._fire_rules(membership_values)
+        self._cached_activations = firing_strengths
+        self._cached_X = X.copy()
+        
+        if verbose:
+            print(f"\nCached activations: {firing_strengths.shape}")
+            print(f"  Rules: {self.n_rules}, Output MFs: {self.n_mfs_output}")
+            print(f"  Cache size: {firing_strengths.nbytes/1024:.2f} KB")
+        
+        # Objective function
+        def objective(rule_indices):
+            rule_indices = np.clip(rule_indices.astype(int), 0, self.n_mfs_output - 1)
+            if self.defuzz_method == 'cog':
+                y_pred = self._defuzzify_cog(self._cached_activations, rule_indices)
+            else:
+                y_pred = self._defuzzify_cos(self._cached_activations, rule_indices)
+            return np.sqrt(np.mean((y_pred - y) ** 2))
+        
+        # Bounds
+        bounds = np.array([[0, self.n_mfs_output - 1]] * self.n_rules)
+        
+        # Prepare gradient data for intelligent initialization
+        out_range = self.output_bound if self.output_bound else (y.min(), y.max())
+        gradient_data = (firing_strengths, y, out_range)
+        
+        # Initialize population
+        if verbose:
+            print(f"\nInitialization: {initialization}")
+        
+        initial_pop, initial_fitness = initialize_population_discrete(
+            pop_size=pop_size,
+            n_dims=self.n_rules,
+            bounds=bounds,
+            method=initialization,
+            objective_func=objective,
+            gradient_data=gradient_data,
+            noise_level=initialization_noise,
+            verbose=verbose
+        )
+        
+        # Optimize
+        if method == 'binary_ga':
+            if verbose:
+                print(f"\nBinary GA: pop={pop_size}, gen={n_generations}, crossover={crossover_type}")
+            
+            ga = BinaryGA(
+                pop_size=pop_size,
+                max_gen=n_generations,
+                elite_ratio=elite_ratio,
+                crossover_rate=crossover_rate,
+                crossover_type=crossover_type,
+                mutation_rate=mutation_rate,
+                **optimizer_kwargs
+            )
+            
+            best_solution, best_fitness, history = ga.optimize(
+                objective, bounds, minimize=True, verbose=verbose,
+                initial_population=initial_pop
+            )
+        
+        else:
+            # PSO/GA/DE - use without custom initialization
+            raise NotImplementedError(f"Method {method} not yet adapted for custom initialization")
+        
+        # Update model
+        self.consequent_indices = best_solution.astype(int)
+        self._is_fitted = True
+        
+        # Results
+        if verbose:
+            print(f"\n{'='*70}")
+            print("COMPLETED")
+            print(f"  Final RMSE: {best_fitness:.6f}")
+            print(f"  Initial RMSE: {initial_fitness[0]:.6f}")
+            print(f"  Improvement: {(1-best_fitness/initial_fitness[0])*100:+.2f}%")
+            
+            for mf_idx in range(self.n_mfs_output):
+                count = np.sum(self.consequent_indices == mf_idx)
+                print(f"  Consequent {mf_idx}: {count} rules ({100*count/self.n_rules:.1f}%)")
+            print("="*70)
+        
+        return {
+            'best_fitness': best_fitness,
+            'initial_fitness': min(initial_fitness),
+            'history': history,
+            'best_solution': self.consequent_indices.copy()
+        }
+
 
     def _initialize_parameters(self, X: np.ndarray, y: np.ndarray):
         """
-        Inicializa parâmetros baseado nos dados.
-
-        Args:
-            X: Dados de entrada (n_samples, n_inputs)
-            y: Saídas desejadas (n_samples,)
+        Initialize fuzzy system parameters based on data.
+        
+        Uses custom initial values if provided, otherwise initializes automatically.
         """
-        # Define bounds se não fornecidos
-        if self.input_bounds is None:
-            self.input_bounds = [(X[:, i].min(), X[:, i].max())
-                                 for i in range(self.n_inputs)]
-
-        if self.output_bound is None:
-            self.output_bound = (y.min(), y.max())
-
-        # Inicializa MFs de entrada (uniformemente espaçadas)
-        self.input_means = []
-        self.input_sigmas = []
-
-        for i in range(self.n_inputs):
-            x_min, x_max = self.input_bounds[i]
-            n_mfs = self.n_mfs_input[i]
-
-            # Médias uniformemente espaçadas
-            means = np.linspace(x_min, x_max, n_mfs)
-            self.input_means.append(means)
-
-            # Sigmas: 50% da distância entre centros adjacentes
-            if n_mfs > 1:
-                sigma = (x_max - x_min) / (2 * (n_mfs - 1))
+        # ============================================================
+        # Input membership functions (antecedents)
+        # ============================================================
+        if self._initial_input_means is not None and self._initial_input_sigmas is not None:
+            # Use custom initialization
+            self.input_means = self._initial_input_means
+            self.input_sigmas = self._initial_input_sigmas
+        else:
+            # Automatic initialization based on data
+            self.input_means = []
+            self.input_sigmas = []
+            
+            for i in range(self.n_inputs):
+                n_mfs = self.n_mfs_input[i]
+                
+                if self.input_bounds and i < len(self.input_bounds):
+                    x_min, x_max = self.input_bounds[i]
+                else:
+                    x_min, x_max = X[:, i].min(), X[:, i].max()
+                
+                # Space MFs evenly across input range
+                means = np.linspace(x_min, x_max, n_mfs)
+                
+                # Sigma: overlap adjacent MFs
+                if n_mfs > 1:
+                    sigma = (x_max - x_min) / (2 * (n_mfs - 1))
+                else:
+                    sigma = (x_max - x_min) / 4
+                
+                sigmas = np.full(n_mfs, sigma)
+                
+                self.input_means.append(means)
+                self.input_sigmas.append(sigmas)
+        
+        # ============================================================
+        # Output membership functions (consequents)
+        # ============================================================
+        if self._initial_output_centroids is not None:
+            self.output_centroids = self._initial_output_centroids
+        else:
+            if self.output_bound:
+                y_min, y_max = self.output_bound
             else:
-                sigma = (x_max - x_min) / 4
-            sigmas = np.full(n_mfs, sigma)
-            self.input_sigmas.append(sigmas)
-
-        # Inicializa centroides de saída
-        y_min, y_max = self.output_bound
-        self.output_centroids = np.linspace(y_min, y_max, self.n_mfs_output)
-
-        # Inicializa pesos das regras
-        if self.use_rule_weights:
-            self.rule_weights = np.ones(self.n_rules)
+                y_min, y_max = y.min(), y.max()
+            
+            # Space centroids evenly across output range
+            self.output_centroids = np.linspace(y_min, y_max, self.n_mfs_output)
+        
+        # Output sigmas (for visualization only, not used in Mamdani inference)
+        if self._initial_output_sigmas is not None:
+            self.output_sigmas = self._initial_output_sigmas
+        else:
+            if self.output_bound:
+                y_min, y_max = self.output_bound
+            else:
+                y_min, y_max = y.min(), y.max()
+            
+            if self.n_mfs_output > 1:
+                sigma = (y_max - y_min) / (2 * (self.n_mfs_output - 1))
+            else:
+                sigma = (y_max - y_min) / 4
+            
+            self.output_sigmas = np.full(self.n_mfs_output, sigma)
+        
+        # ============================================================
+        # Rule structure (consequent indices)
+        # ============================================================
+        if self._initial_rules is not None:
+            self.consequent_indices = self._initial_rules
+        else:
+            # Default: round-robin assignment
+            self.consequent_indices = np.arange(self.n_rules) % self.n_mfs_output
+        
+        # ============================================================
+        # Rule weights (optional)
+        # ============================================================
+        # CORREÇÃO: Mudou de use_rule_weights para learn_rule_weights
+        if self.learn_rule_weights:
+            if self._initial_rule_weights is not None:
+                self.rule_weights = self._initial_rule_weights
+            else:
+                self.rule_weights = np.ones(self.n_rules)
         else:
             self.rule_weights = None
+
 
     def _apply_domain_constraints(self):
         """Aplica restrições de domínio aos parâmetros."""

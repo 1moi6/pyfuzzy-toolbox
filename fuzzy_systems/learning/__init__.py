@@ -13,7 +13,7 @@ Status: Em desenvolvimento
 
 from .wang_mendel import WangMendelRegression, WangMendelClassification, WangMendelLearning
 from .anfis import ANFIS
-from .mamdani import MamdaniLearning
+from .mandani_learning import MamdaniLearning
 from .metaheuristics import PSO, DE, GA, get_optimizer
 
 # TODO: Implementar FCM (Fuzzy C-Means Clustering)

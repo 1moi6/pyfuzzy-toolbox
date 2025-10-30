@@ -69,7 +69,7 @@ class ANFIS:
              learning_rate: float = 0.01,
              input_ranges: Optional[List[Tuple[float, float]]] = None,
              lambda_l1: float = 0.0,
-             lambda_l2: float = 0.01,
+             lambda_l2: float = 0.0,
              batch_size: Optional[int] = None,
              use_adaptive_lr: bool = False,
              classification: bool = False):
@@ -127,7 +127,7 @@ class ANFIS:
         self.batch_size = batch_size
         self.use_adaptive_lr = use_adaptive_lr
         self.classification = classification
-        
+        self._reg = (self.lambda_l1 > 0) or (self.lambda_l2 > 0)
         # Validate MF type
         valid_types = ['gaussmf', 'gbellmf', 'sigmf']
         if mf_type not in valid_types:
@@ -145,6 +145,7 @@ class ANFIS:
         self.mf_params = None
         self.consequent_params = None
         self.input_bounds = None
+        self._rule_indices_cache = None
         
         # Classification attributes
         self.classes_ = None
@@ -188,9 +189,6 @@ class ANFIS:
         self.l1_history = []
         self.l2_history = []
         self.total_cost_history = []
-
-    
-
 
     def _initialize_premise_params(self, X: np.ndarray):
         """
@@ -242,6 +240,11 @@ class ANFIS:
                 mf_params.append(params)
             
             self.mf_params.append(np.array(mf_params))
+            if self.consequent_params is None:
+                # Initialize with small random values
+                self.consequent_params = np.random.randn(self.n_rules, self.n_inputs + 1) * 0.01
+            self._rule_indices_cache = list(itertools.product(*[range(n) for n in self.n_mfs]))
+            self.n_rules = len(self._rule_indices_cache)
 
 
     def _apply_domain_constraints(self):
@@ -812,7 +815,7 @@ class ANFIS:
                         is_width = (param_idx == 0)
                     
                     # Apply regularization ONLY on widths
-                    if is_width:
+                    if is_width and self._reg:
                         grad_l1 = self.lambda_l1 * self._gradient_l1(param_val)
                         grad_l2 = self.lambda_l2 * self._gradient_l2(param_val)
                         grad_total = grad_mse + grad_l1 + grad_l2
@@ -966,286 +969,594 @@ class ANFIS:
         return metrics
 
 
-    def fit(self, 
-        X: np.ndarray, 
-        y: np.ndarray,
-        epochs: int = 100,
-        verbose: bool = True,
-        train_premises: bool = True,
-        X_val: Optional[np.ndarray] = None,
-        y_val: Optional[np.ndarray] = None,
-        early_stopping_patience: int = 20) -> 'ANFIS':
+    def fit(self, X, y, epochs=100, verbose=True, train_premises=True,
+        X_val=None, y_val=None, early_stopping_patience=20,
+        restore_best_weights=True):
         """
         Trains the ANFIS model using hybrid learning.
         
-        Algorithm:
-            1. Initializes parameters based on data
-            2. For each epoch:
-                a. Splits data into batches if minibatch
-                b. For each batch:
-                    - Adjusts consequents with LSE
-                    - Adjusts premises with gradient if enabled
-                c. Calculates metrics on complete set
-                d. Checks early stopping
+        Combines Least Squares Estimation (LSE) for consequent parameters
+        and Gradient Descent for premise parameters (membership functions).
         
         Parameters:
-            X: Input data (n_samples, n_inputs)
-            y: Output data (n_samples,)
+            X: Training input data (n_samples, n_inputs)
+            y: Training target values (n_samples,)
             epochs: Number of training epochs
-            verbose: Shows training progress
-            train_premises: If True, trains premise parameters with gradient descent.
-                        If False, only trains consequents (faster but less accurate)
+            verbose: Print training progress
+            train_premises: If True, trains membership function parameters via gradient descent
+                        If False, only trains consequent parameters via LSE
             X_val: Validation input data (optional)
-            y_val: Validation output data (optional)
-            early_stopping_patience: Number of epochs without improvement to stop
+            y_val: Validation target values (optional)
+            early_stopping_patience: Number of epochs to wait for improvement before stopping
+            restore_best_weights: If True, restores best model weights when early stopping or
+                                at the end of training (requires validation data)
             
         Returns:
-            self for method chaining
+            self (for method chaining)
+            
+        Examples:
+            # Basic training
+            anfis.fit(X_train, y_train, epochs=100)
+            
+            # With validation and early stopping
+            anfis.fit(X_train, y_train, X_val=X_val, y_val=y_val, 
+                    early_stopping_patience=20)
+            
+            # Only train consequents (faster, simpler)
+            anfis.fit(X_train, y_train, train_premises=False)
         """
-        # Validate inputs
+        # Validate input
         X, y = self._validate_input(X, y, 'X', 'y')
-        
-        # For classification, store classes
         if self.classification:
+            # Store unique classes for classification
             self.classes_ = np.unique(y)
-            self.n_classes_ = len(np.unique(y))
+            self.n_classes = len(self.classes_)
         
-        # Initialize parameters
-        self._initialize_premise_params(X)
-        self.consequent_params = np.random.randn(self.n_rules, self.n_inputs + 1) * 0.1
-        self._rule_indices_cache = self._generate_rule_indices()
-        
-        # Validate validation data if provided
         if X_val is not None and y_val is not None:
             X_val, y_val = self._validate_input(X_val, y_val, 'X_val', 'y_val')
         
-        # Determine effective batch size
-        n_samples = len(X)
-        batch_size_effective = self.batch_size if self.batch_size is not None else n_samples
-        batch_size_effective = min(batch_size_effective, n_samples)
-        n_batches = int(np.ceil(n_samples / batch_size_effective))
+        # Initialize parameters if not already done
+        if self.mf_params is None:
+            self._initialize_premise_params(X)
         
-        # Display training configuration
+        # Timing
+        start_time = time.time()
+        
+        # Early stopping variables
+        best_val_loss = float('inf')
+        best_epoch = 0
+        patience_counter = 0
+        early_stopped = False
+        
+        # Store best parameters for restoration
+        best_mf_params = None
+        best_consequent_params = None
+        
+        # Determine batch size
+        batch_size_effective = self.batch_size if self.batch_size is not None else X.shape[0]
+        
+        # Print training info
         if verbose:
             print("="*70)
-            print(f"{'ANFIS - Training':^70}")
+            print("ANFIS TRAINING")
             print("="*70)
-            print(f" Inputs: {self.n_inputs}")
-            print(f" Num MFs: {self.n_mfs}")
-            print(f" Rules: {self.n_rules}")
-            print(f" MF Type: {self.mf_type}")
-            print(f" Type: {'Minibatch' if batch_size_effective < n_samples else 'Batch GD'}")
-            print(f" Samples: {n_samples}")
-            print(f" Batch size: {batch_size_effective}")
-            print(f" Batches/epoch: {n_batches}")
-            print(f" Type: {self._get_reg_type()}")
-            print(f" L1: {self.lambda_l1}")
-            print(f" L2: {self.lambda_l2}")
-            print("="*70)
-        
-        # Early stopping control
-        best_val_loss = np.inf
-        patience_counter = 0
+            print(f"  Inputs:           {self.n_inputs}")
+            print(f"  MFs per input:    {self.n_mfs}")
+            print(f"  Total rules:      {self.n_rules}")
+            print(f"  Training samples: {X.shape[0]}")
+            if X_val is not None:
+                print(f"  Validation samples: {X_val.shape[0]}")
+            print(f"  Epochs:           {epochs}")
+            print(f"  Batch size:       {batch_size_effective}")
+            print(f"  Learning rate:    {self.lr}")
+            if train_premises:
+                print(f"  Adaptive LR:      {self.use_adaptive_lr}")
+            print(f"  Regularization:   {self._get_reg_type()}")
+            if self.lambda_l1 > 0 or self.lambda_l2 > 0:
+                print(f"    L1 (λ₁):        {self.lambda_l1}")
+                print(f"    L2 (λ₂):        {self.lambda_l2}")
+            print(f"  Train premises:   {train_premises}")
+            if X_val is not None:
+                print(f"  Early stopping:   {early_stopping_patience} epochs")
+                print(f"  Restore best:     {restore_best_weights}")
+            print("="*70 + "\n")
         
         # Training loop
         for epoch in range(epochs):
             epoch_start_time = time.time()
             
-            # Create batches
+            # Create mini-batches
             batches = self._create_batches(X, y, batch_size_effective, shuffle=True)
             
             # Train on each batch
             for X_batch, y_batch in batches:
-                # 1. Adjust consequents with Least Squares
+                # Step 1: Adjust consequent parameters using Least Squares
                 self._adjust_consequents_least_squares(X_batch, y_batch)
                 
-                # 2. Adjust premises with gradient descent (if enabled)
+                # Step 2: Adjust premise parameters using Gradient Descent (if enabled)
                 if train_premises:
                     grad_norm, lr_effective = self._adjust_premises_gradient(X_batch, y_batch)
                     self.history['gradient_norms'].append(grad_norm)
                     self.history['learning_rates'].append(lr_effective)
             
-            # Calculate metrics on complete training set
+            # Calculate training metrics for full dataset
             train_metrics = self._calculate_metrics(X, y)
+            
+            # Append to history
             for key, value in train_metrics.items():
                 self.history['train'][key].append(value)
+
+            if self._reg:
+                # Calculate L1 penalty
+                l1_penalty = 0.0
+                for mf_params in self.mf_params:
+                    l1_penalty += np.sum(np.abs(mf_params))
+                l1_penalty += np.sum(np.abs(self.consequent_params))
+                
+                # Calculate L2 penalty
+                l2_penalty = 0.0
+                for mf_params in self.mf_params:
+                    l2_penalty += np.sum(mf_params ** 2)
+                l2_penalty += np.sum(self.consequent_params ** 2)
+                
+                # Total cost
+                total_cost = train_metrics['loss'] + \
+                            self.lambda_l1 * l1_penalty + \
+                            self.lambda_l2 * l2_penalty
+                
+                # Initialize if first epoch
+                if not hasattr(self, 'total_cost_history'):
+                    self.total_cost_history = []
+                    self.l1_history = []
+                    self.l2_history = []
+                
+                # Append
+                self.total_cost_history.append(total_cost)
+                self.l1_history.append(l1_penalty)
+                self.l2_history.append(l2_penalty)
             
-            # Calculate metrics on validation set
+            # Validation metrics
             if X_val is not None and y_val is not None:
                 val_metrics = self._calculate_metrics(X_val, y_val)
+                val_loss = val_metrics['loss']
+                
+                # Append validation metrics to history
                 for key, value in val_metrics.items():
                     self.history['val'][key].append(value)
                 
-                # Early stopping check
-                current_val_loss = val_metrics['loss']
-                if current_val_loss < best_val_loss:
-                    best_val_loss = current_val_loss
+                # Check for improvement
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    best_epoch = epoch
                     patience_counter = 0
+                    
+                    # Save best parameters (deep copy)
+                    best_mf_params = [p.copy() for p in self.mf_params]
+                    best_consequent_params = self.consequent_params.copy()
+                    
+                    if verbose and epoch > 0:  # Don't print on first epoch
+                        print(f"    ✅ New best validation loss: {best_val_loss:.6f}")
                 else:
                     patience_counter += 1
-                    if patience_counter >= early_stopping_patience:
-                        if verbose:
-                            print(f"\nEarly stopping at epoch {epoch+1}")
-                        break
+                
+                # Check for early stopping
+                if patience_counter >= early_stopping_patience:
+                    if verbose:
+                        print(f"\n⚠️  Early stopping triggered at epoch {epoch + 1}")
+                        print(f"   No improvement for {early_stopping_patience} epochs")
+                    early_stopped = True
+                    break
             
-            # Calculate total cost (MSE + regularization)
-            mse, l1_penalty, l2_penalty = self._calculate_total_cost(X, y)
-            total_cost = mse + self.lambda_l1 * l1_penalty + self.lambda_l2 * l2_penalty
+            # Print epoch progress
+            if verbose:
+                if self.classification:
+                    # Classification metrics
+                    metrics_str = (
+                        f"Epoch {epoch+1:3d}/{epochs} | "
+                        f"Train - Loss: {train_metrics['loss']:.6f}, "
+                        f"Acc: {train_metrics['accuracy']:.4f}"
+                    )
+                    if self._reg:
+                        metrics_str += f", Cost: {total_cost:.6f}"
+                    
+                    metrics_str += f", Acc: {train_metrics['accuracy']:.4f}"
+                    
+                    if X_val is not None and y_val is not None:
+                        metrics_str += (
+                            f" | Val - Loss: {val_metrics['loss']:.6f}, "
+                            f"Acc: {val_metrics['accuracy']:.4f}"
+                        )
+                else:
+                    # Regression metrics
+                    metrics_str = (
+                        f"Epoch {epoch+1:3d}/{epochs} | "
+                        f"Train - RMSE: {train_metrics['rmse']:.6f}, "
+                        f"R²: {train_metrics['r2']:.4f}"
+                    )
+
+                    if self._reg:
+                        metrics_str += f", Cost: {total_cost:.6f}"
+                    
+                    if X_val is not None and y_val is not None:
+                        metrics_str += (
+                            f" | Val - RMSE: {val_metrics['rmse']:.6f}, "
+                            f"R²: {val_metrics['r2']:.4f}"
+                        )
+                
+                # Add epoch time
+                epoch_time = time.time() - epoch_start_time
+                metrics_str += f" | Time: {epoch_time:.2f}s"
+                
+                print(metrics_str)
             
-            self.l1_history.append(l1_penalty)
-            self.l2_history.append(l2_penalty)
-            self.total_cost_history.append(total_cost)
-            
-            # Record epoch time
+            # Save epoch timing
             epoch_time = time.time() - epoch_start_time
             self.history['epoch_times'].append(epoch_time)
             
-            # Display progress
-            if verbose and ((epoch + 1) % 10 == 0 or epoch == 0 or epoch == epochs - 1):
-                msg = f"Epoch {epoch+1:3d}/{epochs} - "
-                msg += f"Train RMSE: {train_metrics['rmse']:.6f}"
-                if X_val is not None:
-                    msg += f", Val RMSE: {val_metrics['rmse']:.6f}"
-                msg += f", Cost: {total_cost:.6f}"
-                print(msg)
+            # Save regularization history
+            if hasattr(self, 'total_cost_history'):
+                # Already saved during training
+                pass
         
+        # Restore best weights if applicable
+        if restore_best_weights and best_mf_params is not None:
+            if X_val is not None and y_val is not None:
+                if verbose:
+                    print(f"\n🔄 Restoring best model from epoch {best_epoch + 1}")
+                    print(f"   Best validation loss: {best_val_loss:.6f}")
+                
+                # Restore parameters
+                self.mf_params = best_mf_params
+                self.consequent_params = best_consequent_params
+        
+        # Print final summary
         if verbose:
-            print("="*70)
-            print("Training completed!")
-            print("="*70)
+            self._print_training_summary(
+                X=X,
+                y=y,
+                X_val=X_val,
+                y_val=y_val,
+                epoch=epoch,
+                epochs=epochs,
+                batch_size_effective=batch_size_effective,
+                start_time=start_time,
+                early_stopped=early_stopped,
+                best_val_loss=best_val_loss if early_stopped else None,
+                best_epoch=best_epoch if early_stopped else None
+            )
         
         return self
 
 
-    def fit_metaheuristic(self,
-                     X: np.ndarray,
-                     y: np.ndarray,
-                     optimizer: str = 'pso',
-                     n_particles: int = 30,
-                     n_iterations: int = 100,
-                     verbose: bool = True,
-                     **optimizer_kwargs) -> 'ANFIS':
+
+    def fit_metaheuristic(self, X, y, optimizer='pso', n_particles=30, 
+                      n_iterations=100, verbose=True,
+                      X_val=None, y_val=None,
+                      early_stopping_patience=20,
+                      restore_best_weights=True,
+                      **optimizer_kwargs):
         """
-        Trains the ANFIS using global metaheuristic optimization.
+        Trains ANFIS using metaheuristic optimization.
         
-        Different from traditional fit (LSE + Gradient), this method uses
-        metaheuristic algorithms (PSO, DE, GA) to optimize ALL parameters
-        (premises + consequents) simultaneously.
-        
-        Advantages:
-            - Global optimization (avoids local minima)
-            - No gradients required (works with any MF)
-            - Robust to initial settings
-        
-        Disadvantages:
-            - Slower than traditional fit
-            - Requires more iterations to converge
+        Optimizes all parameters (membership functions and consequents) simultaneously
+        using evolutionary algorithms. Supports early stopping based on validation loss
+        and stores comprehensive convergence metrics.
         
         Parameters:
-            X: Input data (n_samples, n_inputs)
-            y: Output data (n_samples,)
-            optimizer: Type of optimizer: 'pso', 'de', 'ga'
-            n_particles: Population/swarm size
-            n_iterations: Number of iterations
-            verbose: Shows progress
-            optimizer_kwargs: Specific parameters for the optimizer
-                For PSO: w_max, w_min, c1, c2
-                For DE: F, CR
-                For GA: elite_ratio, mutation_rate, tournament_size
-        
+            X: Training input data (n_samples, n_inputs)
+            y: Training target values (n_samples,)
+            optimizer: Optimizer name ('pso', 'de', 'ga')
+            n_particles: Number of particles/population size
+            n_iterations: Number of optimization iterations
+            verbose: Print progress information
+            X_val: Validation input data (optional, for early stopping)
+            y_val: Validation target values (optional, for early stopping)
+            early_stopping_patience: Iterations without improvement before stopping
+            restore_best_weights: If True, restores best parameters at the end
+            **optimizer_kwargs: Additional optimizer-specific parameters
+                PSO: w (inertia), c1, c2 (cognitive/social parameters)
+                DE: F (differential weight), CR (crossover probability)
+                GA: crossover_rate, mutation_rate
+            
         Returns:
-            self for method chaining
-        
+            self (for method chaining)
+            
+        Stores:
+            - self.metaheuristic_history: Dict with convergence metrics and best fitness
+            
         Examples:
-            # PSO (recommended for most cases)
-            anfis.fit_metaheuristic(X, y, optimizer='pso',
+            # Basic PSO optimization
+            anfis.fit_metaheuristic(X_train, y_train, optimizer='pso', 
                                 n_particles=30, n_iterations=100)
             
-            # DE (good for complex spaces)
-            anfis.fit_metaheuristic(X, y, optimizer='de',
-                                n_particles=50, n_iterations=150,
-                                F=0.8, CR=0.9)
+            # With validation and early stopping
+            anfis.fit_metaheuristic(X_train, y_train, X_val=X_val, y_val=y_val,
+                                optimizer='pso', early_stopping_patience=20)
             
-            # GA (good for broad exploration)
-            anfis.fit_metaheuristic(X, y, optimizer='ga',
-                                n_particles=50, n_iterations=100,
-                                elite_ratio=0.1, mutation_rate=0.1)
+            # Using Differential Evolution with custom parameters
+            anfis.fit_metaheuristic(X_train, y_train, optimizer='de',
+                                n_particles=50, F=0.8, CR=0.9)
+            
+            # Method chaining
+            model = ANFIS(n_inputs=2, n_mfs=[3,3]).fit_metaheuristic(X, y)
         """
+        # Validate input
+        X, y = self._validate_input(X, y, 'X', 'y')
         from .metaheuristics import get_optimizer
         
-        # Validate inputs
-        X, y = self._validate_input(X, y, 'X', 'y')
+        if X_val is not None and y_val is not None:
+            X_val, y_val = self._validate_input(X_val, y_val, 'X_val', 'y_val')
         
-        # Initialize parameters
-        self._initialize_premise_params(X)
-        self.consequent_params = np.random.randn(self.n_rules, self.n_inputs + 1) * 0.1
-        self._rule_indices_cache = self._generate_rule_indices()
+        # For classification, store unique classes
+        if self.classification:
+            self.classes_ = np.unique(y)
+            self.n_classes = len(self.classes_)
+            
+            if verbose:
+                print(f"\n📊 Classification Mode: {self.n_classes} classes detected")
+                print(f"   Classes: {self.classes_}\n")
         
-        # Convert parameters to vector
-        param_vector = self._params_to_vector()
+        # Initialize parameters if needed
+        if self.mf_params is None:
+            self._initialize_premise_params(X)
+        
+        # Timing
+        start_time = time.time()
+        
+        # Early stopping variables
+        best_val_loss = float('inf')
+        best_train_loss = float('inf')
+        best_iteration = 0
+        patience_counter = 0
+        early_stopped = False
+        
+        # Store best parameters
+        best_params_vector = None
+        best_mf_params = None
+        best_consequent_params = None
+        
+        # Convergence tracking
+        convergence_history = []
+        
+        # Print training info
+        if verbose:
+            print("="*70)
+            print("ANFIS METAHEURISTIC TRAINING")
+            print("="*70)
+            print(f"  Inputs:           {self.n_inputs}")
+            print(f"  MFs per input:    {self.n_mfs}")
+            print(f"  Total rules:      {self.n_rules}")
+            print(f"  Training samples: {X.shape[0]}")
+            if X_val is not None:
+                print(f"  Validation samples: {X_val.shape[0]}")
+            print(f"  Optimizer:        {optimizer.upper()}")
+            print(f"  Population:       {n_particles}")
+            print(f"  Iterations:       {n_iterations}")
+            if X_val is not None and early_stopping_patience > 0:
+                print(f"  Early stopping:   {early_stopping_patience} iterations")
+                print(f"  Restore best:     {restore_best_weights}")
+            print("="*70 + "\n")
+        
+        # Calculate parameter bounds
         bounds = self._create_optimization_bounds(X)
+
         
-        # Objective function
-        def objective(params_vec):
+        # Objective function with tracking
+        def objective_with_tracking(params_vec):
+            """
+            Objective function that evaluates fitness and tracks metrics.
+            """
             try:
+                # Set parameters from vector
                 self._vector_to_params(params_vec)
-                y_pred = self.forward_batch(X)
-                mse = np.mean((y - y_pred) ** 2)
-                return mse
-            except:
-                return 1e10  # Penalty for invalid parameters
+                
+                # Forward pass for training data
+                y_pred_train = self.forward_batch(X)
+                train_loss = np.mean((y - y_pred_train) ** 2)
+                
+                # Calculate validation loss if available
+                if X_val is not None and y_val is not None:
+                    y_pred_val = self.forward_batch(X_val)
+                    val_loss = np.mean((y_val - y_pred_val) ** 2)
+                    fitness = val_loss  # Optimize on validation
+                else:
+                    val_loss = None
+                    fitness = train_loss  # Optimize on training
+                
+                # Apply regularization to fitness
+                if self.lambda_l1 > 0 or self.lambda_l2 > 0:
+                    l1_penalty = 0
+                    l2_penalty = 0
+                    
+                    # Regularize MF parameters
+                    for mf_params in self.mf_params:
+                        l1_penalty += np.sum(np.abs(mf_params))
+                        l2_penalty += np.sum(mf_params ** 2)
+                    
+                    # Regularize consequent parameters
+                    l1_penalty += np.sum(np.abs(self.consequent_params))
+                    l2_penalty += np.sum(self.consequent_params ** 2)
+                    
+                    fitness += self.lambda_l1 * l1_penalty + self.lambda_l2 * l2_penalty
+                
+                return fitness
+                
+            except Exception as e:
+                if verbose:
+                    print(f"⚠️  Warning in objective function: {e}")
+                return 1e10  # Return large penalty for invalid parameters
         
-        # Create optimizer
+       # Create optimizer
         if optimizer.lower() == 'pso':
             opt_params = {'n_particles': n_particles, 'n_iterations': n_iterations}
         elif optimizer.lower() in ['de', 'ga']:
-            opt_params = {'pop_size': n_particles, 'max_iter': n_iterations}
+            opt_params = {'popsize': n_particles, 'maxiter': n_iterations}
             if optimizer.lower() == 'ga':
-                opt_params['max_gen'] = opt_params.pop('max_iter')
+                opt_params['maxgen'] = opt_params.pop('maxiter')
         else:
-            raise ValueError(f"Unknown optimizer: {optimizer}. Use 'pso', 'de' or 'ga'")
+            raise ValueError(f"Optimizer {optimizer} unknown. Use 'pso', 'de' or 'ga'")
         
+        # Update with user-provided parameters
         opt_params.update(optimizer_kwargs)
-        opt = get_optimizer(optimizer, opt_params)
+        
+        # Create optimizer instance (unpack with **)
+        opt = get_optimizer(optimizer, **opt_params)
         
         if verbose:
-            print("="*70)
-            print(f"ANFIS - Training with Metaheuristic Optimization ({optimizer.upper()})")
-            print("="*70)
-            print(" Architecture")
-            print(f"   Inputs: {self.n_inputs}")
-            print(f"   MFs per input: {self.n_mfs}")
-            print(f"   Rules: {self.n_rules}")
-            print(f"   MF Type: {self.mf_type}")
-            print(" Optimization")
-            print(f"   Algorithm: {optimizer.upper()}")
-            print(f"   Population: {n_particles}")
-            print(f"   Iterations: {n_iterations}")
-            print(f"   Total parameters: {len(param_vector)}")
-            print(f"     - Premises: {sum(len(self.mf_params[i]) * len(self.mf_params[i][0]) for i in range(self.n_inputs))}")
-            print(f"     - Consequents: {self.n_rules * (self.n_inputs + 1)}")
-            print("="*70)
+            print("Starting optimization...\n")
         
-        # Optimize
-        best_params, best_fitness, history = opt.optimize(objective, bounds, 
-                                                        minimize=True, verbose=verbose)
+        # Custom callback for tracking and early stopping
+        iteration_count = [0]  # Use list to allow modification in nested function
         
-        # Apply best parameters
-        self._vector_to_params(best_params)
+        def callback_wrapper(params_vec, fitness):
+            """Callback to track convergence and check early stopping."""
+            nonlocal best_val_loss, best_train_loss, best_iteration, patience_counter
+            nonlocal early_stopped, best_params_vector, best_mf_params, best_consequent_params
+            
+            # Set parameters to evaluate
+            self._vector_to_params(params_vec)
+            
+            # Calculate metrics
+            y_pred_train = self.forward_batch(X)
+            train_loss = np.mean((y - y_pred_train) ** 2)
+            
+            if X_val is not None and y_val is not None:
+                y_pred_val = self.forward_batch(X_val)
+                val_loss = np.mean((y_val - y_pred_val) ** 2)
+            else:
+                val_loss = None
+            
+            # Store convergence data
+            convergence_history.append({
+                'iteration': iteration_count[0],
+                'train_loss': train_loss,
+                'val_loss': val_loss,
+                'fitness': fitness,
+                'timestamp': time.time() - start_time
+            })
+            
+            # Check for improvement
+            current_loss = val_loss if val_loss is not None else train_loss
+            
+            if current_loss < best_val_loss:
+                best_val_loss = current_loss
+                best_train_loss = train_loss
+                best_iteration = iteration_count[0]
+                patience_counter = 0
+                
+                # Save best parameters
+                best_params_vector = params_vec.copy()
+                best_mf_params = [p.copy() for p in self.mf_params]
+                best_consequent_params = self.consequent_params.copy()
+                
+                if verbose:
+                    loss_str = f"Val: {val_loss:.6f}" if val_loss is not None else f"Train: {train_loss:.6f}"
+                    print(f"  ✅ Iteration {iteration_count[0]:3d} | New best {loss_str}")
+            else:
+                patience_counter += 1
+            
+            # Check early stopping
+            if X_val is not None and early_stopping_patience > 0:
+                if patience_counter >= early_stopping_patience:
+                    if verbose:
+                        print(f"\n⚠️  Early stopping at iteration {iteration_count[0]}")
+                        print(f"   No improvement for {early_stopping_patience} iterations")
+                    early_stopped = True
+                    return True  # Signal to stop optimization
+            
+            # Print progress
+            if verbose and (iteration_count[0] + 1) % max(1, n_iterations // 10) == 0:
+                if val_loss is not None:
+                    print(f"  Iteration {iteration_count[0]+1:3d}/{n_iterations} | "
+                        f"Train: {train_loss:.6f} | Val: {val_loss:.6f}")
+                else:
+                    print(f"  Iteration {iteration_count[0]+1:3d}/{n_iterations} | "
+                        f"Train: {train_loss:.6f}")
+            
+            iteration_count[0] += 1
+            return False  # Continue optimization
         
-        # Calculate final metrics
-        final_metrics = self._calculate_metrics(X, y)
+        # Run optimization with callback (if optimizer supports it)
+        try:
+            best_params, best_fitness, opt_history = opt.optimize(
+                objective_with_tracking, bounds, minimize=True, 
+                callback=callback_wrapper, verbose=False
+            )
+        except TypeError:
+            # Optimizer doesn't support callback, run normally
+            best_params, best_fitness, opt_history = opt.optimize(
+                objective_with_tracking, bounds, minimize=True, verbose=verbose
+            )
+            
+            # Manual tracking for optimizers without callback
+            if not convergence_history:
+                for i in range(len(opt_history)):
+                    self._vector_to_params(best_params)
+                    y_pred_train = self.forward_batch(X)
+                    train_loss = np.mean((y - y_pred_train) ** 2)
+                    
+                    val_loss = None
+                    if X_val is not None and y_val is not None:
+                        y_pred_val = self.forward_batch(X_val)
+                        val_loss = np.mean((y_val - y_pred_val) ** 2)
+                    
+                    convergence_history.append({
+                        'iteration': i,
+                        'train_loss': train_loss,
+                        'val_loss': val_loss,
+                        'fitness': opt_history[i],
+                        'timestamp': time.time() - start_time
+                    })
         
+        # Set final parameters
+        if best_params_vector is not None:
+            final_params = best_params_vector
+        else:
+            final_params = best_params
+        
+        self._vector_to_params(final_params)
+        
+        # Restore best weights if applicable
+        if restore_best_weights and best_mf_params is not None:
+            if verbose:
+                print(f"\n🔄 Restoring best model from iteration {best_iteration}")
+                loss_str = f"Val: {best_val_loss:.6f}" if X_val is not None else f"Train: {best_train_loss:.6f}"
+                print(f"   Best loss: {loss_str}")
+            
+            self.mf_params = best_mf_params
+            self.consequent_params = best_consequent_params
+        
+        # Store metaheuristic history
+        self.metaheuristic_history = {
+            'optimizer': optimizer,
+            'n_particles': n_particles,
+            'n_iterations': n_iterations,
+            'convergence': convergence_history,
+            'best_fitness': best_val_loss if X_val is not None else best_train_loss,
+            'best_iteration': best_iteration,
+            'early_stopped': early_stopped,
+            'total_time': time.time() - start_time,
+            'optimizer_params': opt_params
+        }
+        
+        # Print final summary
         if verbose:
-            print("="*70)
-            print("Optimization completed!")
-            print(f" Final MSE: {best_fitness:.6f}")
-            print(f" RMSE: {final_metrics['rmse']:.6f}")
-            print(f" R²: {final_metrics['r2']:.4f}")
-            print(f" MAPE: {final_metrics['mape']:.2f}%")
-            print("="*70)
+            self._print_training_summary(
+                X=X,
+                y=y,
+                X_val=X_val,
+                y_val=y_val,
+                epoch=len(convergence_history) - 1,
+                epochs=n_iterations,
+                batch_size_effective=None,
+                start_time=start_time,
+                early_stopped=early_stopped,
+                best_val_loss=best_val_loss if X_val is not None else None,
+                best_epoch=best_iteration
+            )
         
         return self
+
 
 
     def _params_to_vector(self) -> np.ndarray:
@@ -1363,7 +1674,6 @@ class ANFIS:
         # Return scalar if input was 1D
         return predictions[0] if input_1d else predictions
 
-
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
         Predicts class probabilities (for classification).
@@ -1389,7 +1699,6 @@ class ANFIS:
         
         return np.column_stack([proba_class0, proba_class1])
 
-
     def _sigmoid(self, x: np.ndarray) -> np.ndarray:
         """
         Sigmoid function for converting outputs to probabilities.
@@ -1401,9 +1710,6 @@ class ANFIS:
             Values between 0 and 1
         """
         return 1 / (1 + np.exp(-x))
-
-
-    
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -1425,7 +1731,6 @@ class ANFIS:
         metrics = self._calculate_metrics(X, y)
         
         return metrics['r2']
-
 
     def save(self, filepath: str):
         """
@@ -1477,7 +1782,6 @@ class ANFIS:
         # Save
         np.savez_compressed(filepath, **save_dict)
         print(f"Model saved to {filepath}")
-
 
     @classmethod
     def load(cls, filepath: str) -> 'ANFIS':
@@ -1602,8 +1906,6 @@ class ANFIS:
         plt.tight_layout()
         return fig
 
-
-
     def plot_regularization(self, figsize=(16, 5)):
         """
         Plots evolution of regularization penalties.
@@ -1654,8 +1956,6 @@ class ANFIS:
         plt.tight_layout()
         return fig
 
-
-
     def _get_reg_type(self) -> str:
         """
         Returns description of the regularization type used.
@@ -1671,7 +1971,6 @@ class ANFIS:
             return "Ridge (L2)"
         else:
             return "No regularization"
-
 
     def summary(self):
         """
@@ -1701,7 +2000,6 @@ class ANFIS:
         print(f"   Centers: Free (not regularized)")
         print(f"   Widths: Regularized")
         print("=" * 70)
-
 
     def _calculate_classification_metrics(self, y_true: np.ndarray, y_pred: np.ndarray) -> Dict:
         """
@@ -1736,13 +2034,17 @@ class ANFIS:
             rmse = np.sqrt(mse)
             mae = np.mean(np.abs(errors))
             max_error = np.max(np.abs(errors))
+
+            ss_res = np.sum(errors ** 2)
+            ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+            r2 = 1 - (ss_res / (ss_tot + 1e-10))
             
             return {
                 'loss': mse,
                 'rmse': rmse,
                 'mae': mae,
                 'max_error': max_error,
-                'r2': np.nan,
+                'r2': r2,
                 'mape': np.nan,
                 'accuracy': accuracy,
                 'precision': precision,
@@ -1765,7 +2067,8 @@ class ANFIS:
                 'f1_score': np.nan
             }
 
-    def plot_metrics(self, metrics: Union[str, List[str]] = 'all', figsize=(15, 10)):
+    def plot_metrics(self, metrics: Union[str, List[str]] = 'all', 
+                 figsize=(15, 10), metaheuristic=False):
         """
         Plots training and validation metrics evolution.
         
@@ -1778,10 +2081,128 @@ class ANFIS:
                     - Classification: 'accuracy', 'precision', 'recall', 'f1_score'
                     - Training: 'gradient_norms', 'learning_rates'
             figsize: Figure size
+            metaheuristic: If True, plots metaheuristic convergence
+                        If False, plots hybrid training metrics (default)
             
         Returns:
             Matplotlib figure
+            
+        Examples:
+            # Plot hybrid training metrics
+            anfis.plot_metrics(['rmse', 'r2'])
+            
+            # Plot metaheuristic convergence
+            anfis.plot_metrics(metaheuristic=True)
         """
+        import matplotlib.pyplot as plt
+        
+        # ============================================================================
+        # Check available data and print helpful message
+        # ============================================================================
+        has_hybrid = hasattr(self, 'history') and self.history is not None and \
+                    len(self.history.get('train', {}).get('loss', [])) > 0
+        has_metaheuristic = hasattr(self, 'metaheuristic_history') and \
+                            self.metaheuristic_history is not None and \
+                            len(self.metaheuristic_history.get('convergence', [])) > 0
+        
+        if not has_hybrid and not has_metaheuristic:
+            print("❌ No training history available.")
+            print("   Train the model first using fit() or fit_metaheuristic()")
+            return None
+        
+        # Print info about available data
+        if has_hybrid and has_metaheuristic:
+            if not metaheuristic:
+                print("ℹ️  Showing hybrid training metrics (fit).")
+                print("   To see metaheuristic convergence, use: plot_metrics(metaheuristic=True)")
+            else:
+                print("ℹ️  Showing metaheuristic convergence.")
+                print("   To see hybrid training metrics, use: plot_metrics(metaheuristic=False)")
+        elif has_hybrid and not has_metaheuristic:
+            if metaheuristic:
+                print("⚠️  No metaheuristic data available. Showing hybrid metrics instead.")
+                print("   Train with fit_metaheuristic() to generate metaheuristic data.")
+                metaheuristic = False
+        elif has_metaheuristic and not has_hybrid:
+            if not metaheuristic:
+                print("⚠️  No hybrid training data available. Showing metaheuristic instead.")
+                print("   Train with fit() to generate hybrid training data.")
+                metaheuristic = True
+        
+        # ============================================================================
+        # Plot metaheuristic convergence
+        # ============================================================================
+        if metaheuristic:
+            conv = self.metaheuristic_history['convergence']
+            
+            # Extract data
+            iterations = [c['iteration'] for c in conv]
+            train_loss = [c['train_loss'] for c in conv]
+            val_loss = [c['val_loss'] for c in conv if c['val_loss'] is not None]
+            has_validation = len(val_loss) > 0
+            
+            # Create figure with 2 subplots
+            fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+            
+            # Plot 1: Linear scale
+            ax = axes[0]
+            ax.plot(iterations, train_loss, 'b-', linewidth=2.5, label='Train Loss', alpha=0.8)
+            
+            if has_validation:
+                ax.plot(iterations[:len(val_loss)], val_loss, 'r--', linewidth=2.5, 
+                        label='Validation Loss', alpha=0.8)
+            
+            # Mark best iteration
+            if self.metaheuristic_history.get('early_stopped', False):
+                best_iter = self.metaheuristic_history['best_iteration']
+                ax.axvline(best_iter, color='green', linestyle=':', linewidth=2.5, 
+                        label=f'Best (iter {best_iter})', alpha=0.7)
+            
+            ax.set_xlabel('Iteration', fontsize=12, weight='bold')
+            ax.set_ylabel('Loss (MSE)', fontsize=12, weight='bold')
+            ax.set_title(f'{self.metaheuristic_history["optimizer"].upper()} Convergence', 
+                        fontsize=14, weight='bold')
+            ax.legend(loc='best', fontsize=11)
+            ax.grid(True, alpha=0.3, linestyle='--')
+            
+            # Plot 2: Log scale
+            ax = axes[1]
+            ax.semilogy(iterations, train_loss, 'b-', linewidth=2.5, label='Train Loss', alpha=0.8)
+            
+            if has_validation:
+                ax.semilogy(iterations[:len(val_loss)], val_loss, 'r--', linewidth=2.5, 
+                        label='Validation Loss', alpha=0.8)
+            
+            if self.metaheuristic_history.get('early_stopped', False):
+                best_iter = self.metaheuristic_history['best_iteration']
+                ax.axvline(best_iter, color='green', linestyle=':', linewidth=2.5, 
+                        label=f'Best (iter {best_iter})', alpha=0.7)
+            
+            ax.set_xlabel('Iteration', fontsize=12, weight='bold')
+            ax.set_ylabel('Loss (MSE) - Log Scale', fontsize=12, weight='bold')
+            ax.set_title('Convergence (Log Scale)', fontsize=14, weight='bold')
+            ax.legend(loc='best', fontsize=11)
+            ax.grid(True, alpha=0.3, linestyle='--', which='both')
+            
+            # Add info box
+            info_text = f"Optimizer: {self.metaheuristic_history['optimizer'].upper()}\n"
+            info_text += f"Population: {self.metaheuristic_history['n_particles']}\n"
+            info_text += f"Iterations: {len(iterations)}/{self.metaheuristic_history['n_iterations']}\n"
+            info_text += f"Best Loss: {self.metaheuristic_history['best_fitness']:.6f}\n"
+            info_text += f"Time: {self.metaheuristic_history['total_time']:.2f}s"
+            
+            if self.metaheuristic_history.get('early_stopped', False):
+                info_text += f"\n⚠️ Early Stopped"
+            
+            fig.text(0.98, 0.02, info_text, fontsize=9, ha='right', va='bottom',
+                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
+            
+            plt.tight_layout()
+            return fig
+        
+        # ============================================================================
+        # Plot hybrid training metrics (original code)
+        # ============================================================================
         # Define available metrics
         regression_metrics = ['loss', 'rmse', 'mae', 'max_error', 'r2', 'mape']
         classification_metrics = ['accuracy', 'precision', 'recall', 'f1_score']
@@ -1811,7 +2232,7 @@ class ANFIS:
                     available_metrics.append(metric)
         
         if len(available_metrics) == 0:
-            print("No metrics available to plot. Train the model first.")
+            print("❌ No metrics available to plot. Train the model first.")
             return None
         
         # Calculate grid layout
@@ -1865,6 +2286,7 @@ class ANFIS:
         
         plt.tight_layout()
         return fig
+
 
     def rules_to_dataframe(self, input_names=None, output_name='Output', linguistic_terms=None):
         """
@@ -2165,4 +2587,101 @@ class ANFIS:
         
         plt.tight_layout()
         return fig
+
+    def _print_training_summary(self, X, y, X_val=None, y_val=None, 
+                           epoch=None, epochs=None, batch_size_effective=None,
+                           start_time=None, early_stopped=False, 
+                           best_val_loss=None, best_epoch=None):
+        """
+        Prints comprehensive training summary with final metrics.
+        
+        Parameters:
+            X: Training data
+            y: Training targets
+            X_val: Validation data (optional)
+            y_val: Validation targets (optional)
+            epoch: Final epoch number
+            epochs: Total epochs configured
+            batch_size_effective: Batch size used
+            start_time: Training start time
+            early_stopped: Whether early stopping was triggered
+            best_val_loss: Best validation loss (if early stopping)
+            best_epoch: Epoch with best validation loss
+        """
+        print("\n" + "="*70)
+        print("TRAINING COMPLETED")
+        print("="*70)
+        
+        # Calculate final metrics on training set
+        train_metrics = self._calculate_metrics(X, y)
+        
+        print("\n📊 Final Training Metrics:")
+        print("-" * 70)
+        
+        if self.classification:
+            # Classification metrics
+            print(f"  Loss (MSE):       {train_metrics['loss']:.6f}")
+            print(f"  RMSE:             {train_metrics['rmse']:.6f}")
+            print(f"  Accuracy:         {train_metrics['accuracy']:.4f} ({train_metrics['accuracy']*100:.2f}%)")
+            print(f"  Precision:        {train_metrics['precision']:.4f}")
+            print(f"  Recall:           {train_metrics['recall']:.4f}")
+            print(f"  F1-Score:         {train_metrics['f1_score']:.4f}")
+        else:
+            # Regression metrics
+            print(f"  Loss (MSE):       {train_metrics['loss']:.6f}")
+            print(f"  RMSE:             {train_metrics['rmse']:.6f}")
+            print(f"  MAE:              {train_metrics['mae']:.6f}")
+            print(f"  R² Score:         {train_metrics['r2']:.4f}")
+            print(f"  Max Error:        {train_metrics['max_error']:.6f}")
+            if not np.isnan(train_metrics['mape']):
+                print(f"  MAPE:             {train_metrics['mape']:.2f}%")
+        
+        # Validation metrics (if available)
+        if X_val is not None and y_val is not None:
+            val_metrics = self._calculate_metrics(X_val, y_val)
+            
+            print("\n📈 Final Validation Metrics:")
+            print("-" * 70)
+            
+            if self.classification:
+                print(f"  Loss (MSE):       {val_metrics['loss']:.6f}")
+                print(f"  RMSE:             {val_metrics['rmse']:.6f}")
+                print(f"  Accuracy:         {val_metrics['accuracy']:.4f} ({val_metrics['accuracy']*100:.2f}%)")
+                print(f"  Precision:        {val_metrics['precision']:.4f}")
+                print(f"  Recall:           {val_metrics['recall']:.4f}")
+                print(f"  F1-Score:         {val_metrics['f1_score']:.4f}")
+            else:
+                print(f"  Loss (MSE):       {val_metrics['loss']:.6f}")
+                print(f"  RMSE:             {val_metrics['rmse']:.6f}")
+                print(f"  MAE:              {val_metrics['mae']:.6f}")
+                print(f"  R² Score:         {val_metrics['r2']:.4f}")
+                print(f"  Max Error:        {val_metrics['max_error']:.6f}")
+                if not np.isnan(val_metrics['mape']):
+                    print(f"  MAPE:             {val_metrics['mape']:.2f}%")
+        
+        # Training configuration
+        print("\n⚙️  Training Configuration:")
+        print("-" * 70)
+        if epoch is not None and epochs is not None:
+            print(f"  Total Epochs:     {epoch + 1}/{epochs}")
+        if batch_size_effective is not None:
+            print(f"  Batch Size:       {batch_size_effective if batch_size_effective else 'Full batch'}")
+        print(f"  Learning Rate:    {self.lr}")
+        print(f"  Regularization:   {self._get_reg_type()}")
+        if self.lambda_l1 > 0 or self.lambda_l2 > 0:
+            print(f"    L1 (λ₁):        {self.lambda_l1}")
+            print(f"    L2 (λ₂):        {self.lambda_l2}")
+        
+        # Total time
+        if start_time is not None:
+            total_time = time.time() - start_time
+            print(f"\n⏱️  Total Training Time: {total_time:.2f}s ({total_time/60:.2f}m)")
+        
+        # Early stopping info
+        if early_stopped:
+            print(f"\n⚠️  Early stopping triggered at epoch {epoch + 1}")
+            if best_val_loss is not None and best_epoch is not None:
+                print(f"   Best validation loss: {best_val_loss:.6f} at epoch {best_epoch}")
+        
+        print("=" * 70 + "\n")
 
