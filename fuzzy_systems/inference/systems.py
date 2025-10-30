@@ -1764,6 +1764,350 @@ class MamdaniSystem(FuzzyInferenceSystem):
         }
 
 
+    @classmethod
+    def create_automatic(cls,
+                        n_inputs: int,
+                        n_outputs: int = 1,
+                        n_mfs: Union[int, List[int]] = 3,
+                        mf_type: Union[str, List[str]] = 'triangular',
+                        input_universes: Optional[Union[Tuple[float, float], List[Tuple[float, float]]]] = None,
+                        output_universes: Optional[Union[Tuple[float, float], List[Tuple[float, float]]]] = None,
+                        input_names: Optional[List[str]] = None,
+                        output_names: Optional[List[str]] = None,
+                        name: str = "Auto Mamdani FIS",
+                        **kwargs) -> 'MamdaniSystem':
+        """
+        Cria automaticamente um sistema Mamdani com MFs igualmente espaçadas.
+
+        Gera funções de pertinência distribuídas uniformemente no domínio,
+        considerando centros também nos extremos dos universos.
+
+        Parameters
+        ----------
+        n_inputs : int
+            Número de variáveis de entrada
+        n_outputs : int, default=1
+            Número de variáveis de saída
+        n_mfs : int or list of int, default=3
+            Número de MFs por variável.
+            - Se int: mesmo número para todas as variáveis
+            - Se list: número específico para cada variável (entrada + saída)
+        mf_type : str or list of str, default='triangular'
+            Tipo de MF: 'triangular', 'gaussian', 'trapezoidal', 'bell'
+            - Se str: mesmo tipo para todas as MFs
+            - Se list: tipo específico para cada variável (entrada + saída)
+        input_universes : tuple or list of tuples, optional
+            Universos de discurso das entradas (min, max)
+            - Se None: usa (0, 1) para todas
+            - Se tuple: mesmo universo para todas as entradas
+            - Se list of tuples: universo específico para cada entrada
+        output_universes : tuple or list of tuples, optional
+            Universos de discurso das saídas (min, max)
+            - Se None: usa (0, 1) para todas
+            - Se tuple: mesmo universo para todas as saídas
+            - Se list of tuples: universo específico para cada saída
+        input_names : list of str, optional
+            Nomes das variáveis de entrada
+            Se None: usa ["input_1", "input_2", ...]
+        output_names : list of str, optional
+            Nomes das variáveis de saída
+            Se None: usa ["output_1", "output_2", ...]
+        name : str, default="Auto Mamdani FIS"
+            Nome do sistema
+        **kwargs
+            Argumentos adicionais para MamdaniSystem
+
+        Returns
+        -------
+        MamdaniSystem
+            Sistema Mamdani configurado automaticamente
+
+        Examples
+        --------
+        >>> # Sistema simples: 2 entradas, 1 saída, 3 MFs triangulares cada
+        >>> fis = MamdaniSystem.create_automatic(n_inputs=2)
+
+        >>> # Sistema com MFs diferentes por variável
+        >>> fis = MamdaniSystem.create_automatic(
+        ...     n_inputs=2,
+        ...     n_outputs=1,
+        ...     n_mfs=[3, 5, 3],  # input1=3, input2=5, output=3
+        ...     mf_type=['triangular', 'gaussian', 'triangular']
+        ... )
+
+        >>> # Sistema com universos customizados
+        >>> fis = MamdaniSystem.create_automatic(
+        ...     n_inputs=2,
+        ...     n_outputs=1,
+        ...     input_universes=[(0, 100), (-50, 50)],
+        ...     output_universes=(0, 1),
+        ...     input_names=['temperature', 'pressure'],
+        ...     output_names=['valve']
+        ... )
+
+        >>> # Sistema complexo
+        >>> fis = MamdaniSystem.create_automatic(
+        ...     n_inputs=3,
+        ...     n_outputs=2,
+        ...     n_mfs=[5, 3, 4, 3, 3],  # 3 inputs + 2 outputs
+        ...     mf_type='gaussian',
+        ...     input_universes=[(0, 10), (0, 100), (-1, 1)],
+        ...     output_universes=[(0, 1), (0, 100)]
+        ... )
+
+        Notes
+        -----
+        - MFs são distribuídas uniformemente com centros nos extremos
+        - Para n_mfs=3: MFs em min, médio, max
+        - Para n_mfs=5: MFs em min, 25%, 50%, 75%, max
+        - Labels automáticos: "low", "medium", "high" (para n_mfs=3)
+        - Para n_mfs > 3: "verylow", "low", "medium", "high", "veryhigh", etc.
+        """
+
+        # ==================== Validação de Parâmetros ====================
+        if n_inputs < 1:
+            raise ValueError(f"n_inputs deve ser >= 1, recebido: {n_inputs}")
+        if n_outputs < 1:
+            raise ValueError(f"n_outputs deve ser >= 1, recebido: {n_outputs}")
+
+        total_vars = n_inputs + n_outputs
+
+        # ==================== Processar n_mfs ====================
+        if isinstance(n_mfs, int):
+            n_mfs_list = [n_mfs] * total_vars
+        elif isinstance(n_mfs, list):
+            if len(n_mfs) != total_vars:
+                raise ValueError(
+                    f"Se n_mfs for lista, deve ter {total_vars} elementos "
+                    f"({n_inputs} entradas + {n_outputs} saídas). "
+                    f"Recebido: {len(n_mfs)}"
+                )
+            n_mfs_list = n_mfs
+        else:
+            raise TypeError(f"n_mfs deve ser int ou list, recebido: {type(n_mfs)}")
+
+        # Validar número de MFs
+        for i, n_mf in enumerate(n_mfs_list):
+            if n_mf < 2:
+                raise ValueError(f"Cada variável deve ter >= 2 MFs. Variável {i}: {n_mf}")
+
+        # ==================== Processar mf_type ====================
+        if isinstance(mf_type, str):
+            mf_types_list = [mf_type] * total_vars
+        elif isinstance(mf_type, list):
+            if len(mf_type) != total_vars:
+                raise ValueError(
+                    f"Se mf_type for lista, deve ter {total_vars} elementos. "
+                    f"Recebido: {len(mf_type)}"
+                )
+            mf_types_list = mf_type
+        else:
+            raise TypeError(f"mf_type deve ser str ou list, recebido: {type(mf_type)}")
+
+        # Validar tipos de MF
+        valid_types = ['triangular', 'gaussian', 'trapezoidal', 'bell', 'sigmoid', 'gauss2mf']
+        for mf_t in mf_types_list:
+            if mf_t not in valid_types:
+                raise ValueError(
+                    f"Tipo de MF inválido: '{mf_t}'. "
+                    f"Válidos: {valid_types}"
+                )
+
+        # ==================== Processar universos ====================
+        # Entradas
+        if input_universes is None:
+            input_universes_list = [(0.0, 1.0)] * n_inputs
+        elif isinstance(input_universes, tuple) and len(input_universes) == 2:
+            input_universes_list = [input_universes] * n_inputs
+        elif isinstance(input_universes, list):
+            if len(input_universes) != n_inputs:
+                raise ValueError(
+                    f"input_universes deve ter {n_inputs} elementos. "
+                    f"Recebido: {len(input_universes)}"
+                )
+            input_universes_list = input_universes
+        else:
+            raise TypeError(
+                f"input_universes deve ser tuple ou list of tuples"
+            )
+
+        # Saídas
+        if output_universes is None:
+            output_universes_list = [(0.0, 1.0)] * n_outputs
+        elif isinstance(output_universes, tuple) and len(output_universes) == 2:
+            output_universes_list = [output_universes] * n_outputs
+        elif isinstance(output_universes, list):
+            if len(output_universes) != n_outputs:
+                raise ValueError(
+                    f"output_universes deve ter {n_outputs} elementos. "
+                    f"Recebido: {len(output_universes)}"
+                )
+            output_universes_list = output_universes
+        else:
+            raise TypeError(
+                f"output_universes deve ser tuple ou list of tuples"
+            )
+
+        # ==================== Processar nomes ====================
+        if input_names is None:
+            input_names = [f"input_{i+1}" for i in range(n_inputs)]
+        elif len(input_names) != n_inputs:
+            raise ValueError(
+                f"input_names deve ter {n_inputs} elementos. "
+                f"Recebido: {len(input_names)}"
+            )
+
+        if output_names is None:
+            output_names = [f"output_{i+1}" for i in range(n_outputs)]
+        elif len(output_names) != n_outputs:
+            raise ValueError(
+                f"output_names deve ter {n_outputs} elementos. "
+                f"Recebido: {len(output_names)}"
+            )
+
+        # ==================== Criar Sistema ====================
+        system = cls(name=name, **kwargs)
+
+        # ==================== Função para gerar labels ====================
+        def _generate_labels(n: int) -> List[str]:
+            """Gera labels linguísticos baseado no número de MFs."""
+            if n == 2:
+                return ['low', 'high']
+            elif n == 3:
+                return ['low', 'medium', 'high']
+            elif n == 4:
+                return ['low', 'medium_low', 'medium_high', 'high']
+            elif n == 5:
+                return ['very_low', 'low', 'medium', 'high', 'very_high']
+            elif n == 7:
+                return ['very_low', 'low', 'medium_low', 'medium', 
+                       'medium_high', 'high', 'very_high']
+            else:
+                # Para n > 7 ou outros casos
+                return [f'mf_{i+1}' for i in range(n)]
+
+        # ==================== Função para gerar parâmetros de MF ====================
+        def _generate_mf_params(universe: Tuple[float, float], 
+                               n_mf: int, 
+                               mf_type: str,
+                               index: int) -> Tuple:
+            """
+            Gera parâmetros de MF igualmente espaçadas.
+            Centros incluem os extremos do universo.
+            """
+            u_min, u_max = universe
+            u_range = u_max - u_min
+
+            # Centros igualmente espaçados (incluindo extremos)
+            centers = np.linspace(u_min, u_max, n_mf)
+
+            # Largura base para as MFs
+            if n_mf > 1:
+                width = u_range / (n_mf - 1)
+            else:
+                width = u_range / 2
+
+            center = centers[index]
+
+            if mf_type == 'triangular':
+                # Triangular: [left, center, right]
+                left = center - width
+                right = center + width
+
+                # Ajustar extremos para cobrir todo o universo
+                if index == 0:
+                    left = u_min
+                if index == n_mf - 1:
+                    right = u_max
+
+                return (left, center, right)
+
+            elif mf_type == 'trapezoidal':
+                # Trapezoidal: [left, left_top, right_top, right]
+                left = center - width
+                left_top = center - width/4
+                right_top = center + width/4
+                right = center + width
+
+                # Ajustar extremos
+                if index == 0:
+                    left = u_min
+                    left_top = u_min
+                if index == n_mf - 1:
+                    right = u_max
+                    right_top = u_max
+
+                return (left, left_top, right_top, right)
+
+            elif mf_type == 'gaussian':
+                # Gaussian: [center, sigma]
+                sigma = width / 3  # Regra empírica: 3*sigma cobre largura
+                return (center, sigma)
+
+            elif mf_type == 'bell':
+                # Bell (Generalized Bell): [a, b, c]
+                # a controla largura, b controla inclinação, c é o centro
+                a = width / 2
+                b = 2.0  # Inclinação padrão
+                c = center
+                return (a, b, c)
+
+            elif mf_type == 'sigmoid':
+                # Sigmoid: [a, c]
+                # a controla inclinação, c é o centro
+                a = 10 / width  # Inclinação inversamente proporcional à largura
+                c = center
+                return (a, c)
+
+            elif mf_type == 'gauss2mf':
+                # Gaussian combination: [mean1, sigma1, mean2, sigma2]
+                sigma = width / 4
+                return (center - width/4, sigma, center + width/4, sigma)
+
+            else:
+                raise ValueError(f"Tipo de MF não suportado: {mf_type}")
+
+        # ==================== Adicionar Entradas ====================
+        for i in range(n_inputs):
+            var_name = input_names[i]
+            universe = input_universes_list[i]
+            n_mf = n_mfs_list[i]
+            mf_type_var = mf_types_list[i]
+
+            # Adicionar variável
+            system.add_input(var_name, universe)
+
+            # Gerar labels
+            labels = _generate_labels(n_mf)
+
+            # Adicionar MFs
+            for j in range(n_mf):
+                term_name = labels[j]
+                params = _generate_mf_params(universe, n_mf, mf_type_var, j)
+                system.add_term(var_name, term_name, mf_type_var, params)
+
+        # ==================== Adicionar Saídas ====================
+        for i in range(n_outputs):
+            var_name = output_names[i]
+            universe = output_universes_list[i]
+            n_mf = n_mfs_list[n_inputs + i]  # Offset pelos inputs
+            mf_type_var = mf_types_list[n_inputs + i]
+
+            # Adicionar variável
+            system.add_output(var_name, universe)
+
+            # Gerar labels
+            labels = _generate_labels(n_mf)
+
+            # Adicionar MFs
+            for j in range(n_mf):
+                term_name = labels[j]
+                params = _generate_mf_params(universe, n_mf, mf_type_var, j)
+                system.add_term(var_name, term_name, mf_type_var, params)
+
+        return system
+
+
 class SugenoSystem(FuzzyInferenceSystem):
     """
     Sistema de Inferência Fuzzy tipo Sugeno (Takagi-Sugeno-Kang).

@@ -775,14 +775,7 @@ class FuzzyODESolver:
 
 
 # Mensagem de sucesso
-print("✅ Módulo de EDO Fuzzy implementado com sucesso!")
-print("\nCaracterísticas:")
-print("  • Integração completa com fuzzy_systems.core")
-print("  • Suporte a FuzzySet, triangular, gaussiana, trapezoidal")
-print("  • Método de α-níveis vetorizado")
 if HAS_JOBLIB:
-    print("  • Paralelização automática (joblib)")
+    print("Automatic parallelization (joblib)")
 else:
-    print("  • Processamento serial (instale joblib para paralelização)")
-print("  • Condições iniciais e parâmetros fuzzy")
-print("  • Visualização de envelopes por α-nível")
+    print("Serial processing (install joblib for parallelization)")

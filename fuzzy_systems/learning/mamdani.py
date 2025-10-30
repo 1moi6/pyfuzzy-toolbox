@@ -1766,10 +1766,4 @@ class MamdaniLearning:
 
 
 # Mensagem de sucesso
-print("✅ MamdaniLearning implementado com sucesso!")
-print("\nCaracterísticas:")
-print("  • Aprendizado por gradiente: batch, online, mini-batch")
-print("  • Otimização metaheurística: PSO, DE, GA")
-print("  • Defuzzificação: COG e COS")
-print("  • Caching de ativações para otimização eficiente")
-print("  • Extração de regras linguísticas")
+print("✅ MamdaniLearning imported")
