@@ -1603,7 +1603,268 @@ class FuzzyInferenceSystem:
         
         plt.tight_layout()
         return fig, ax
+    
+    def add_auto_mfs(self,
+                     variable_name: str,
+                     n_mfs: int,
+                     mf_type: str = 'triangular',
+                     universe: Optional[Tuple[float, float]] = None,
+                     label_prefix: Optional[str] = None,
+                     overlap_strategy: str = 'standard') -> 'MamdaniSystem':
+        """
+        Adiciona automaticamente MFs igualmente espaçadas a uma variável existente.
 
+        Este método cria funções de pertinência distribuídas uniformemente
+        no domínio da variável, com sobreposição apropriada.
+
+        Parameters
+        ----------
+        variable_name : str
+            Nome da variável (deve existir no sistema)
+        n_mfs : int
+            Número de funções de pertinência a criar (mínimo 2)
+        mf_type : str, default='triangular'
+            Tipo de MF: 'triangular', 'gaussian', 'trapezoidal', 'bell'
+        universe : tuple of float, optional
+            Novo universo (min, max) para a variável.
+            Se None, usa o universo existente da variável.
+        label_prefix : str, optional
+            Prefixo para os labels das MFs.
+            Se None, usa labels linguísticos padrão (low, medium, high, etc.)
+        overlap_strategy : str, default='standard'
+            Estratégia de sobreposição:
+            - 'standard': largura = u_range/(n_mf-1) (código original)
+            - 'perfect': largura = 2*u_range/(n_mf-1) (pontas tocam centros)
+
+        Returns
+        -------
+        self : MamdaniSystem
+            Retorna self para method chaining
+
+        Raises
+        ------
+        ValueError
+            Se a variável não existe, n_mfs < 2, ou mf_type inválido
+
+        Examples
+        --------
+        >>> # Criar sistema e adicionar variável
+        >>> fis = MamdaniSystem()
+        >>> fis.add_input('temperature', (0, 100))
+
+        >>> # Adicionar 5 MFs triangulares automaticamente
+        >>> fis.add_auto_mfs('temperature', n_mfs=5, mf_type='triangular')
+
+        >>> # Sistema agora tem: very_low, low, medium, high, very_high
+        >>> fis.info()
+
+        >>> # Adicionar com labels customizados
+        >>> fis.add_input('pressure', (0, 10))
+        >>> fis.add_auto_mfs('pressure', n_mfs=3, 
+        ...                  mf_type='gaussian',
+        ...                  label_prefix='P')
+        >>> # Cria: P_1, P_2, P_3
+
+        >>> # Atualizar universo e adicionar MFs
+        >>> fis.add_output('power', (0, 1))
+        >>> fis.add_auto_mfs('power', n_mfs=7, 
+        ...                  mf_type='triangular',
+        ...                  universe=(0, 100))  # Muda universo
+
+        >>> # Usar estratégia de sobreposição perfeita
+        >>> fis.add_input('speed', (0, 100))
+        >>> fis.add_auto_mfs('speed', n_mfs=5,
+        ...                  overlap_strategy='perfect')
+
+        Notes
+        -----
+        - MFs são distribuídas uniformemente com centros nos extremos
+        - Labels padrão gerados automaticamente baseado em n_mfs
+        - Estratégia 'standard': sobreposição moderada (original)
+        - Estratégia 'perfect': pontas triangulares tocam centros adjacentes
+        - Remove MFs existentes da variável antes de adicionar novos
+        """
+        import numpy as np
+
+        # ==================== Validações ====================
+
+        # Verificar se variável existe
+        if variable_name not in self.input_variables and \
+           variable_name not in self.output_variables:
+            raise ValueError(
+                f"Variável '{variable_name}' não existe no sistema. "
+                f"Variáveis disponíveis: "
+                f"inputs={list(self.input_variables.keys())}, "
+                f"outputs={list(self.output_variables.keys())}"
+            )
+
+        # Validar n_mfs
+        if n_mfs < 2:
+            raise ValueError(f"n_mfs deve ser >= 2, recebido: {n_mfs}")
+
+        # Validar mf_type
+        valid_types = ['triangular', 'gaussian', 'trapezoidal', 'bell', 
+                      'sigmoid', 'gauss2mf']
+        if mf_type not in valid_types:
+            raise ValueError(
+                f"Tipo de MF inválido: '{mf_type}'. "
+                f"Válidos: {valid_types}"
+            )
+
+        # Validar overlap_strategy
+        if overlap_strategy not in ['standard', 'perfect']:
+            raise ValueError(
+                f"overlap_strategy deve ser 'standard' ou 'perfect'. "
+                f"Recebido: '{overlap_strategy}'"
+            )
+
+        # ==================== Obter/Atualizar Universo ====================
+
+        # Determinar se é input ou output
+        if variable_name in self.input_variables:
+            var = self.input_variables[variable_name]
+        else:
+            var = self.output_variables[variable_name]
+
+        # Atualizar universo se fornecido
+        if universe is not None:
+            if not isinstance(universe, tuple) or len(universe) != 2:
+                raise ValueError(
+                    f"universe deve ser tuple (min, max). "
+                    f"Recebido: {universe}"
+                )
+            var.universe = np.linspace(universe[0], universe[1], 1000)
+
+        # Obter universo atual
+        u_min, u_max = var.universe[0], var.universe[-1]
+        u_range = u_max - u_min
+
+        # ==================== Gerar Labels ====================
+
+        def _generate_labels(n: int, prefix: Optional[str] = None) -> List[str]:
+            """Gera labels linguísticos ou com prefixo."""
+            if prefix is not None:
+                return [f'{prefix}_{i+1}' for i in range(n)]
+
+            # Labels linguísticos padrão
+            if n == 2:
+                return ['low', 'high']
+            elif n == 3:
+                return ['low', 'medium', 'high']
+            elif n == 4:
+                return ['low', 'medium_low', 'medium_high', 'high']
+            elif n == 5:
+                return ['very_low', 'low', 'medium', 'high', 'very_high']
+            elif n == 7:
+                return ['very_low', 'low', 'medium_low', 'medium', 
+                       'medium_high', 'high', 'very_high']
+            else:
+                return [f'mf_{i+1}' for i in range(n)]
+
+        labels = _generate_labels(n_mfs, label_prefix)
+
+        # ==================== Calcular Centros e Largura ====================
+
+        # Centros igualmente espaçados (incluindo extremos)
+        centers = np.linspace(u_min, u_max, n_mfs)
+
+        # Distância entre centros consecutivos
+        if n_mfs > 1:
+            center_distance = u_range / (n_mfs - 1)
+        else:
+            center_distance = u_range
+
+        # Largura baseada na estratégia
+        if overlap_strategy == 'standard':
+            width = center_distance  # Código original
+        else:  # 'perfect'
+            width = 2 * center_distance  # Pontas tocam centros
+
+        # ==================== Função de Geração de Parâmetros ====================
+
+        def _generate_params(center: float, index: int) -> Tuple:
+            """Gera parâmetros de MF baseado no tipo."""
+
+            if mf_type == 'triangular':
+                left = center - width
+                right = center + width
+
+                # Ajustar extremos
+                if index == 0:
+                    left = u_min
+                if index == n_mfs - 1:
+                    right = u_max
+
+                return (left, center, right)
+
+            elif mf_type == 'gaussian':
+                if overlap_strategy == 'standard':
+                    sigma = width / 3  # Regra 3-sigma
+                else:  # 'perfect'
+                    sigma = 0.4247 * center_distance  # Cruzamento em μ=0.5
+                return (center, sigma)
+
+            elif mf_type == 'trapezoidal':
+                plateau_width = center_distance / 3
+
+                left = center - width
+                left_top = center - plateau_width / 2
+                right_top = center + plateau_width / 2
+                right = center + width
+
+                # Ajustar extremos
+                if index == 0:
+                    left = u_min
+                    left_top = center
+                if index == n_mfs - 1:
+                    right = u_max
+                    right_top = center
+
+                return (left, left_top, right_top, right)
+
+            elif mf_type == 'bell':
+                a = width / 2
+                b = 2.0
+                c = center
+                return (a, b, c)
+
+            elif mf_type == 'sigmoid':
+                a = 10 / width if width > 0 else 10
+                c = center
+                return (a, c)
+
+            elif mf_type == 'gauss2mf':
+                sigma = width / 4
+                return (center - width/4, sigma, center + width/4, sigma)
+
+            else:
+                raise ValueError(f"Tipo não suportado: {mf_type}")
+
+        # ==================== Limpar MFs Existentes ====================
+
+        # Remover termos existentes da variável
+        var.terms.clear()
+
+        # ==================== Adicionar Novas MFs ====================
+
+        for i in range(n_mfs):
+            center = centers[i]
+            params = _generate_params(center, i)
+            label = labels[i]
+
+            # Adicionar termo usando método existente
+            self.add_term(variable_name, label, mf_type, params)
+
+        # ==================== Log (se verbose) ====================
+
+        if hasattr(self, 'verbose') and self.verbose:
+            print(f"\n✅ Adicionadas {n_mfs} MFs '{mf_type}' à variável '{variable_name}'")
+            print(f"   Universo: [{u_min:.4f}, {u_max:.4f}]")
+            print(f"   Estratégia: {overlap_strategy}")
+            print(f"   Labels: {labels}")
+
+        return self
+        
 
     def __repr__(self) -> str:
         n_inputs = len(self.input_variables)
@@ -1611,6 +1872,439 @@ class FuzzyInferenceSystem:
         n_rules = len(self.rule_base)
         return f"{self.__class__.__name__}(name='{self.name}', inputs={n_inputs}, outputs={n_outputs}, rules={n_rules})"
 
+    def to_json(self, filename: Optional[str] = None, 
+                indent: int = 2,
+                include_metadata: bool = True) -> Union[str, None]:
+        """
+        Salva o sistema fuzzy completo em JSON.
+
+        Serializa todas as configurações, variáveis, MFs e regras do sistema
+        em formato JSON, permitindo reconstrução completa posterior.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Nome do arquivo para salvar. Se None, retorna string JSON.
+        indent : int, default=2
+            Número de espaços para indentação (legibilidade)
+        include_metadata : bool, default=True
+            Se True, inclui metadata (data, versão, etc.)
+
+        Returns
+        -------
+        str or None
+            Se filename=None: retorna string JSON
+            Se filename fornecido: salva arquivo e retorna None
+
+        Examples
+        --------
+        >>> # Salvar em arquivo
+        >>> fis.to_json('meu_sistema.json')
+
+        >>> # Obter string JSON
+        >>> json_str = fis.to_json()
+        >>> print(json_str)
+
+        >>> # Salvar compacto (sem indentação)
+        >>> fis.to_json('sistema_compacto.json', indent=None)
+
+        Notes
+        -----
+        - Funções de pertinência customizadas (callables) não são salvas
+        - Apenas MFs com tipos padrão são completamente serializáveis
+        - Use from_json() para recarregar o sistema
+        """
+        import json
+        from datetime import datetime
+
+        # ==================== Coletar dados do sistema ====================
+
+        data = {
+            'system_type': self.__class__.__name__,
+            'name': self.name
+        }
+
+        # Metadata
+        if include_metadata:
+            data['metadata'] = {
+                'created_at': datetime.now().isoformat(),
+                'version': '1.0',
+                'library': 'fuzzy_systems'
+            }
+
+        # ==================== Configurações específicas do sistema ====================
+
+        if hasattr(self, 'defuzzification_method'):
+            defuzz = self.defuzzification_method
+            if hasattr(defuzz, 'value'):
+                data['defuzzification_method'] = defuzz.value
+            else:
+                data['defuzzification_method'] = str(defuzz)
+
+        if hasattr(self, 'inference_engine'):
+            engine = self.inference_engine
+            data['inference_config'] = {}
+
+            if hasattr(engine, 'fuzzy_op'):
+                if hasattr(engine.fuzzy_op, 'and_method'):
+                    and_m = engine.fuzzy_op.and_method
+                    if hasattr(and_m, 'value'):
+                        data['inference_config']['and_method'] = and_m.value
+                    elif hasattr(and_m, 'name'):
+                        data['inference_config']['and_method'] = and_m.name
+                    else:
+                        data['inference_config']['and_method'] = str(and_m).upper()
+                if hasattr(engine.fuzzy_op, 'or_method'):
+                    or_m = engine.fuzzy_op.or_method
+                    data['inference_config']['or_method'] = or_m.value if hasattr(or_m, 'value') else str(or_m)
+
+            if hasattr(engine, 'implication_method'):
+                data['inference_config']['implication_method'] = engine.implication_method
+            if hasattr(engine, 'aggregation_method'):
+                data['inference_config']['aggregation_method'] = engine.aggregation_method
+            if hasattr(engine, 'order'):
+                data['inference_config']['order'] = engine.order
+
+        # ==================== Variáveis de Entrada ====================
+
+        data['input_variables'] = {}
+        for var_name, var in self.input_variables.items():
+            var_data = {
+                'universe': [float(var.universe[0]), float(var.universe[-1])],
+                'terms': {}
+            }
+
+            # Serializar cada termo fuzzy
+            for term_name, fuzzy_set in var.terms.items():
+                term_data = {
+                    'mf_type': fuzzy_set.mf_type
+                }
+
+                # Serializar parâmetros (converter numpy para lista)
+                if hasattr(fuzzy_set, 'params') and fuzzy_set.params is not None:
+                    import numpy as np
+                    if isinstance(fuzzy_set.params, (list, tuple)):
+                        term_data['params'] = [float(p) for p in fuzzy_set.params]
+                    elif isinstance(fuzzy_set.params, np.ndarray):
+                        term_data['params'] = fuzzy_set.params.tolist()
+                    else:
+                        term_data['params'] = float(fuzzy_set.params)
+
+                # Flag se é função customizada
+                if hasattr(fuzzy_set, 'custom_function') and fuzzy_set.custom_function:
+                    term_data['custom_function'] = True
+                    term_data['warning'] = 'Custom function not serializable'
+
+                var_data['terms'][term_name] = term_data
+
+            data['input_variables'][var_name] = var_data
+
+        # ==================== Variáveis de Saída ====================
+
+        data['output_variables'] = {}
+        for var_name, var in self.output_variables.items():
+            var_data = {
+                'universe': [float(var.universe[0]), float(var.universe[-1])],
+                'terms': {}
+            }
+
+            # Serializar termos de saída
+            for term_name, fuzzy_set in var.terms.items():
+                term_data = {
+                    'mf_type': fuzzy_set.mf_type
+                }
+
+                if hasattr(fuzzy_set, 'params') and fuzzy_set.params is not None:
+                    import numpy as np
+                    if isinstance(fuzzy_set.params, (list, tuple)):
+                        term_data['params'] = [float(p) for p in fuzzy_set.params]
+                    elif isinstance(fuzzy_set.params, np.ndarray):
+                        term_data['params'] = fuzzy_set.params.tolist()
+                    else:
+                        term_data['params'] = float(fuzzy_set.params)
+
+                if hasattr(fuzzy_set, 'custom_function') and fuzzy_set.custom_function:
+                    term_data['custom_function'] = True
+
+                var_data['terms'][term_name] = term_data
+
+            data['output_variables'][var_name] = var_data
+
+        # ==================== Regras ====================
+
+        data['rules'] = []
+        for rule in self.rule_base.rules:
+            rule_data = {
+                'antecedents': dict(rule.antecedents),
+                'consequents': {}
+            }
+
+            # Serializar consequentes (pode ser string, número ou lista)
+            for var_name, value in rule.consequent.items():
+                if isinstance(value, (list, tuple)):
+                    rule_data['consequents'][var_name] = [float(v) if isinstance(v, (int, float)) else v for v in value]
+                elif isinstance(value, (int, float)):
+                    rule_data['consequents'][var_name] = float(value)
+                else:
+                    rule_data['consequents'][var_name] = str(value)
+
+            rule_data['operator'] = rule.operator
+            rule_data['weight'] = float(rule.weight)
+
+            if hasattr(rule, 'label') and rule.label:
+                rule_data['label'] = rule.label
+
+            data['rules'].append(rule_data)
+
+        # ==================== Salvar ou retornar ====================
+
+        json_str = json.dumps(data, indent=indent, ensure_ascii=False)
+
+        if filename is None:
+            return json_str
+        else:
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(json_str)
+            print(f"✅ Sistema salvo em: {filename}")
+            return None
+
+    @classmethod
+    def from_json(cls, source: str,
+                  validate: bool = True) -> 'FuzzyInferenceSystem':
+        """
+        Carrega um sistema fuzzy de JSON.
+
+        Reconstrói completamente o sistema a partir de arquivo JSON
+        ou string JSON gerada por to_json().
+
+        Parameters
+        ----------
+        source : str
+            Caminho do arquivo JSON ou string JSON
+        validate : bool, default=True
+            Se True, valida estrutura do JSON
+
+        Returns
+        -------
+        FuzzyInferenceSystem
+            Sistema fuzzy reconstruído (MamdaniSystem ou SugenoSystem)
+
+        Raises
+        ------
+        FileNotFoundError
+            Se arquivo não existe
+        ValueError
+            Se JSON inválido ou incompleto
+
+        Examples
+        --------
+        >>> # Carregar de arquivo
+        >>> fis = MamdaniSystem.from_json('meu_sistema.json')
+
+        >>> # Carregar de string JSON
+        >>> json_str = '{"system_type": "MamdaniSystem", ...}'
+        >>> fis = MamdaniSystem.from_json(json_str)
+
+        >>> # Carregar qualquer tipo de sistema
+        >>> fis = FuzzyInferenceSystem.from_json('sistema.json')
+
+        Notes
+        -----
+        - Detecta automaticamente o tipo de sistema (Mamdani/Sugeno)
+        - Reconstrói todas as variáveis, MFs e regras
+        - Funções customizadas não podem ser reconstruídas
+        """
+        import json
+        import os
+
+        # ==================== Carregar JSON ====================
+
+        # Detecta se é arquivo ou string JSON
+        if os.path.isfile(source):
+            with open(source, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            try:
+                data = json.loads(source)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"JSON inválido: {e}")
+
+        # ==================== Validar estrutura ====================
+
+        if validate:
+            required_keys = ['system_type', 'input_variables', 'output_variables', 'rules']
+            for key in required_keys:
+                if key not in data:
+                    raise ValueError(f"JSON incompleto: chave '{key}' faltando")
+
+        # ==================== Determinar tipo de sistema ====================
+
+        system_type = data['system_type']
+
+        if system_type == 'MamdaniSystem':
+            from .systems import MamdaniSystem
+            SystemClass = MamdaniSystem
+        elif system_type == 'SugenoSystem' or system_type == 'TSKSystem':
+            from .systems import SugenoSystem
+            SystemClass = SugenoSystem
+        else:
+            raise ValueError(f"Tipo de sistema desconhecido: {system_type}")
+
+        # ==================== Criar sistema ====================
+
+        # Preparar kwargs para construtor
+        kwargs = {}
+        if 'name' in data:
+            kwargs['name'] = data['name']
+
+        # Configurações de inferência
+        if 'inference_config' in data:
+            config = data['inference_config']
+            and_value = config['and_method']
+            try:
+                if 'and_method' in config:
+                    from ..core.operators import TNorm
+                    if hasattr(TNorm, and_value.upper()):
+                        kwargs['and_method'] = TNorm[and_value.upper()]
+                    # Depois tenta original
+                    elif hasattr(TNorm, and_value):
+                        kwargs['and_method'] = TNorm[and_value]
+                    # Fallback: passa string
+                    else:
+                        kwargs['and_method'] = and_value
+            except Exception as e:
+                print(f"⚠️ and_method '{and_value}' não reconhecido, usando padrão")
+
+            if 'or_method' in config:
+                or_value = config['or_method']
+                try:
+                    from ..core.operators import SNorm
+                    # Tentar maiúsculo primeiro
+                    kwargs['or_method'] = SNorm[or_value.upper()]
+                except (KeyError, AttributeError):
+                    try:
+                        # Tentar original
+                        kwargs['or_method'] = SNorm[or_value]
+                    except KeyError:
+                        # Fallback: passar string
+                        kwargs['or_method'] = or_value
+
+            if 'implication_method' in config:
+                kwargs['implication_method'] = config['implication_method']
+
+            if 'aggregation_method' in config:
+                kwargs['aggregation_method'] = config['aggregation_method']
+
+            if 'order' in config:
+                kwargs['order'] = config['order']
+
+        if 'defuzzification_method' in data:
+            from ..core.defuzzification import DefuzzMethod
+            try:
+                kwargs['defuzzification_method'] = DefuzzMethod[data['defuzzification_method']]
+            except (KeyError, AttributeError):
+                kwargs['defuzzification_method'] = data['defuzzification_method']
+
+        # Criar instância
+        system = SystemClass(**kwargs)
+
+        # ==================== Adicionar variáveis de entrada ====================
+
+        for var_name, var_data in data['input_variables'].items():
+            universe = tuple(var_data['universe'])
+            system.add_input(var_name, universe)
+
+            # Adicionar termos
+            for term_name, term_data in var_data['terms'].items():
+                if term_data.get('custom_function', False):
+                    print(f"⚠️ Termo '{term_name}' tem função customizada - pulando")
+                    continue
+
+                mf_type = term_data['mf_type']
+                params = tuple(term_data['params']) if isinstance(term_data['params'], list) else term_data['params']
+
+                system.add_term(var_name, term_name, mf_type, params)
+
+        # ==================== Adicionar variáveis de saída ====================
+
+        for var_name, var_data in data['output_variables'].items():
+            universe = tuple(var_data['universe'])
+            system.add_output(var_name, universe)
+
+            # Adicionar termos
+            for term_name, term_data in var_data['terms'].items():
+                if term_data.get('custom_function', False):
+                    print(f"⚠️ Termo '{term_name}' tem função customizada - pulando")
+                    continue
+
+                mf_type = term_data['mf_type']
+                params = tuple(term_data['params']) if isinstance(term_data['params'], list) else term_data['params']
+
+                system.add_term(var_name, term_name, mf_type, params)
+
+        # ==================== Adicionar regras ====================
+
+        for rule_data in data['rules']:
+            antecedents = rule_data['antecedents']
+            consequents = rule_data['consequents']
+            operator = rule_data.get('operator', 'AND')
+            weight = rule_data.get('weight', 1.0)
+
+            # Criar dicionário de regra
+            rule_dict = {**antecedents, **consequents}
+            rule_dict['operator'] = operator
+            rule_dict['weight'] = weight
+
+            system.add_rule(rule_dict)
+
+        print(f"✅ Sistema '{system.name}' carregado com sucesso!")
+        print(f"   - {len(system.input_variables)} entradas")
+        print(f"   - {len(system.output_variables)} saídas")
+        print(f"   - {len(system.rule_base.rules)} regras")
+
+        return system
+
+    def save(self, filename: str, **kwargs) -> None:
+        """
+        Alias para to_json() - salva sistema em arquivo.
+
+        Parameters
+        ----------
+        filename : str
+            Nome do arquivo para salvar
+        **kwargs
+            Argumentos adicionais para to_json()
+
+        Examples
+        --------
+        >>> fis.save('meu_sistema.json')
+        >>> fis.save('sistema.json', indent=4)
+        """
+        self.to_json(filename, **kwargs)
+
+    @classmethod
+    def load(cls, filename: str, **kwargs) -> 'FuzzyInferenceSystem':
+        """
+        Alias para from_json() - carrega sistema de arquivo.
+
+        Parameters
+        ----------
+        filename : str
+            Nome do arquivo para carregar
+        **kwargs
+            Argumentos adicionais para from_json()
+
+        Returns
+        -------
+        FuzzyInferenceSystem
+            Sistema carregado
+
+        Examples
+        --------
+        >>> fis = MamdaniSystem.load('meu_sistema.json')
+        >>> fis = FuzzyInferenceSystem.load('sistema.json')
+        """
+        return cls.from_json(filename, **kwargs)
 
 class MamdaniSystem(FuzzyInferenceSystem):
     """
@@ -1762,7 +2456,6 @@ class MamdaniSystem(FuzzyInferenceSystem):
             'activated_rules': activated_rules,
             'aggregated_mf': aggregated_mfs
         }
-
 
     @classmethod
     def create_automatic(cls,

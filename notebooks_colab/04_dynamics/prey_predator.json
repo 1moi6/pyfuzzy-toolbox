@@ -1,0 +1,434 @@
+{
+  "system_type": "MamdaniSystem",
+  "name": "Predador-Presa Discreto",
+  "metadata": {
+    "created_at": "2025-10-30T18:04:40.519549",
+    "version": "1.0",
+    "library": "fuzzy_systems"
+  },
+  "defuzzification_method": "centroid",
+  "inference_config": {
+    "and_method": "min",
+    "or_method": "max",
+    "implication_method": "min",
+    "aggregation_method": "max"
+  },
+  "input_variables": {
+    "prey": {
+      "universe": [
+        0.0,
+        100.0
+      ],
+      "terms": {
+        "B": {
+          "mf_type": "gaussian",
+          "params": [
+            0.0,
+            12.0
+          ]
+        },
+        "MB": {
+          "mf_type": "gaussian",
+          "params": [
+            33.333333333333336,
+            12.0
+          ]
+        },
+        "MA": {
+          "mf_type": "gaussian",
+          "params": [
+            66.66666666666667,
+            12.0
+          ]
+        },
+        "A": {
+          "mf_type": "gaussian",
+          "params": [
+            100.0,
+            12.0
+          ]
+        }
+      }
+    },
+    "predator": {
+      "universe": [
+        0.0,
+        100.0
+      ],
+      "terms": {
+        "B": {
+          "mf_type": "gaussian",
+          "params": [
+            0.0,
+            12.0
+          ]
+        },
+        "MB": {
+          "mf_type": "gaussian",
+          "params": [
+            33.333333333333336,
+            12.0
+          ]
+        },
+        "MA": {
+          "mf_type": "gaussian",
+          "params": [
+            66.66666666666667,
+            12.0
+          ]
+        },
+        "A": {
+          "mf_type": "gaussian",
+          "params": [
+            100.0,
+            12.0
+          ]
+        }
+      }
+    }
+  },
+  "output_variables": {
+    "var_prey": {
+      "universe": [
+        -2.0,
+        2.0
+      ],
+      "terms": {
+        "B_n": {
+          "mf_type": "triangular",
+          "params": [
+            -0.5,
+            0.0,
+            0.0
+          ]
+        },
+        "MB_n": {
+          "mf_type": "triangular",
+          "params": [
+            -1.0,
+            -0.5,
+            0.0
+          ]
+        },
+        "MA_n": {
+          "mf_type": "triangular",
+          "params": [
+            -1.5,
+            -1.0,
+            -0.5
+          ]
+        },
+        "A_n": {
+          "mf_type": "trapezoidal",
+          "params": [
+            -2.0,
+            -2.0,
+            -1.5,
+            -1.0
+          ]
+        },
+        "B_p": {
+          "mf_type": "triangular",
+          "params": [
+            0.0,
+            0.0,
+            0.5
+          ]
+        },
+        "MB_p": {
+          "mf_type": "triangular",
+          "params": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        },
+        "MA_p": {
+          "mf_type": "triangular",
+          "params": [
+            0.5,
+            1.0,
+            1.5
+          ]
+        },
+        "A_p": {
+          "mf_type": "trapezoidal",
+          "params": [
+            1.0,
+            1.5,
+            2.0,
+            2.0
+          ]
+        }
+      }
+    },
+    "var_predator": {
+      "universe": [
+        -2.0,
+        2.0
+      ],
+      "terms": {
+        "B_n": {
+          "mf_type": "triangular",
+          "params": [
+            -0.5,
+            0.0,
+            0.0
+          ]
+        },
+        "MB_n": {
+          "mf_type": "triangular",
+          "params": [
+            -1.0,
+            -0.5,
+            0.0
+          ]
+        },
+        "MA_n": {
+          "mf_type": "triangular",
+          "params": [
+            -1.5,
+            -1.0,
+            -0.5
+          ]
+        },
+        "A_n": {
+          "mf_type": "trapezoidal",
+          "params": [
+            -2.0,
+            -2.0,
+            -1.5,
+            -1.0
+          ]
+        },
+        "B_p": {
+          "mf_type": "triangular",
+          "params": [
+            0.0,
+            0.0,
+            0.5
+          ]
+        },
+        "MB_p": {
+          "mf_type": "triangular",
+          "params": [
+            0.0,
+            0.5,
+            1.0
+          ]
+        },
+        "MA_p": {
+          "mf_type": "triangular",
+          "params": [
+            0.5,
+            1.0,
+            1.5
+          ]
+        },
+        "A_p": {
+          "mf_type": "trapezoidal",
+          "params": [
+            1.0,
+            1.5,
+            2.0,
+            2.0
+          ]
+        }
+      }
+    }
+  },
+  "rules": [
+    {
+      "antecedents": {
+        "prey": "B",
+        "predator": "B"
+      },
+      "consequents": {
+        "var_prey": "MB_p",
+        "var_predator": "MB_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "B",
+        "predator": "MB"
+      },
+      "consequents": {
+        "var_prey": "B_p",
+        "var_predator": "MB_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "B",
+        "predator": "MA"
+      },
+      "consequents": {
+        "var_prey": "B_n",
+        "var_predator": "MA_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "B",
+        "predator": "A"
+      },
+      "consequents": {
+        "var_prey": "MB_n",
+        "var_predator": "A_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MB",
+        "predator": "B"
+      },
+      "consequents": {
+        "var_prey": "MA_p",
+        "var_predator": "B_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MB",
+        "predator": "MB"
+      },
+      "consequents": {
+        "var_prey": "MB_p",
+        "var_predator": "B_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MB",
+        "predator": "MA"
+      },
+      "consequents": {
+        "var_prey": "B_n",
+        "var_predator": "MB_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MB",
+        "predator": "A"
+      },
+      "consequents": {
+        "var_prey": "MB_n",
+        "var_predator": "MA_n"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MA",
+        "predator": "B"
+      },
+      "consequents": {
+        "var_prey": "MB_p",
+        "var_predator": "MA_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MA",
+        "predator": "MB"
+      },
+      "consequents": {
+        "var_prey": "B_p",
+        "var_predator": "MB_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MA",
+        "predator": "MA"
+      },
+      "consequents": {
+        "var_prey": "MB_n",
+        "var_predator": "B_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "MA",
+        "predator": "A"
+      },
+      "consequents": {
+        "var_prey": "MA_n",
+        "var_predator": "B_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "A",
+        "predator": "B"
+      },
+      "consequents": {
+        "var_prey": "B_n",
+        "var_predator": "A_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "A",
+        "predator": "MB"
+      },
+      "consequents": {
+        "var_prey": "MB_n",
+        "var_predator": "MA_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "A",
+        "predator": "MA"
+      },
+      "consequents": {
+        "var_prey": "MA_n",
+        "var_predator": "MB_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "prey": "A",
+        "predator": "A"
+      },
+      "consequents": {
+        "var_prey": "A_n",
+        "var_predator": "B_p"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    }
+  ]
+}

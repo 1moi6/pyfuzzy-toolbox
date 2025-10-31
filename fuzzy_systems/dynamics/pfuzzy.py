@@ -18,6 +18,7 @@ import numpy as np
 from typing import Dict, List, Tuple, Optional, Union, Callable
 from abc import ABC, abstractmethod
 from ..inference.systems import MamdaniSystem, SugenoSystem, FuzzyInferenceSystem
+import warnings 
 
 
 class PFuzzySystem(ABC):
@@ -89,28 +90,38 @@ class PFuzzySystem(ABC):
     def _check_domain(self, x: np.ndarray) -> Tuple[bool, Optional[str]]:
         """
         Verifica se todas as variáveis de estado estão dentro de seus domínios.
-
+        VERSÃO OTIMIZADA com operações vetorizadas NumPy.
+        
         Parâmetros:
             x: Array com valores das variáveis de estado
-
+            
         Retorna:
             (dentro_dominio, mensagem_erro)
             - dentro_dominio: True se todos os valores estão válidos
             - mensagem_erro: String descrevendo o problema (ou None se válido)
         """
-        for i, var_name in enumerate(self.state_vars):
-            value = x[i]
-            var = self.fis.input_variables[var_name]
-            min_val, max_val = var.universe
+        # Verificação vetorizada (muito mais rápida)
+        min_vals = self._domain_limits[:, 0]
+        max_vals = self._domain_limits[:, 1]
+        
+        out_of_bounds = (x < min_vals) | (x > max_vals)
+        
+        # Se todos estão dentro do domínio, retorna imediatamente
+        if not np.any(out_of_bounds):
+            return True, None
+        
+        # Encontrar primeira variável fora do domínio
+        idx = np.where(out_of_bounds)[0][0]
+        var_name = self.state_vars[idx]
+        value = x[idx]
+        min_val, max_val = self._domain_limits[idx]
+        
+        msg = (
+            f"Variável '{var_name}' = {value:.6f} está fora do domínio "
+            f"[{min_val}, {max_val}]. Simulação interrompida."
+        )
+        return False, msg
 
-            if value < min_val or value > max_val:
-                msg = (
-                    f"Variável '{var_name}' = {value:.6f} está fora do domínio "
-                    f"[{min_val}, {max_val}]. Simulação interrompida."
-                )
-                return False, msg
-
-        return True, None
 
     def _evaluate_fis(self, state: Dict[str, float]) -> Dict[str, float]:
         """
@@ -334,39 +345,53 @@ class PFuzzyDiscrete(PFuzzySystem):
     """
 
     def __init__(self,
-                 fis: FuzzyInferenceSystem,
-                 mode: str = 'absolute',
-                 state_vars: Optional[List[str]] = None,
-                 dt: float = 1.0):
+             fis: FuzzyInferenceSystem,
+             mode: str = 'absolute',
+             state_vars: Optional[List[str]] = None):
         """
         Inicializa sistema p-fuzzy discreto.
-
+        
         Parâmetros:
             fis: Sistema de inferência fuzzy
             mode: 'absolute' ou 'relative'
             state_vars: Variáveis de estado
-            dt: Passo de tempo (para conversão tempo discreto -> contínuo)
         """
         super().__init__(fis, mode, state_vars)
-        self.dt = dt
+        
+        # OTIMIZAÇÃO 1: Pré-computar limites de domínio
+        self._domain_limits = np.array([
+            self.fis.input_variables[var].universe 
+            for var in self.state_vars
+        ])
+        
+        # OTIMIZAÇÃO 2: Dicionário reutilizável para estados
+        self._state_dict = {var: 0.0 for var in self.state_vars}
+
 
     def simulate(self,
-                 x0: Union[Dict[str, float], np.ndarray, List[float], Tuple[float, ...]],
-                 n_steps: int,
-                 store_all: bool = True) -> np.ndarray:
+             x0: Union[Dict[str, float], np.ndarray, List[float], Tuple[float, ...]],
+             n_steps: int,
+             verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Simula o sistema discreto.
-
+        Simula o sistema discreto p-fuzzy.
+        
         Parâmetros:
             x0: Condição inicial. Pode ser:
                 - Dicionário: {'var1': val1, 'var2': val2}
                 - Lista/tupla: [val1, val2] (ordem das state_vars)
                 - Array numpy: np.array([val1, val2])
             n_steps: Número de iterações
-            store_all: Se True, armazena toda a trajetória
-
+            verbose: Se True, imprime progresso da simulação
+            
         Retorna:
-            Array com a trajetória (n_steps+1, n_vars)
+            (iterations, trajectory): Tupla com arrays de iterações e estados
+            
+        Exemplo:
+            >>> n, x = pfuzzy_disc.simulate(
+            ...     x0={'populacao': 10.0},
+            ...     n_steps=100,
+            ...     verbose=True
+            ... )
         """
         # Converter condição inicial para array
         if isinstance(x0, dict):
@@ -375,37 +400,46 @@ class PFuzzyDiscrete(PFuzzySystem):
             x_current = np.array(x0, dtype=float)
         else:
             x_current = np.array(x0)
-
+        
         if len(x_current) != self.n_vars:
             raise ValueError(
                 f"Condição inicial deve ter {self.n_vars} valores, "
                 f"recebeu {len(x_current)}"
             )
-
+        
         # Validar condição inicial
         valid, msg = self._check_domain(x_current)
         if not valid:
             raise ValueError(f"Condição inicial inválida: {msg}")
-
-        # Armazenar trajetória
-        if store_all:
-            trajectory = np.zeros((n_steps + 1, self.n_vars))
-            trajectory[0] = x_current
-
+        
+        # Inicializar trajetória (sempre armazena agora)
+        trajectory = np.zeros((n_steps + 1, self.n_vars))
+        trajectory[0] = x_current
+        iterations = np.arange(n_steps + 1)
+        
+        if verbose:
+            print(f"\n{'='*70}")
+            print(f"SIMULAÇÃO DISCRETA INICIADA")
+            print(f"{'='*70}")
+            print(f"Iterações: {n_steps}")
+            print(f"Variáveis: {self.state_vars}")
+            print(f"Modo: {self.mode}")
+            print(f"{'='*70}\n")
+        
         # Iterar
         for step in range(n_steps):
-            # Criar dicionário de estado
-            state = {self.state_vars[i]: x_current[i]
-                    for i in range(self.n_vars)}
-
+            # OTIMIZAÇÃO: Reutilizar dicionário ao invés de criar novo
+            for i, var in enumerate(self.state_vars):
+                self._state_dict[var] = float(x_current[i])
+            
             # Avaliar FIS
-            fis_output = self._evaluate_fis(state)
-
-            # Extrair valores de saída na mesma ordem das variáveis de estado
+            fis_output = self._evaluate_fis(self._state_dict)
+            
+            # Extrair valores de saída (vetorização)
             output_vals = np.array([
                 fis_output[self.output_vars[i]] for i in range(self.n_vars)
             ])
-
+            
             # Atualizar estado baseado no modo
             if self.mode == 'absolute':
                 # x_{n+1} = x_n + f(x_n)
@@ -413,31 +447,94 @@ class PFuzzyDiscrete(PFuzzySystem):
             else:  # relative
                 # x_{n+1} = x_n * f(x_n)
                 x_current = x_current * output_vals
-
-            # Verificar se ainda está no domínio
+            
+            # Verificar se ainda está no domínio (versão otimizada)
             valid, msg = self._check_domain(x_current)
             if not valid:
-                print(f"\n⚠️  AVISO: {msg}")
-                print(f"    Passo: {step + 1}/{n_steps}")
-                print(f"    Tempo: {(step + 1) * self.dt:.4f}")
-                # Truncar trajetória no ponto onde saiu do domínio
-                if store_all:
-                    self.trajectory = trajectory[:step + 1]
-                    self.time = np.arange(step + 1) * self.dt
-                    return self.trajectory
-                else:
-                    return x_current
-
-            if store_all:
-                trajectory[step + 1] = x_current
-
+                print(f"\n⚠️ AVISO: {msg}")
+                print(f"   Iteração: {step + 1}/{n_steps}")
+                
+                # Truncar trajetória
+                self.trajectory = trajectory[:step + 1]
+                self.time = iterations[:step + 1]
+                
+                if verbose:
+                    print(f"\n{'='*70}")
+                    print(f"SIMULAÇÃO INTERROMPIDA")
+                    print(f"{'='*70}")
+                    print(f"Iterações completadas: {step + 1}/{n_steps}")
+                    print(f"{'='*70}\n")
+                
+                return self.time, self.trajectory
+            
+            trajectory[step + 1] = x_current
+            
+            # Progresso (a cada 10% ou múltiplos de 100)
+            if verbose and ((step + 1) % max(1, n_steps // 10) == 0 or (step + 1) % 100 == 0):
+                progress = 100 * (step + 1) / n_steps
+                print(f"Progresso: {progress:.1f}% | Iteração: {step + 1}/{n_steps}")
+        
         # Armazenar resultados
-        if store_all:
-            self.trajectory = trajectory
-            self.time = np.arange(n_steps + 1) * self.dt
-            return trajectory
+        self.trajectory = trajectory
+        self.time = iterations
+        
+        if verbose:
+            print(f"\n{'='*70}")
+            print(f"SIMULAÇÃO CONCLUÍDA")
+            print(f"{'='*70}")
+            print(f"Iterações completadas: {n_steps}")
+            print(f"Pontos na trajetória: {len(iterations)}")
+            for i, var in enumerate(self.state_vars):
+                print(f"{var}: {x_current[i]:.6f}")
+            print(f"{'='*70}\n")
+        
+        return self.time, self.trajectory
+
+    def step(self, x: Union[Dict[str, float], np.ndarray]) -> np.ndarray:
+        """
+        Executa um único passo da evolução discreta.
+        
+        Útil para análise manual ou estudos de estabilidade.
+        
+        Parâmetros:
+            x: Estado atual (dict ou array)
+            
+        Retorna:
+            Próximo estado (array)
+            
+        Exemplo:
+            >>> x0 = np.array([10.0])
+            >>> x1 = pfuzzy_disc.step(x0)
+            >>> x2 = pfuzzy_disc.step(x1)
+        """
+        # Converter para array se necessário
+        if isinstance(x, dict):
+            x_current = np.array([x[var] for var in self.state_vars])
         else:
-            return x_current
+            x_current = np.array(x)
+        
+        # Validar domínio
+        valid, msg = self._check_domain(x_current)
+        if not valid:
+            raise ValueError(f"Estado fora do domínio: {msg}")
+        
+        # Atualizar dicionário reutilizável
+        for i, var in enumerate(self.state_vars):
+            self._state_dict[var] = float(x_current[i])
+        
+        # Avaliar FIS
+        fis_output = self._evaluate_fis(self._state_dict)
+        
+        # Extrair saídas
+        output_vals = np.array([
+            fis_output[self.output_vars[i]] for i in range(self.n_vars)
+        ])
+        
+        # Calcular próximo estado
+        if self.mode == 'absolute':
+            return x_current + output_vals
+        else:  # relative
+            return x_current * output_vals
 
 
 class PFuzzyContinuous(PFuzzySystem):
@@ -477,48 +574,61 @@ class PFuzzyContinuous(PFuzzySystem):
     """
 
     def __init__(self,
-                 fis: FuzzyInferenceSystem,
-                 mode: str = 'absolute',
-                 state_vars: Optional[List[str]] = None,
-                 method: str = 'rk4'):
+             fis: FuzzyInferenceSystem,
+             mode: str = 'absolute',
+             state_vars: Optional[List[str]] = None,
+             method: str = 'euler'):
         """
         Inicializa sistema p-fuzzy contínuo.
-
+        
         Parâmetros:
             fis: Sistema de inferência fuzzy
             mode: 'absolute' ou 'relative'
             state_vars: Variáveis de estado
             method: Método de integração numérica:
-                   - 'euler': Método de Euler (simples, menos preciso)
-                   - 'rk4': Runge-Kutta 4ª ordem (mais preciso)
+                - 'euler': Método de Euler (simples, menos preciso)
+                - 'rk4': Runge-Kutta 4ª ordem (mais preciso)
         """
         super().__init__(fis, mode, state_vars)
-
+        
         if method not in ['euler', 'rk4']:
             raise ValueError(
                 f"Método '{method}' inválido. Use 'euler' ou 'rk4'."
             )
+        
         self.method = method
+        
+        # OTIMIZAÇÃO 1: Pré-computar limites de domínio (evita acessos repetidos)
+        self._domain_limits = np.array([
+            self.fis.input_variables[var].universe 
+            for var in self.state_vars
+        ])  # Shape: (n_vars, 2) -> [[min1, max1], [min2, max2], ...]
+        
+        # OTIMIZAÇÃO 2: Dicionário reutilizável para estados (evita criar novo a cada passo)
+        self._state_dict = {var: 0.0 for var in self.state_vars}
+
 
     def _dynamics(self, x: np.ndarray) -> np.ndarray:
         """
         Calcula dx/dt = f(x) ou dx/dt = x * f(x).
-
+        VERSÃO OTIMIZADA que reutiliza dicionário.
+        
         Parâmetros:
             x: Estado atual (array)
-
+            
         Retorna:
             Derivada dx/dt (array)
         """
-        # Criar dicionário de estado
-        state = {self.state_vars[i]: x[i] for i in range(self.n_vars)}
-
+        # OTIMIZAÇÃO: Atualizar valores no dicionário existente (não cria novo)
+        for i, var in enumerate(self.state_vars):
+            self._state_dict[var] = float(x[i])
+        
         # Avaliar FIS
-        fis_output = self._evaluate_fis(state)
-
+        fis_output = self._evaluate_fis(self._state_dict)
+        
         # Extrair valores de saída na mesma ordem das variáveis de estado
         f_x = np.array([fis_output[self.output_vars[i]] for i in range(self.n_vars)])
-
+        
         # Calcular derivada baseado no modo
         if self.mode == 'absolute':
             # dx/dt = f(x)
@@ -527,10 +637,10 @@ class PFuzzyContinuous(PFuzzySystem):
             # dx/dt = x * f(x)
             return x * f_x
 
+
     def _step_euler(self, x: np.ndarray, dt: float) -> np.ndarray:
         """
         Um passo do método de Euler.
-
         x_{n+1} = x_n + dt * f(x_n)
         """
         return x + dt * self._dynamics(x)
@@ -538,36 +648,180 @@ class PFuzzyContinuous(PFuzzySystem):
     def _step_rk4(self, x: np.ndarray, dt: float) -> np.ndarray:
         """
         Um passo do método Runge-Kutta 4ª ordem.
-
         Mais preciso que Euler.
         """
         k1 = self._dynamics(x)
         k2 = self._dynamics(x + 0.5 * dt * k1)
         k3 = self._dynamics(x + 0.5 * dt * k2)
         k4 = self._dynamics(x + dt * k3)
-
         return x + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
 
     def simulate(self,
-                 x0: Union[Dict[str, float], np.ndarray, List[float], Tuple[float, ...]],
-                 t_span: Tuple[float, float],
-                 dt: float = 0.01,
-                 store_all: bool = True) -> np.ndarray:
+             x0: Union[Dict[str, float], np.ndarray, List[float], Tuple[float, ...]],
+             t_span: Tuple[float, float],
+             dt: Optional[float] = None,
+             adaptive: bool = False,
+             tolerance: float = 1e-4,
+             dt_min: float = 1e-5,
+             dt_max: float = 1.0,
+             verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Simula o sistema contínuo.
-
+        Simula o sistema p-fuzzy contínuo.
+        
+        Se adaptive=False, usa passo fixo (implementação original).
+        Se adaptive=True, usa passo adaptativo (mais eficiente).
+        
         Parâmetros:
-            x0: Condição inicial. Pode ser:
-                - Dicionário: {'var1': val1, 'var2': val2}
-                - Lista/tupla: [val1, val2] (ordem das state_vars)
-                - Array numpy: np.array([val1, val2])
-            t_span: Tupla (t_inicial, t_final)
-            dt: Passo de integração
-            store_all: Se True, armazena toda a trajetória
-
+            x0: Condição inicial
+            t_span: (t_inicial, t_final)
+            dt: Tamanho do passo (fixo ou inicial se adaptativo)
+            adaptive: Se True, usa passo adaptativo
+            tolerance: Tolerância de erro (apenas para adaptativo)
+            dt_min, dt_max: Limites de dt (apenas para adaptativo)
+            verbose: Imprimir estatísticas
+            
         Retorna:
-            Array com a trajetória
+            (time_points, trajectory): Tupla com arrays de tempo e trajetória
         """
+        if not adaptive:
+            # Simulação com passo fixo (método original)
+            if dt is None:
+                dt = 0.05  # Padrão
+            
+            # Converter condição inicial
+            if isinstance(x0, dict):
+                x_current = np.array([x0[var] for var in self.state_vars])
+            elif isinstance(x0, (list, tuple)):
+                x_current = np.array(x0, dtype=float)
+            else:
+                x_current = np.array(x0)
+
+            if len(x_current) != self.n_vars:
+                raise ValueError(
+                    f"Condição inicial deve ter {self.n_vars} valores"
+                )
+
+            # Validar condição inicial
+            valid, msg = self._check_domain(x_current)
+            if not valid:
+                raise ValueError(f"Condição inicial inválida: {msg}")
+
+            # Tempos de integração
+            t_start, t_end = t_span
+            time_points = np.arange(t_start, t_end + dt, dt)
+            n_steps = len(time_points)
+
+            # Armazenar trajetória (SEMPRE armazena agora)
+            trajectory = np.zeros((n_steps, self.n_vars))
+            trajectory[0] = x_current
+
+            # Selecionar método de integração
+            step_func = self._step_rk4 if self.method == 'rk4' else self._step_euler
+
+            # Integrar
+            for i in range(1, n_steps):
+                x_current = step_func(x_current, dt)
+
+                # Verificar se ainda está no domínio
+                valid, msg = self._check_domain(x_current)
+                if not valid:
+                    print(f"\n⚠️  AVISO: {msg}")
+                    print(f"    Passo: {i}/{n_steps - 1}")
+                    print(f"    Tempo: {time_points[i]:.4f}")
+                    # Truncar trajetória no ponto onde saiu do domínio
+                    self.trajectory = trajectory[:i]
+                    self.time = time_points[:i]
+                    return self.time, self.trajectory  # ✓ Retorna tupla
+
+                trajectory[i] = x_current
+
+            # Armazenar resultados
+            self.trajectory = trajectory
+            self.time = time_points
+            
+            return self.time, self.trajectory  # ✓ Retorna tupla
+        
+        else:  # ✓ Indentação corrigida (alinhada com o if)
+            # Simulação com passo adaptativo
+            if dt is None:
+                dt = 0.1  # Inicial maior para adaptativo
+            
+            return self.simulate_adaptive(
+                x0=x0,
+                t_span=t_span,
+                dt_initial=dt,
+                tolerance=tolerance,
+                dt_min=dt_min,
+                dt_max=dt_max,
+                verbose=verbose
+            )
+
+
+    def _step_rk4_with_error(self, x: np.ndarray, dt: float) -> Tuple[np.ndarray, float]:
+        """
+        Um passo RK4 com estimativa de erro local.
+        
+        Calcula dois passos: um completo de tamanho dt e dois meios passos.
+        A diferença fornece uma estimativa do erro local.
+        
+        Parâmetros:
+            x: Estado atual
+            dt: Tamanho do passo
+            
+        Retorna:
+            (x_next, erro): Próximo estado e estimativa do erro
+        """
+        # Passo completo: x(t + dt)
+        x_full = self._step_rk4(x, dt)
+        
+        # Dois meios passos: x(t + dt/2) e depois x(t + dt)
+        x_half1 = self._step_rk4(x, dt/2)
+        x_half2 = self._step_rk4(x_half1, dt/2)
+        
+        # Estimativa do erro local (método de Richardson)
+        # O erro de RK4 é O(h^5), então a diferença entre
+        # passo completo e meios passos é aproximadamente 15*erro
+        error_estimate = np.linalg.norm(x_full - x_half2) / 15.0
+        
+        # Usar a solução mais precisa (meios passos)
+        return x_half2, error_estimate
+
+    def simulate_adaptive(self,
+                     x0: Union[Dict[str, float], np.ndarray, List[float], Tuple[float, ...]],
+                     t_span: Tuple[float, float],
+                     dt_initial: float = 0.1,
+                     tolerance: float = 1e-4,
+                     dt_min: float = 1e-5,
+                     dt_max: float = 1.0,
+                     max_steps: int = 100000,
+                     verbose: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Simula o sistema contínuo com passo adaptativo.
+        
+        O tamanho do passo é ajustado automaticamente baseado no erro local,
+        permitindo passos maiores em regiões suaves e menores onde há mudanças
+        rápidas. Funciona com Euler e RK4.
+        
+        NOTA: RK4 adaptativo é mais eficiente que Euler adaptativo para
+        a maioria dos problemas (menos passos para mesma precisão).
+        
+        Parâmetros:
+            x0: Condição inicial (dict, array, lista ou tupla)
+            t_span: Tupla (t_inicial, t_final)
+            dt_initial: Tamanho inicial do passo (padrão: 0.1)
+            tolerance: Tolerância para o erro local (padrão: 1e-4)
+                - Valores menores: maior precisão, mais passos
+                - Valores maiores: menor precisão, menos passos
+            dt_min: Tamanho mínimo permitido para o passo (padrão: 1e-5)
+            dt_max: Tamanho máximo permitido para o passo (padrão: 1.0)
+            max_steps: Número máximo de passos (prevenção de loops infinitos)
+            verbose: Se True, imprime estatísticas durante a simulação
+            
+        Retorna:
+            (time_points, trajectory): Arrays com tempos e estados
+        """
+        import warnings
+        
         # Converter condição inicial
         if isinstance(x0, dict):
             x_current = np.array([x0[var] for var in self.state_vars])
@@ -575,55 +829,192 @@ class PFuzzyContinuous(PFuzzySystem):
             x_current = np.array(x0, dtype=float)
         else:
             x_current = np.array(x0)
-
+        
         if len(x_current) != self.n_vars:
             raise ValueError(
-                f"Condição inicial deve ter {self.n_vars} valores"
+                f"Condição inicial deve ter {self.n_vars} valores, "
+                f"recebeu {len(x_current)}"
             )
-
+        
         # Validar condição inicial
         valid, msg = self._check_domain(x_current)
         if not valid:
             raise ValueError(f"Condição inicial inválida: {msg}")
-
-        # Tempos de integração
+        
+        # Inicializar
         t_start, t_end = t_span
-        time_points = np.arange(t_start, t_end + dt, dt)
-        n_steps = len(time_points)
-
-        # Armazenar trajetória
-        if store_all:
-            trajectory = np.zeros((n_steps, self.n_vars))
-            trajectory[0] = x_current
-
-        # Selecionar método de integração
-        step_func = self._step_rk4 if self.method == 'rk4' else self._step_euler
-
-        # Integrar
-        for i in range(1, n_steps):
-            x_current = step_func(x_current, dt)
-
-            # Verificar se ainda está no domínio
-            valid, msg = self._check_domain(x_current)
-            if not valid:
-                print(f"\n⚠️  AVISO: {msg}")
-                print(f"    Passo: {i}/{n_steps - 1}")
-                print(f"    Tempo: {time_points[i]:.4f}")
-                # Truncar trajetória no ponto onde saiu do domínio
-                if store_all:
-                    self.trajectory = trajectory[:i]
-                    self.time = time_points[:i]
-                    return self.trajectory
+        t_current = t_start
+        dt = dt_initial
+        
+        trajectory = [x_current.copy()]
+        time_points = [t_current]
+        
+        # Estatísticas
+        n_accepted = 0
+        n_rejected = 0
+        dt_history = []
+        
+        # ESCOLHER função de passo com erro baseada no método
+        if self.method == 'rk4':
+            step_with_error = self._step_rk4_with_error
+            order = 4  # Ordem do método (para ajuste de dt)
+        else:  # euler
+            step_with_error = self._step_euler_with_error
+            order = 1  # Ordem do método
+            if verbose:
+                warnings.warn(
+                    "Usando Euler adaptativo. Para melhor eficiência, "
+                    "considere usar method='rk4'.",
+                    UserWarning,
+                    stacklevel=2
+                )
+        
+        if verbose:
+            print(f"\n{'='*70}")
+            print(f"SIMULAÇÃO ADAPTATIVA INICIADA")
+            print(f"{'='*70}")
+            print(f"Intervalo: [{t_start:.2f}, {t_end:.2f}]")
+            print(f"Método: {self.method.upper()} (ordem {order})")
+            print(f"dt inicial: {dt_initial:.6f}")
+            print(f"Tolerância: {tolerance:.2e}")
+            print(f"Limites dt: [{dt_min:.2e}, {dt_max:.2e}]")
+            print(f"{'='*70}\n")
+        
+        # Loop de integração adaptativa
+        step_count = 0
+        while t_current < t_end and step_count < max_steps:
+            step_count += 1
+            
+            # Ajustar dt se ultrapassar t_end
+            if t_current + dt > t_end:
+                dt = t_end - t_current
+            
+            # Tentar passo com estimativa de erro (usa método apropriado)
+            x_next, error = step_with_error(x_current, dt)
+            
+            # Calcular erro relativo (normalizado)
+            error_norm = error / (tolerance * (1.0 + np.linalg.norm(x_current)))
+            
+            if error_norm <= 1.0:
+                # ✓ Passo aceito: erro dentro da tolerância
+                
+                # Verificar domínio
+                valid, msg = self._check_domain(x_next)
+                if not valid:
+                    print(f"\n⚠️ AVISO: {msg}")
+                    print(f"   Tempo: {t_current:.6f}")
+                    print(f"   Passo: {step_count}")
+                    break
+                
+                # Aceitar passo
+                x_current = x_next
+                t_current += dt
+                
+                trajectory.append(x_current.copy())
+                time_points.append(t_current)
+                dt_history.append(dt)
+                
+                n_accepted += 1
+                
+                if verbose and n_accepted % 100 == 0:
+                    progress = 100 * (t_current - t_start) / (t_end - t_start)
+                    print(f"Progresso: {progress:.1f}% | "
+                        f"t={t_current:.4f} | "
+                        f"dt={dt:.6f} | "
+                        f"Aceitos: {n_accepted} | "
+                        f"Rejeitados: {n_rejected}")
+                
+                # Aumentar dt para o próximo passo se erro for muito pequeno
+                # Fator de segurança: 0.9
+                # Regra: dt_new = dt * (tol/erro)^(1/(order+1))
+                if error_norm > 0:
+                    # Fórmula depende da ordem do método
+                    exponent = 1.0 / (order + 1)
+                    factor = 0.9 * (1.0 / error_norm) ** exponent
+                    factor = min(factor, 2.0)  # Não aumentar mais que 2x
+                    factor = max(factor, 0.5)   # Não diminuir mais que 0.5x
+                    dt = dt * factor
                 else:
-                    return x_current
+                    # Erro zero ou negligível: aumentar dt
+                    dt = min(dt * 1.5, dt_max)
+                
+                # Respeitar limites
+                dt = np.clip(dt, dt_min, dt_max)
+                
+            else:
+                # ✗ Passo rejeitado: erro muito grande
+                n_rejected += 1
+                
+                # Reduzir dt e tentar novamente
+                # Fator de segurança: 0.9
+                exponent = 1.0 / (order + 1)
+                factor = 0.9 * (1.0 / error_norm) ** exponent
+                factor = max(factor, 0.1)  # Não reduzir mais que 10x
+                dt = dt * factor
+                
+                # Respeitar limite mínimo
+                if dt < dt_min:
+                    print(f"\n⚠️ AVISO: dt atingiu limite mínimo ({dt_min:.2e})")
+                    print(f"   Erro muito alto para tolerância especificada")
+                    print(f"   Tempo: {t_current:.6f}")
+                    break
+        
+        # Verificar se loop foi interrompido
+        if step_count >= max_steps:
+            warnings.warn(
+                f"Número máximo de passos ({max_steps}) atingido. "
+                f"Considere aumentar max_steps ou relaxar a tolerância.",
+                UserWarning
+            )
+        
+        # Converter para arrays
+        self.time = np.array(time_points)
+        self.trajectory = np.array(trajectory)
+        
+        # Imprimir estatísticas finais
+        if verbose:
+            print(f"\n{'='*70}")
+            print(f"SIMULAÇÃO CONCLUÍDA")
+            print(f"{'='*70}")
+            print(f"Método: {self.method.upper()}")
+            print(f"Passos aceitos: {n_accepted}")
+            print(f"Passos rejeitados: {n_rejected}")
+            print(f"Total de passos: {n_accepted + n_rejected}")
+            if n_accepted + n_rejected > 0:
+                print(f"Taxa de aceitação: {100*n_accepted/(n_accepted+n_rejected):.1f}%")
+            print(f"Pontos na trajetória: {len(time_points)}")
+            if len(dt_history) > 0:
+                print(f"dt médio: {np.mean(dt_history):.6f}")
+                print(f"dt mínimo: {np.min(dt_history):.6f}")
+                print(f"dt máximo: {np.max(dt_history):.6f}")
+            print(f"Tempo final: {t_current:.6f}")
+            print(f"{'='*70}\n")
+        
+        return self.time, self.trajectory
 
-            if store_all:
-                trajectory[i] = x_current
 
-        # Armazenar resultados
-        if store_all:
-            self.trajectory = trajectory
-            self.time = time_points
-            return trajectory
-        else:
-            return x_current
+    def _step_euler_with_error(self, x: np.ndarray, dt: float) -> Tuple[np.ndarray, float]:
+        """
+        Um passo Euler com estimativa de erro local.
+        
+        Usa dois meios passos para estimar o erro (menos preciso que RK4).
+        
+        Parâmetros:
+            x: Estado atual
+            dt: Tamanho do passo
+            
+        Retorna:
+            (x_next, erro): Próximo estado e estimativa do erro
+        """
+        # Passo completo
+        x_full = self._step_euler(x, dt)
+        
+        # Dois meios passos
+        x_half1 = self._step_euler(x, dt/2)
+        x_half2 = self._step_euler(x_half1, dt/2)
+        
+        # Estimativa do erro local
+        # O erro de Euler é O(h^2), então a diferença é aproximadamente 2*erro
+        error_estimate = np.linalg.norm(x_full - x_half2) / 2.0
+        
+        return x_half2, error_estimate
