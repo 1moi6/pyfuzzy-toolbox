@@ -4,8 +4,18 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/pyfuzzy-toolbox.svg)](https://pypi.org/project/pyfuzzy-toolbox/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://pepy.tech/badge/pyfuzzy-toolbox)](https://pepy.tech/project/pyfuzzy-toolbox)
+[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://1moi6.github.io/pyfuzzy-toolbox/)
 
 A comprehensive Python library for Fuzzy Systems with focus on education and professional applications. Includes inference, learning, fuzzy differential equations, and p-fuzzy systems.
+
+## 📚 Documentation
+
+**[Read the full documentation →](https://1moi6.github.io/pyfuzzy-toolbox/)**
+
+- **Getting Started**: Installation and quick tutorials
+- **User Guides**: In-depth guides for each module
+- **API Reference**: Complete method documentation
+- **Examples**: 18+ interactive Colab notebooks
 
 ## 📦 Installation
 
@@ -81,6 +91,7 @@ print(f"Fan speed: {result['fan_speed']:.1f}%")
 
 ## 🔗 Links
 
+- **Documentation**: https://1moi6.github.io/pyfuzzy-toolbox/
 - **PyPI**: https://pypi.org/project/pyfuzzy-toolbox/
 - **GitHub**: https://github.com/1moi6/pyfuzzy-toolbox
 
