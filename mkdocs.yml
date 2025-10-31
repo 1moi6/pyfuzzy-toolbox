@@ -1,0 +1,144 @@
+# Project information
+site_name: pyfuzzy-toolbox Documentation
+site_url: https://github.com/1moi6/pyfuzzy-toolbox
+site_author: Moiseis Cecconello
+site_description: >-
+  Comprehensive Python library for Fuzzy Systems with focus on
+  education and professional applications.
+
+# Repository
+repo_name: 1moi6/pyfuzzy-toolbox
+repo_url: https://github.com/1moi6/pyfuzzy-toolbox
+edit_uri: ""
+
+# Copyright
+copyright: Copyright &copy; 2025 Moiseis Cecconello
+
+# Configuration
+theme:
+  name: material
+  language: en
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+
+  icon:
+    repo: fontawesome/brands/github
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+  - tags
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/1moi6/pyfuzzy-toolbox
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/pyfuzzy-toolbox/
+
+  version:
+    provider: mike
+
+# Additional JavaScript
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Page tree
+nav:
+  - Home: index.md
+
+  - Getting Started:
+    - Installation: getting_started/installation.md
+    - Quickstart: getting_started/quickstart.md
+    - Key Concepts: getting_started/key_concepts.md
+
+  - User Guide:
+    - Fundamentals: user_guide/fundamentals.md
+    - Inference Systems: user_guide/inference_systems.md
+    - Learning & Optimization: user_guide/learning.md
+    - Dynamic Systems: user_guide/dynamics.md
+
+  - API Reference:
+    - Core: api_reference/core.md
+    - Inference: api_reference/inference.md
+    - Learning: api_reference/learning.md
+    - Dynamics: api_reference/dynamics.md
+
+  - Examples:
+    - Gallery: examples/gallery.md
+
+  - About:
+    - Contributing: contributing/development.md
+    - License: about/license.md
