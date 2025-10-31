@@ -98,6 +98,32 @@ plugins:
   - search:
       lang: en
   - tags
+  - with-pdf:
+      author: Moiseis Cecconello
+      copyright: Copyright &copy; 2025 Moiseis Cecconello
+      cover_title: pyfuzzy-toolbox
+      cover_subtitle: Professional Fuzzy Systems for Python
+      output_path: pdf/pyfuzzy-toolbox-documentation.pdf
+      enabled_if_env: ENABLE_PDF_EXPORT
+      two_columns_level: 3
+      toc_title: Table of Contents
+      heading_shift: false
+      toc_level: 2
+      ordered_chapter_level: 2
+      excludes_children:
+        - 'release-notes/:upgrading'
+        - 'release-notes/:changelog'
+      exclude_pages:
+        - 'about/license'
+        - 'contributing/development'
+      convert_iframe:
+        - src: IFRAME SRC
+          img: POSTER IMAGE URL
+          text: ALTERNATE TEXT
+      cover_logo: null
+      debug_html: false
+      show_anchors: true
+      verbose: false
 
 # Extra
 extra:

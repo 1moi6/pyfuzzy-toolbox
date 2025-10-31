@@ -146,6 +146,8 @@ Thumbs.db
 *.png
 *.jpg
 *.pdf
+# Exception: keep documentation PDF
+!pyfuzzy-toolbox-documentation.pdf
 exported_rules/
 *.npz
 *.csv
