@@ -26,5 +26,8 @@ jobs:
         run: |
           pip install mkdocs mkdocs-material
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (without PDF)
         run: mkdocs gh-deploy --force
+        env:
+          # Don't generate PDF in CI (requires weasyprint dependencies)
+          ENABLE_PDF_EXPORT: "0"
