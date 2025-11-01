@@ -157,6 +157,20 @@ nav:
     - Learning & Optimization: user_guide/learning.md
     - Dynamic Systems: user_guide/dynamics.md
 
+  - Quick Start Guides:
+    - Overview: quick_start/index.md
+    - Learning:
+      - ANFIS: quick_start/anfis.md
+      - Wang-Mendel: quick_start/wang_mendel.md
+      - Mamdani Learning: quick_start/mamdani_learning.md
+    - Inference:
+      - Mamdani System: quick_start/mamdani_system.md
+      - Sugeno System: quick_start/sugeno_system.md
+    - Dynamics:
+      - p-Fuzzy Discrete: quick_start/pfuzzy_discrete.md
+      - p-Fuzzy Continuous: quick_start/pfuzzy_continuous.md
+      - Fuzzy ODE Solver: quick_start/fuzzy_ode.md
+
   - API Reference:
     - Core: api_reference/core.md
     - Inference: api_reference/inference.md
