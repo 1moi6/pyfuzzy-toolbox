@@ -65,7 +65,135 @@ Explore hands-on examples organized by topic:
 
 All notebooks can be opened directly in Google Colab!
 
-## ⚡ Quick Start
+## 📖 Quick Start Guides
+
+Comprehensive guides for each module with theory, examples, and best practices:
+
+### 🎛️ Inference Systems
+Build fuzzy control systems and decision-making tools.
+
+<table>
+<tr>
+<td width="50%">
+
+**[Mamdani System](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/mamdani_system/)**
+
+Linguistic fuzzy inference with interpretable rules.
+
+- ✅ Intuitive rule creation
+- ✅ Multiple defuzzification methods
+- ✅ Visualization tools
+- 📓 [Tipping Example](notebooks_colab/02_inference/01_mamdani_tipping.ipynb)
+
+</td>
+<td width="50%">
+
+**[Sugeno System](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/sugeno_system/)**
+
+Efficient inference with mathematical consequents.
+
+- ✅ Order 0 (constant) or Order 1 (linear)
+- ✅ Fast computation
+- ✅ Ideal for optimization
+- 📓 [Zero-Order Example](notebooks_colab/02_inference/03_sugeno_zero_order.ipynb)
+
+</td>
+</tr>
+</table>
+
+### 🧠 Learning & Optimization
+Automatic rule generation and parameter tuning from data.
+
+<table>
+<tr>
+<td width="33%">
+
+**[Wang-Mendel](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/wang_mendel/)**
+
+Single-pass rule extraction.
+
+- ✅ Fast learning
+- ✅ Auto task detection
+- ✅ Interpretable rules
+- 📓 [Nonlinear Example](notebooks_colab/03_learning/wang_mendel_nonlinear.ipynb)
+
+</td>
+<td width="33%">
+
+**[ANFIS](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/anfis/)**
+
+Neuro-fuzzy hybrid learning.
+
+- ✅ Gradient descent
+- ✅ Metaheuristics (PSO/DE/GA)
+- ✅ High accuracy
+- 📓 [Classification Example](notebooks_colab/03_learning/anfis_iris.ipynb)
+
+</td>
+<td width="33%">
+
+**[Mamdani Learning](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/mamdani_learning/)**
+
+Optimize existing systems.
+
+- ✅ SA, GA, PSO, DE
+- ✅ Preserve interpretability
+- ✅ Fine-tune consequents
+- 📓 [Optimization Example](notebooks_colab/03_learning/rules_optimization.ipynb)
+
+</td>
+</tr>
+</table>
+
+### 🌊 Dynamic Systems
+Model temporal evolution with fuzzy uncertainty.
+
+<table>
+<tr>
+<td width="33%">
+
+**[p-Fuzzy Discrete](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/pfuzzy_discrete/)**
+
+Discrete-time dynamics.
+
+- ✅ x_{n+1} = x_n + f(x_n)
+- ✅ Absolute/relative modes
+- ✅ Population models
+- 📓 [Predator-Prey Example](notebooks_colab/04_dynamics/pfuzzy_discrete_predator_prey.ipynb)
+
+</td>
+<td width="33%">
+
+**[p-Fuzzy Continuous](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/pfuzzy_continuous/)**
+
+Continuous-time dynamics.
+
+- ✅ dx/dt = f(x)
+- ✅ Euler or RK4
+- ✅ Adaptive stepping
+- 📓 [Continuous Example](notebooks_colab/04_dynamics/pfuzzy_continuous_predator_prey.ipynb)
+
+</td>
+<td width="33%">
+
+**[Fuzzy ODE](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/fuzzy_ode/)**
+
+ODEs with fuzzy uncertainty.
+
+- ✅ α-level method
+- ✅ Fuzzy parameters/ICs
+- ✅ Monte Carlo option
+- 📓 [Logistic Example](notebooks_colab/04_dynamics/fuzzy_ode_logistic.ipynb)
+
+</td>
+</tr>
+</table>
+
+**[📚 View All Guides](https://1moi6.github.io/pyfuzzy-toolbox/quick_start/quickstart_index/)**
+
+---
+
+## ⚡ Quick Example
 
 ```python
 import fuzzy_systems as fs
