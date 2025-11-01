@@ -1490,13 +1490,13 @@ class FuzzyInferenceSystem:
                ha='center', fontsize=12, fontweight='bold', color='darkred')
         
         # Title and adjustments
-        ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+        ax.set_title(title, fontsize=14, fontweight='bold', pad=40)
         ax.set_xlabel('')
         ax.set_ylabel('Rules', fontsize=12, fontweight='bold')
         
         # Colorbar
-        cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label('Term Intensity', rotation=270, labelpad=20, fontsize=10)
+        # cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        # cbar.set_label('Term Intensity', rotation=270, labelpad=20, fontsize=10)
         
         plt.tight_layout()
         return fig, ax

@@ -30,7 +30,9 @@
       "Bash(curl:*)",
       "Bash(gh run view:*)",
       "Bash(ENABLE_PDF_EXPORT=0 mkdocs gh-deploy:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nFix GitHub Actions: install mkdocs-with-pdf plugin\n\nThe plugin needs to be installed even when disabled via\nENABLE_PDF_EXPORT=0. Without it, mkdocs fails to load the config.\n\nThis fixes the deployment workflow failures.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix GitHub Actions: install mkdocs-with-pdf plugin\n\nThe plugin needs to be installed even when disabled via\nENABLE_PDF_EXPORT=0. Without it, mkdocs fails to load the config.\n\nThis fixes the deployment workflow failures.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
