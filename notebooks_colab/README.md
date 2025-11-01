@@ -76,7 +76,7 @@ notebooks_colab/
 ---
 
 ### 02_sugeno_zero_order.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/02_sugeno_zero_order.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/03_sugeno_zero_order.ipynb)
 
 **Conteúdo:**
 - Sistema Sugeno Ordem 0 (saídas constantes)
@@ -90,7 +90,7 @@ notebooks_colab/
 ---
 
 ### 03_sugeno_first_order.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/03_sugeno_first_order.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/04_sugeno_first_order.ipynb)
 
 **Conteúdo:**
 - Sistema Sugeno Ordem 1 (saídas lineares)
@@ -104,7 +104,7 @@ notebooks_colab/
 ---
 
 ### 04_voting_prediction.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/04_voting_prediction.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/02_voting_prediction.ipynb)
 
 **Conteúdo:**
 - Atividade prática completa
@@ -120,7 +120,7 @@ notebooks_colab/
 ## 🧠 03_learning/ - Aprendizado e Otimização
 
 ### 01_wang_mendel_nonlinear.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/01_wang_mendel_nonlinear.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_nonlinear.ipynb)
 
 **Conteúdo:**
 - Método de Wang-Mendel para geração automática de regras
@@ -135,7 +135,7 @@ notebooks_colab/
 ---
 
 ### 02_wang_mendel_linear.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/02_wang_mendel_linear.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_linear.ipynb)
 
 **Conteúdo:**
 - Wang-Mendel aplicado a função linear: f(x) = -2x + 5
@@ -149,7 +149,7 @@ notebooks_colab/
 ---
 
 ### 03_wang_mendel_iris.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/03_wang_mendel_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_iris.ipynb)
 
 **Conteúdo:**
 - Wang-Mendel para **classificação** (dataset Iris)
@@ -164,7 +164,7 @@ notebooks_colab/
 ---
 
 ### 04_anfis_iris.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/04_anfis_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/anfis_iris.ipynb)
 
 **Conteúdo:**
 - ANFIS: combinação de Lógica Fuzzy + Redes Neurais
@@ -185,7 +185,7 @@ notebooks_colab/
 ---
 
 ### 05_pso_optimization.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/05_pso_optimization.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/rules_optimization.ipynb)
 
 **Conteúdo:**
 - **PSO (Particle Swarm Optimization)**: Otimização por enxame
@@ -207,7 +207,7 @@ notebooks_colab/
 ## 🌊 04_dynamics/ - Sistemas Dinâmicos p-Fuzzy
 
 ### 01_pfuzzy_discrete_predator_prey.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_discrete_predator_prey.ipynb)
 
 **Conteúdo:**
 - Sistema p-fuzzy discreto: $x_{n+1} = x_n + f(x_n)$
@@ -228,7 +228,7 @@ notebooks_colab/
 ---
 
 ### 02_pfuzzy_continuous_predator_prey.ipynb
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_continuous_predator_prey.ipynb)
 
 **Conteúdo:**
 - Sistema p-fuzzy contínuo: $\frac{dx}{dt} = f(x)$

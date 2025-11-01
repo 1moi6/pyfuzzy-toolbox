@@ -5,7 +5,7 @@ from scipy.integrate import solve_ivp
 import warnings
 import itertools
 
-# Importação opcional de joblib para paralelização
+# Optional joblib import for parallelization
 try:
     from joblib import Parallel, delayed
     HAS_JOBLIB = True
@@ -17,31 +17,31 @@ except ImportError:
         ImportWarning
     )
 
-# Integração com core
+# Core integration
 from ..core import FuzzySet, triangular, trapezoidal, gaussian
 
 
 @dataclass
 class FuzzyNumber:
     """
-    Número fuzzy baseado em FuzzySet do core.
+    Fuzzy number based on core FuzzySet.
 
-    Representa um número fuzzy através de sua função de pertinência.
-    Integrado completamente com fuzzy_systems.core.
+    Represents a fuzzy number through its membership function.
+    Fully integrated with fuzzy_systems.core.
 
-    Atributos:
-        fuzzy_set: FuzzySet do core (triangular, gaussiana, etc)
-        support: Suporte do número fuzzy [min, max]
-        name: Nome descritivo (opcional)
+    Attributes:
+        fuzzy_set: Core FuzzySet (triangular, gaussian, etc)
+        support: Fuzzy number support [min, max]
+        name: Descriptive name (optional)
 
-    Exemplos:
-        >>> # Número triangular ~5
+    Examples:
+        >>> # Triangular number ~5
         >>> num1 = FuzzyNumber.triangular(center=5, spread=1)
 
-        >>> # Número gaussiano ~10
+        >>> # Gaussian number ~10
         >>> num2 = FuzzyNumber.gaussian(mean=10, sigma=2)
 
-        >>> # Número trapezoidal
+        >>> # Trapezoidal number
         >>> num3 = FuzzyNumber.trapezoidal(a=1, b=2, c=3, d=4)
     """
     fuzzy_set: FuzzySet
@@ -52,15 +52,15 @@ class FuzzyNumber:
     def triangular(cls, center: float, spread: float,
                    name: str = "triangular") -> 'FuzzyNumber':
         """
-        Cria número fuzzy triangular.
+        Creates triangular fuzzy number.
 
         Args:
-            center: Centro (pico, μ=1)
-            spread: Espalhamento (distância do centro aos extremos)
-            name: Nome do número
+            center: Center (peak, μ=1)
+            spread: Spread (distance from center to extremes)
+            name: Number name
 
         Returns:
-            FuzzyNumber triangular
+            Triangular FuzzyNumber
         """
         a = center - spread
         b = center
@@ -82,17 +82,17 @@ class FuzzyNumber:
     def trapezoidal(cls, a: float, b: float, c: float, d: float,
                     name: str = "trapezoidal") -> 'FuzzyNumber':
         """
-        Cria número fuzzy trapezoidal.
+        Creates trapezoidal fuzzy number.
 
         Args:
-            a: Limite inferior
-            b: Início do plateau
-            c: Fim do plateau
-            d: Limite superior
-            name: Nome do número
+            a: Lower bound
+            b: Plateau start
+            c: Plateau end
+            d: Upper bound
+            name: Number name
 
         Returns:
-            FuzzyNumber trapezoidal
+            Trapezoidal FuzzyNumber
         """
         fuzzy_set = FuzzySet(
             name=name,
@@ -111,16 +111,16 @@ class FuzzyNumber:
                  n_sigmas: float = 3.0,
                  name: str = "gaussian") -> 'FuzzyNumber':
         """
-        Cria número fuzzy gaussiano.
+        Creates gaussian fuzzy number.
 
         Args:
-            mean: Média (centro)
-            sigma: Desvio padrão
-            n_sigmas: Quantos sigmas para definir suporte (padrão: 3)
-            name: Nome do número
+            mean: Mean (center)
+            sigma: Standard deviation
+            n_sigmas: How many sigmas to define support (default: 3)
+            name: Number name
 
         Returns:
-            FuzzyNumber gaussiano
+            Gaussian FuzzyNumber
         """
         fuzzy_set = FuzzySet(
             name=name,
@@ -139,11 +139,11 @@ class FuzzyNumber:
     @classmethod
     def from_fuzzy_set(cls, fuzzy_set: FuzzySet, support: Tuple[float, float]) -> 'FuzzyNumber':
         """
-        Cria FuzzyNumber a partir de um FuzzySet do core.
+        Creates FuzzyNumber from a core FuzzySet.
 
         Args:
-            fuzzy_set: FuzzySet do core
-            support: Suporte [min, max]
+            fuzzy_set: Core FuzzySet
+            support: Support [min, max]
 
         Returns:
             FuzzyNumber
@@ -156,31 +156,31 @@ class FuzzyNumber:
 
     def alpha_cut(self, alpha: float, n_points: int = 100) -> Tuple[float, float]:
         """
-        Extrai α-corte do número fuzzy.
+        Extracts α-cut from fuzzy number.
 
         Args:
-            alpha: Nível α (0 a 1)
-            n_points: Pontos para busca numérica
+            alpha: α level (0 to 1)
+            n_points: Points for numerical search
 
         Returns:
-            (min, max) do α-corte
+            (min, max) of α-cut
         """
         if not (0 <= alpha <= 1):
-            raise ValueError(f"Alpha deve estar em [0, 1], recebido: {alpha}")
+            raise ValueError(f"Alpha must be in [0, 1], received: {alpha}")
 
-        # Caso especial: α = 0 retorna suporte completo
+        # Special case: α = 0 returns full support
         if alpha == 0:
             return self.support
 
-        # Busca numérica dos pontos onde μ(x) >= alpha
+        # Numerical search for points where μ(x) >= alpha
         x = np.linspace(self.support[0], self.support[1], n_points)
         mu = self.fuzzy_set.membership(x)
 
-        # Pontos que satisfazem μ(x) >= alpha
+        # Points that satisfy μ(x) >= alpha
         valid_indices = np.where(mu >= alpha - 1e-10)[0]
 
         if len(valid_indices) == 0:
-            # Alpha muito alto, retorna centro
+            # Alpha too high, return center
             center = (self.support[0] + self.support[1]) / 2
             return (center, center)
 
@@ -190,7 +190,7 @@ class FuzzyNumber:
         return (x_min, x_max)
 
     def membership(self, x: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
-        """Calcula grau de pertinência."""
+        """Computes membership degree."""
         return self.fuzzy_set.membership(x)
 
     def __repr__(self) -> str:
@@ -202,16 +202,16 @@ class FuzzyNumber:
 @dataclass
 class FuzzySolution:
     """
-    Solução de uma EDO fuzzy.
+    Solution of a fuzzy ODE.
 
-    Contém envelopes (min/max) para cada α-nível em cada instante de tempo.
+    Contains envelopes (min/max) for each α-level at each time instant.
 
-    Atributos:
-        t: Array de tempos
-        y_min: Array [n_alpha, n_vars, n_time] com envelope inferior
-        y_max: Array [n_alpha, n_vars, n_time] com envelope superior
-        alphas: Níveis α utilizados
-        var_names: Nomes das variáveis
+    Attributes:
+        t: Time array
+        y_min: Array [n_alpha, n_vars, n_time] with lower envelope
+        y_max: Array [n_alpha, n_vars, n_time] with upper envelope
+        alphas: α levels used
+        var_names: Variable names
     """
     t: np.ndarray
     y_min: np.ndarray  # shape: (n_alpha, n_vars, n_time)
@@ -226,114 +226,155 @@ class FuzzySolution:
 
     def get_alpha_level(self, alpha: float) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Retorna envelopes para um α-nível específico.
+        Returns envelopes for a specific α-level.
 
         Args:
-            alpha: Nível α desejado
+            alpha: Desired α level
 
         Returns:
-            (y_min, y_max) para o α mais próximo
+            (y_min, y_max) for the nearest α
         """
         idx = np.argmin(np.abs(self.alphas - alpha))
         return self.y_min[idx], self.y_max[idx]
 
-    def plot(self, var_idx: int = 0, ax=None, alpha_levels=None,
-             show=True, **kwargs):
+    def plot(self, var_idx: int = None, ax=None, alpha_levels=None,
+             show=True, figsize=None, **kwargs):
         """
-        Plota solução fuzzy com α-níveis.
+        Plots fuzzy solution with α-levels.
 
         Args:
-            var_idx: Índice da variável a plotar
-            ax: Eixo matplotlib (None = criar novo)
-            alpha_levels: Lista de αs a plotar (None = todos)
-            show: Se True, chama plt.show()
-            **kwargs: Argumentos para plt.plot
+            var_idx: Variable index to plot (None = plot all variables)
+            ax: Matplotlib axis or array of axes (None = create new)
+            alpha_levels: List of αs to plot (None = all)
+            show: If True, calls plt.show()
+            figsize: Figure size (width, height). If None, auto-sized based on n_vars
+            **kwargs: Arguments for fill_between
         """
         import matplotlib.pyplot as plt
-
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(10, 6))
 
         if alpha_levels is None:
             alpha_levels = self.alphas
 
-        # Colormap para α-níveis
+        # Determine which variables to plot
+        n_vars = len(self.var_names)
+
+        if var_idx is None:
+            # Plot all variables
+            vars_to_plot = list(range(n_vars))
+        else:
+            # Plot single variable
+            vars_to_plot = [var_idx]
+
+        n_plots = len(vars_to_plot)
+
+        # Create figure and axes if not provided
+        if ax is None:
+            if n_plots == 1:
+                if figsize is None:
+                    figsize = (10, 6)
+                fig, ax = plt.subplots(figsize=figsize)
+                axes = [ax]
+            else:
+                # Multiple subplots
+                if figsize is None:
+                    # Auto-size: 10 width, 4 height per subplot
+                    figsize = (10, 4 * n_plots)
+                fig, axes = plt.subplots(n_plots, 1, figsize=figsize)
+                # Ensure axes is always a list
+                if n_plots == 1:
+                    axes = [axes]
+        else:
+            # Use provided axes
+            if isinstance(ax, (list, tuple)):
+                axes = ax
+            else:
+                axes = [ax]
+            fig = axes[0].get_figure()
+
+        # Colormap for α-levels
         cmap = plt.cm.Blues
 
-        for i, alpha in enumerate(self.alphas):
-            if alpha not in alpha_levels:
-                continue
+        # Plot each variable
+        for plot_idx, v_idx in enumerate(vars_to_plot):
+            current_ax = axes[plot_idx]
 
-            y_min_alpha, y_max_alpha = self.get_alpha_level(alpha)
+            for i, alpha in enumerate(self.alphas):
+                if alpha not in alpha_levels:
+                    continue
 
-            # Intensidade da cor proporcional a α
-            color = cmap(0.3 + 0.7 * alpha)
+                y_min_alpha, y_max_alpha = self.get_alpha_level(alpha)
 
-            # Plota envelope
-            ax.fill_between(
-                self.t,
-                y_min_alpha[var_idx],
-                y_max_alpha[var_idx],
-                alpha=0.3,
-                color=color,
-                label=f'α={alpha:.2f}' if i % max(
-                    1, len(self.alphas) // 5) == 0 else None
-            )
+                # Color intensity proportional to α
+                color = cmap(0.3 + 0.7 * alpha)
 
-        ax.set_xlabel('Tempo', fontsize=12)
-        ax.set_ylabel(self.var_names[var_idx], fontsize=12)
-        ax.set_title(f'Solução Fuzzy: {self.var_names[var_idx]}',
-                     fontsize=14, fontweight='bold')
-        ax.legend(loc='best')
-        ax.grid(True, alpha=0.3)
+                # Plot envelope
+                current_ax.fill_between(
+                    self.t,
+                    y_min_alpha[v_idx],
+                    y_max_alpha[v_idx],
+                    alpha=0.3,
+                    color=color,
+                    label=f'α={alpha:.2f}' if i % max(
+                        1, len(self.alphas) // 5) == 0 else None,
+                    **kwargs
+                )
+
+            current_ax.set_xlabel('Time', fontsize=12)
+            current_ax.set_ylabel(self.var_names[v_idx], fontsize=12)
+            current_ax.set_title(f'Fuzzy Solution: {self.var_names[v_idx]}',
+                         fontsize=14, fontweight='bold')
+            current_ax.legend(loc='best')
+            current_ax.grid(True, alpha=0.3)
 
         if show:
             plt.tight_layout()
             plt.show()
 
+        return fig, axes
+
     def to_dataframe(self, alpha: Optional[float] = None):
         """
-        Converte a solução fuzzy para pandas DataFrame.
+        Converts fuzzy solution to pandas DataFrame.
 
         Args:
-            alpha: Nível α específico (None = usa α=1.0, núcleo fuzzy)
+            alpha: Specific α level (None = uses α=1.0, fuzzy core)
 
         Returns:
-            pandas.DataFrame com colunas:
-                - time: Tempo
-                - {var}_min: Envelope inferior para cada variável
-                - {var}_max: Envelope superior para cada variável
+            pandas.DataFrame with columns:
+                - time: Time
+                - {var}_min: Lower envelope for each variable
+                - {var}_max: Upper envelope for each variable
 
         Raises:
-            ImportError: Se pandas não está instalado
+            ImportError: If pandas is not installed
 
-        Exemplo:
+        Example:
             >>> sol = solver.solve()
             >>> df = sol.to_dataframe(alpha=0.5)
             >>> df.head()
             >>>
-            >>> # Exportar para CSV
-            >>> df.to_csv('solucao_fuzzy.csv', index=False)
+            >>> # Export to CSV
+            >>> df.to_csv('fuzzy_solution.csv', index=False)
         """
         try:
             import pandas as pd
         except ImportError:
             raise ImportError(
-                "pandas é necessário para to_dataframe(). "
-                "Instale com: pip install pandas"
+                "pandas is required for to_dataframe(). "
+                "Install with: pip install pandas"
             )
 
-        # Se alpha não fornecido, usa α=1.0 (núcleo)
+        # If alpha not provided, use α=1.0 (core)
         if alpha is None:
             alpha = 1.0
 
-        # Busca α-nível mais próximo
+        # Find nearest α-level
         idx = np.argmin(np.abs(self.alphas - alpha))
         alpha_real = self.alphas[idx]
 
         y_min, y_max = self.get_alpha_level(alpha_real)
 
-        # Constrói dicionário de dados
+        # Build data dictionary
         data = {'time': self.t}
 
         for i, var_name in enumerate(self.var_names):
@@ -342,7 +383,7 @@ class FuzzySolution:
 
         df = pd.DataFrame(data)
 
-        # Adiciona metadados como atributos
+        # Add metadata as attributes
         df.attrs['alpha_level'] = float(alpha_real)
         df.attrs['n_alpha_levels'] = len(self.alphas)
         df.attrs['var_names'] = self.var_names
@@ -352,28 +393,28 @@ class FuzzySolution:
     def to_csv(self, filename: str, alpha: Optional[float] = None,
                sep: str = ',', decimal: str = '.', **kwargs):
         """
-        Exporta solução fuzzy para arquivo CSV.
+        Exports fuzzy solution to CSV file.
 
         Args:
-            filename: Caminho do arquivo CSV
-            alpha: Nível α (None = α=1.0)
-            sep: Separador de colunas (padrão: ',')
-            decimal: Separador decimal (padrão: '.' para internacional,
-                    use ',' para formato brasileiro/europeu)
-            **kwargs: Argumentos adicionais para pd.DataFrame.to_csv()
+            filename: CSV file path
+            alpha: α level (None = α=1.0)
+            sep: Column separator (default: ',')
+            decimal: Decimal separator (default: '.' for international,
+                    use ',' for Brazilian/European format)
+            **kwargs: Additional arguments for pd.DataFrame.to_csv()
 
-        Exemplo:
-            >>> sol.to_csv('solucao.csv')
+        Example:
+            >>> sol.to_csv('solution.csv')
             >>>
-            >>> # Formato brasileiro (Excel)
-            >>> sol.to_csv('solucao.csv', sep=';', decimal=',')
+            >>> # Brazilian format (Excel)
+            >>> sol.to_csv('solution.csv', sep=';', decimal=',')
             >>>
-            >>> # α-nível específico
-            >>> sol.to_csv('solucao_alpha05.csv', alpha=0.5)
+            >>> # Specific α-level
+            >>> sol.to_csv('solution_alpha05.csv', alpha=0.5)
         """
         df = self.to_dataframe(alpha=alpha)
 
-        # Configurações padrão do CSV
+        # Default CSV settings
         csv_kwargs = {
             'index': False,
             'sep': sep,
@@ -420,23 +461,23 @@ class FuzzyODESolver:
         self.atol = atol
         self.var_names = var_names
 
-        # Dimensões
+        # Dimensions
         self.n_vars = len(initial_condition)
         self.n_params = len(self.params)
 
-        # Valida
+        # Validate
         self._validate_inputs()
 
     def _validate_inputs(self):
-        """Valida entradas."""
+        """Validates inputs."""
         if self.n_vars == 0:
-            raise ValueError("y0_fuzzy não pode ser vazio")
+            raise ValueError("y0_fuzzy cannot be empty")
 
         if self.n_alpha_cuts < 2:
-            raise ValueError("n_alpha_cuts deve ser >= 2")
+            raise ValueError("n_alpha_cuts must be >= 2")
 
     def _generate_alpha_levels(self) -> np.ndarray:
-        """Gera níveis α uniformemente espaçados."""
+        """Generates uniformly spaced α levels."""
         return np.linspace(0, 1, self.n_alpha_cuts)
 
     def _extract_alpha_cuts(
@@ -444,25 +485,25 @@ class FuzzyODESolver:
         alpha: float
     ) -> Tuple[List[Tuple[float, float]], Dict[str, Tuple[float, float]]]:
         """
-        Extrai α-cortes de todas as variáveis e parâmetros fuzzy.
+        Extracts α-cuts from all fuzzy variables and parameters.
 
         Args:
-            alpha: Nível α
+            alpha: α level
 
         Returns:
             (y0_intervals, params_intervals)
         """
-        # α-cortes das condições iniciais
+        # α-cuts of initial conditions
         y0_intervals = []
         for y0 in self.initial_condition:
             if isinstance(y0, FuzzyNumber):
                 interval = y0.alpha_cut(alpha)
             else:
-                # Valor crisp
+                # Crisp value
                 interval = (float(y0), float(y0))
             y0_intervals.append(interval)
 
-        # α-cortes dos parâmetros
+        # α-cuts of parameters
         params_intervals = {}
         for param_name, param_value in self.params.items():
             if isinstance(param_value, FuzzyNumber):
@@ -479,25 +520,25 @@ class FuzzyODESolver:
         params_intervals: Dict[str, Tuple[float, float]]
     ) -> Tuple[np.ndarray, List[Dict]]:
         """
-        Cria grid de pontos iniciais e parâmetros (vetorizado).
+        Creates grid of initial points and parameters (vectorized).
 
         Args:
-            y0_intervals: Intervalos [min, max] para cada y0
-            params_intervals: Intervalos para cada parâmetro
+            y0_intervals: [min, max] intervals for each y0
+            params_intervals: Intervals for each parameter
 
         Returns:
             (y0_grid, params_grid)
             y0_grid: array (n_points, n_vars)
-            params_grid: lista de dicts com parâmetros
+            params_grid: list of parameter dicts
         """
-        # Cria pontos para cada dimensão
+        # Create points for each dimension
         y0_points = []
         for y_min, y_max in y0_intervals:
             if y_min == y_max:
-                # Valor crisp
+                # Crisp value
                 points = np.array([y_min])
             else:
-                # Pontos uniformemente espaçados no intervalo
+                # Uniformly spaced points in interval
                 points = np.linspace(y_min, y_max, self.n_grid_points)
             y0_points.append(points)
 
@@ -509,25 +550,25 @@ class FuzzyODESolver:
                 points = np.linspace(p_min, p_max, self.n_grid_points)
             params_points[param_name] = points
 
-        # Produto cartesiano (grid completo)
-        # Para y0
+        # Cartesian product (full grid)
+        # For y0
         y0_meshgrid = np.meshgrid(*y0_points, indexing='ij')
         y0_grid = np.stack([grid.flatten() for grid in y0_meshgrid], axis=1)
 
-        # Para params
+        # For params
         if params_points:
             param_names = list(params_points.keys())
             param_values = [params_points[name] for name in param_names]
             param_meshgrid = np.meshgrid(*param_values, indexing='ij')
 
-            # Repete para cada combinação de y0
+            # Repeat for each y0 combination
             n_y0_combinations = y0_grid.shape[0]
             n_param_combinations = param_meshgrid[0].size
 
-            # Expande y0_grid para incluir todas as combinações de parâmetros
+            # Expand y0_grid to include all parameter combinations
             y0_grid_expanded = np.repeat(y0_grid, n_param_combinations, axis=0)
 
-            # Cria lista de dicts de parâmetros
+            # Create list of parameter dicts
             params_grid = []
             for _ in range(n_y0_combinations):
                 for idx in range(n_param_combinations):
@@ -539,7 +580,7 @@ class FuzzyODESolver:
 
             y0_grid = y0_grid_expanded
         else:
-            # Sem parâmetros fuzzy
+            # No fuzzy parameters
             params_grid = [{} for _ in range(y0_grid.shape[0])]
 
         return y0_grid, params_grid
@@ -551,28 +592,28 @@ class FuzzyODESolver:
         t_eval: np.ndarray
     ) -> np.ndarray:
         """
-        Resolve uma única EDO com parâmetros e tempos específicos.
+        Solves a single ODE with specific parameters and times.
 
         Args:
-            y0: Condição inicial
-            params: Parâmetros
-            t_eval: Tempos para avaliação
+            y0: Initial condition
+            params: Parameters
+            t_eval: Times for evaluation
 
         Returns:
-            Array (n_vars, len(t_eval)) com a solução
+            Array (n_vars, len(t_eval)) with solution
         """
 
-        # Wrapper para incluir parâmetros
+        # Wrapper to include parameters
         def ode_wrapper(t, y):
             return self.ode_func(t, y, **params)
 
-        # Resolve
+        # Solve
         sol = solve_ivp(
             ode_wrapper,
             self.t_span,
             y0,
             method=self.method,
-            t_eval=t_eval,  # *** SEMPRE especifica t_eval ***
+            t_eval=t_eval,  # *** ALWAYS specify t_eval ***
             rtol=self.rtol,
             atol=self.atol,
             dense_output=False
@@ -580,15 +621,15 @@ class FuzzyODESolver:
 
         if not sol.success:
             warnings.warn(
-                f"ODE solver falhou para y0={y0}, params={params}: {sol.message}",
+                f"ODE solver failed for y0={y0}, params={params}: {sol.message}",
                 RuntimeWarning
             )
-            # Retorna NaNs com a forma correta
+            # Return NaNs with correct shape
             return np.full((self.n_vars, len(t_eval)), np.nan)
 
-        # Garante que a saída tem a forma (n_vars, len(t_eval))
+        # Ensure output has shape (n_vars, len(t_eval))
         if sol.y.shape[0] != self.n_vars or sol.y.shape[1] != len(t_eval):
-            # Se algo deu errado, retorna NaNs
+            # If something went wrong, return NaNs
             return np.full((self.n_vars, len(t_eval)), np.nan)
 
         return sol.y
@@ -598,34 +639,34 @@ class FuzzyODESolver:
         alpha: float
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Resolve EDO para um α-nível específico.
+        Solves ODE for a specific α-level.
 
         Args:
-            alpha: Nível α
+            alpha: α level
 
         Returns:
             (t, y_min, y_max)
         """
 
-        # 1. Extrai α-cortes
+        # 1. Extract α-cuts
         y0_intervals, params_intervals = self._extract_alpha_cuts(alpha)
 
-        # 2. Cria grid
+        # 2. Create grid
         y0_grid, params_grid = self._create_grid(
             y0_intervals, params_intervals)
 
-        # *** CORREÇÃO: Define t_eval EXPLICITAMENTE se não fornecido ***
+        # *** FIX: Define t_eval EXPLICITLY if not provided ***
         if self.t_eval is None:
-            # Cria malha de tempos consistente
+            # Create consistent time mesh
             t_eval_internal = np.linspace(
                 self.t_span[0],
                 self.t_span[1],
-                100  # 100 pontos uniformes
+                100  # 100 uniform points
             )
         else:
             t_eval_internal = self.t_eval
 
-        # 3. Resolve EDOs (paralelo se joblib disponível, senão serial)
+        # 3. Solve ODEs (parallel if joblib available, otherwise serial)
         if HAS_JOBLIB and self.n_jobs != 1:
             solutions = Parallel(n_jobs=self.n_jobs, backend='loky')(
                 delayed(self._solve_single_ode_with_t_eval)(
@@ -634,26 +675,26 @@ class FuzzyODESolver:
                 for y0, params in zip(y0_grid, params_grid)
             )
         else:
-            # Fallback: processamento serial
+            # Fallback: serial processing
             solutions = [
                 self._solve_single_ode_with_t_eval(y0, params, t_eval_internal)
                 for y0, params in zip(y0_grid, params_grid)
             ]
 
-        # 4. Filtra soluções válidas (sem NaNs)
+        # 4. Filter valid solutions (without NaNs)
         valid_solutions = [
             sol for sol in solutions
             if not np.any(np.isnan(sol))
         ]
 
         if len(valid_solutions) == 0:
-            raise RuntimeError(f"Nenhuma solução válida para α={alpha}")
+            raise RuntimeError(f"No valid solution for α={alpha}")
 
-        # *** AGORA TODAS AS SOLUÇÕES TÊM A MESMA FORMA ***
+        # *** NOW ALL SOLUTIONS HAVE THE SAME SHAPE ***
         # (n_solutions, n_vars, n_time)
         solutions_array = np.stack(valid_solutions, axis=0)
 
-        # 5. Extrai envelopes (min/max)
+        # 5. Extract envelopes (min/max)
         y_min = np.min(solutions_array, axis=0)  # (n_vars, n_time)
         y_max = np.max(solutions_array, axis=0)  # (n_vars, n_time)
 
@@ -661,28 +702,28 @@ class FuzzyODESolver:
 
     def _solve_standard(self, n_grid_points=5, verbose: bool = False) -> 'FuzzySolution':
         """
-        Método padrão original - resolve cada α completo.
-        (Este é o código original do solve())
+        Original standard method - solves each complete α.
+        (This is the original solve() code)
         """
         if n_grid_points < 2:
-            raise ValueError("n_grid_points deve ser >= 2")
+            raise ValueError("n_grid_points must be >= 2")
 
         self.n_grid_points = n_grid_points
         if verbose:
             print("=" * 70)
-            print("SOLVER DE EDO FUZZY - MÉTODO PADRÃO")
+            print("FUZZY ODE SOLVER - STANDARD METHOD")
             print("=" * 70)
-            print(f"Variáveis: {self.n_vars}")
-            print(f"Parâmetros fuzzy: {self.n_params}")
-            print(f"α-níveis: {self.n_alpha_cuts}")
-            print(f"Pontos por dimensão: {self.n_grid_points}")
-            print(f"Método: {self.method}")
+            print(f"Variables: {self.n_vars}")
+            print(f"Fuzzy parameters: {self.n_params}")
+            print(f"α-levels: {self.n_alpha_cuts}")
+            print(f"Points per dimension: {self.n_grid_points}")
+            print(f"Method: {self.method}")
             print("=" * 70 + "\n")
 
         alphas = self._generate_alpha_levels()
 
         if verbose:
-            print("Resolvendo para cada α-nível...")
+            print("Solving for each α-level...")
 
         results = []
 
@@ -698,7 +739,7 @@ class FuzzyODESolver:
         y_max_all = np.stack([res[2] for res in results], axis=0)
 
         if verbose:
-            print("\n✅ Solução computada!")
+            print("\n✅ Solution computed!")
             print("=" * 70)
 
         return FuzzySolution(
@@ -711,7 +752,7 @@ class FuzzyODESolver:
 
     def _solve_single_ode(self, y0: np.ndarray, params: Dict,
                           t_eval: np.ndarray = None) -> np.ndarray:
-        """Wrapper para compatibilidade."""
+        """Wrapper for compatibility."""
         return self._solve_single_ode_with_t_eval(y0, params, t_eval)
 
     def solve_with_method_option(self,
@@ -719,26 +760,26 @@ class FuzzyODESolver:
                                  verbose: bool = False,
                                  **method_kwargs) -> 'FuzzySolution':
         """
-        Resolve EDO fuzzy com múltiplos métodos disponíveis.
+        Solves fuzzy ODE with multiple available methods.
 
         Args:
-            method: Método a usar
-                - 'standard': Resolve cada α-nível completamente (padrão)
-                - 'hierarchical': Reuso hierárquico de α-níveis (3-5x mais rápido)
-                - 'monte_carlo': Monte Carlo (escalável, 10-400x em alta dimensão)
+            method: Method to use
+                - 'standard': Solve each α-level completely (default)
+                - 'hierarchical': Hierarchical reuse of α-levels (3-5x faster)
+                - 'monte_carlo': Monte Carlo (scalable, 10-400x in high dimension)
 
-            verbose: Se True, imprime progresso
+            verbose: If True, print progress
 
-            **method_kwargs: Argumentos específicos do método
-                Para 'hierarchical': (nenhum)
-                Para 'monte_carlo': n_samples=500, random_seed=None
+            **method_kwargs: Method-specific arguments
+                For 'hierarchical': (none)
+                For 'monte_carlo': n_samples=500, random_seed=None
 
         Returns:
             FuzzySolution
 
         """
 
-        # Normaliza método
+        # Normalize method
         method_lower = method.lower().strip()
 
         if method_lower == 'standard':
@@ -759,16 +800,16 @@ class FuzzyODESolver:
 
         else:
             raise ValueError(
-                f"Método desconhecido: '{method}'. "
-                f"Opções válidas: 'standard', 'hierarchical', 'monte_carlo'"
+                f"Unknown method: '{method}'. "
+                f"Valid options: 'standard', 'hierarchical', 'monte_carlo'"
             )
 
     def _solve_hierarchical(self, verbose: bool = False) -> 'FuzzySolution':
         """
-        Método hierárquico - reusa α-níveis maiores.
-        3-5x mais rápido que padrão.
+        Hierarchical method - reuses larger α-levels.
+        3-5x faster than standard.
         """
-        # Importar a classe de otimização
+        # Import optimization class
 
         optimizer = HierarchicalFuzzyODESolver(self)
         return optimizer.solve_optimized(verbose=verbose)
@@ -778,8 +819,8 @@ class FuzzyODESolver:
                            random_seed: int = None,
                            verbose: bool = False) -> 'FuzzySolution':
         """
-        Método Monte Carlo com pertinência herdada.
-        10-400x mais rápido em alta dimensionalidade.
+        Monte Carlo method with inherited membership.
+        10-400x faster in high dimensionality.
         """
 
         mc_solver = MonteCarloFuzzyODESolver(
@@ -790,24 +831,24 @@ class FuzzyODESolver:
         return mc_solver.solve_monte_carlo(verbose=verbose)
     def solve(self, method: str = 'standard',
               verbose: bool = False, **method_kwargs) -> FuzzySolution:
-        """Resolve EDO fuzzy com múltiplos métodos."""
+        """Solves fuzzy ODE with multiple methods."""
         return self.solve_with_method_option(method, verbose, **method_kwargs)
 
 
 class MonteCarloFuzzyODESolver:
     """
-    Solver Monte Carlo com pertinência HERDADA da CI.
+    Monte Carlo solver with INHERITED membership from IC.
 
-    Ideia-chave:
+    Key idea:
         μ(y(t)) = μ(y0)
     """
 
     def __init__(self, base_solver, n_samples: int = 1000, random_seed: int = None):
         """
         Args:
-            base_solver: FuzzyODESolver original
-            n_samples: Número de amostras aleatórias
-            random_seed: Para reprodutibilidade
+            base_solver: Original FuzzyODESolver
+            n_samples: Number of random samples
+            random_seed: For reproducibility
         """
         self.solver = base_solver
         self.n_samples = n_samples
@@ -816,96 +857,96 @@ class MonteCarloFuzzyODESolver:
 
         self.sampled_points = []
         self.solutions = []
-        # Pertinência das CIs (herdada para todas soluções)
+        # IC membership (inherited to all solutions)
         self.pertinences_CI = []
 
     def _compute_ci_pertinence(self,
                                y0: np.ndarray,
                                params: Dict[str, float]) -> float:
         """
-        Calcula pertinência de uma condição inicial no espaço fuzzy.
+        Computes membership of an initial condition in fuzzy space.
 
-        A pertinência é calculada como:
-        μ(CI) = min(μ_y0_1, μ_y0_2, ..., μ_param_1, μ_param_2, ...)
+        Membership is calculated as:
+        μ(IC) = min(μ_y0_1, μ_y0_2, ..., μ_param_1, μ_param_2, ...)
 
-        Onde:
-        - μ_y0_i: pertinência da i-ésima condição inicial
-        - μ_param_j: pertinência do j-ésimo parâmetro fuzzy
+        Where:
+        - μ_y0_i: membership of i-th initial condition
+        - μ_param_j: membership of j-th fuzzy parameter
 
         Args:
-            y0 (np.ndarray): Vetor de condições iniciais
+            y0 (np.ndarray): Initial conditions vector
                             Shape: (n_vars,)
-                            Valores avaliados nas funções de pertinência fuzzy
+                            Values evaluated in fuzzy membership functions
 
-            params (Dict[str, float]): Dicionário de parâmetros
-                                    Chaves: nomes dos parâmetros
-                                    Valores: valores numéricos
+            params (Dict[str, float]): Parameter dictionary
+                                    Keys: parameter names
+                                    Values: numerical values
 
         Returns:
-            float: Grau de pertinência total ∈ [0, 1]
-                1.0 = Máxima pertinência (núcleo fuzzy)
-                0.0 = Mínima pertinência (fora do suporte)
+            float: Total membership degree ∈ [0, 1]
+                1.0 = Maximum membership (fuzzy core)
+                0.0 = Minimum membership (outside support)
 
         Raises:
-            IndexError: Se y0 tem tamanho diferente de n_vars esperado
-            KeyError: Se params não contém parâmetro esperado
+            IndexError: If y0 has different size than expected n_vars
+            KeyError: If params doesn't contain expected parameter
         """
 
-        # Inicializa com pertinência máxima
+        # Initialize with maximum membership
         pertinence = 1.0
 
         # ========================================================================
-        # FASE 1: Calcula pertinência das condições iniciais fuzzy
+        # PHASE 1: Compute fuzzy initial conditions membership
         # ========================================================================
 
         for i, y0_var in enumerate(self.solver.initial_condition):
 
-            # Obtém o valor da i-ésima CI
+            # Get i-th IC value
             y0_value = y0[i]
 
-            # Verifica se é FuzzyNumber ou crisp
+            # Check if it's FuzzyNumber or crisp
             if hasattr(y0_var, 'fuzzy_set'):
-                # É FuzzyNumber: calcula pertinência
+                # It's FuzzyNumber: compute membership
                 mu_y0 = y0_var.fuzzy_set.membership(y0_value)
             else:
-                # É crisp (float/int): pertinência é 1.0
-                # (crisp não restringe o espaço fuzzy)
+                # It's crisp (float/int): membership is 1.0
+                # (crisp doesn't restrict fuzzy space)
                 mu_y0 = 1.0
 
-            # Aplica t-norma (mínimo) para combinar pertinências
+            # Apply t-norm (minimum) to combine memberships
             pertinence = min(pertinence, mu_y0)
 
         # ========================================================================
-        # FASE 2: Calcula pertinência dos parâmetros fuzzy
+        # PHASE 2: Compute fuzzy parameters membership
         # ========================================================================
 
         for param_name, param_var in self.solver.params.items():
 
-            # Verifica se é FuzzyNumber ou crisp
+            # Check if it's FuzzyNumber or crisp
             if hasattr(param_var, 'fuzzy_set'):
-                # É FuzzyNumber: obtém valor do parâmetro
+                # It's FuzzyNumber: get parameter value
                 param_value = params.get(param_name)
 
                 if param_value is None:
-                    # Parâmetro não fornecido, assume valor padrão
-                    # Isso não deveria acontecer, mas é proteção
+                    # Parameter not provided, assume default value
+                    # This shouldn't happen, but it's a protection
                     continue
 
-                # Calcula pertinência do parâmetro
+                # Compute parameter membership
                 mu_param = param_var.fuzzy_set.membership(param_value)
             else:
-                # É crisp: pertinência é 1.0
+                # It's crisp: membership is 1.0
                 mu_param = 1.0
 
-            # Aplica t-norma (mínimo)
+            # Apply t-norm (minimum)
             pertinence = min(pertinence, mu_param)
 
         # ========================================================================
-        # FASE 3: Normaliza resultado para [0, 1]
+        # PHASE 3: Normalize result to [0, 1]
         # ========================================================================
 
-        # Garante que o resultado está no intervalo [0, 1]
-        # (proteção contra erros numéricos)
+        # Ensure result is in [0, 1] interval
+        # (protection against numerical errors)
         pertinence = max(0.0, min(1.0, pertinence))
 
         return pertinence
@@ -916,45 +957,45 @@ class MonteCarloFuzzyODESolver:
     verbose: bool = False
 ) -> Tuple[np.ndarray, Dict[str, np.ndarray], np.ndarray]:
         """
-        Amostra pontos no hipercubo fuzzy de forma simples e direta.
+        Samples points in fuzzy hypercube in a simple and direct way.
 
-        ESTRATÉGIA:
-        1. Gera 1000 amostras aleatórias INDEPENDENTES em cada dimensão
-        2. Usa zip() para combinar em 1000 pontos (hipercubo)
-        3. Adiciona combinações dos EXTREMOS de α=0 (itertools.product)
-        4. Adiciona combinações dos EXTREMOS de α=1.0
-        5. Calcula pertinência de TODOS
+        STRATEGY:
+        1. Generates 1000 INDEPENDENT random samples in each dimension
+        2. Uses zip() to combine into 1000 points (hypercube)
+        3. Adds combinations of EXTREMES from α=0 (itertools.product)
+        4. Adds combinations of EXTREMES from α=1.0
+        5. Computes membership of ALL
 
         Args:
-            n_samples: Número de amostras por dimensão (default: 1000)
-            verbose: Se True, imprime estatísticas
+            n_samples: Number of samples per dimension (default: 1000)
+            verbose: If True, print statistics
 
         Returns:
             (y0_samples, param_samples, pertinences_CI)
         """
 
         # ========================================================================
-        # FASE 1: EXTRAI INTERVALOS
+        # PHASE 1: EXTRACT INTERVALS
         # ========================================================================
 
-        # α=0 (suporte completo)
+        # α=0 (full support)
         y0_intervals_alpha_0, params_intervals_alpha_0 = (
             self.solver._extract_alpha_cuts(0.0)
         )
 
-        # α=1.0 (núcleo)
+        # α=1.0 (core)
         y0_intervals_alpha_1, params_intervals_alpha_1 = (
             self.solver._extract_alpha_cuts(1.0)
         )
 
         if verbose:
-            print(f"\n  FASE 1: Gerando {n_samples} amostras por dimensão...")
+            print(f"\n  PHASE 1: Generating {n_samples} samples per dimension...")
 
         # ========================================================================
-        # FASE 2: AMOSTRAS ALEATÓRIAS INDEPENDENTES EM CADA DIMENSÃO
+        # PHASE 2: INDEPENDENT RANDOM SAMPLES IN EACH DIMENSION
         # ========================================================================
 
-        # Amostras para cada CI
+        # Samples for each IC
         y0_samples_per_dim = []
         for i, (y_min, y_max) in enumerate(y0_intervals_alpha_0):
             if y_min == y_max:
@@ -963,10 +1004,10 @@ class MonteCarloFuzzyODESolver:
                 samples = np.random.uniform(y_min, y_max, n_samples)
             y0_samples_per_dim.append(samples)
             if verbose:
-                print(f"    - CI {i}: [{y_min:.3f}, {y_max:.3f}]")
+                print(f"    - IC {i}: [{y_min:.3f}, {y_max:.3f}]")
 
-        # Amostras para cada parâmetro fuzzy
-        param_names = sorted([k for k, v in self.solver.params.items() 
+        # Samples for each fuzzy parameter
+        param_names = sorted([k for k, v in self.solver.params.items()
                             if hasattr(v, 'fuzzy_set')])
 
         param_samples_per_dim = {}
@@ -978,20 +1019,20 @@ class MonteCarloFuzzyODESolver:
                 samples = np.random.uniform(p_min, p_max, n_samples)
             param_samples_per_dim[param_name] = samples
             if verbose:
-                print(f"    - Parâm '{param_name}': [{p_min:.3f}, {p_max:.3f}]")
+                print(f"    - Param '{param_name}': [{p_min:.3f}, {p_max:.3f}]")
 
         # ========================================================================
-        # FASE 3: COMBINA EM 1000 PONTOS COM zip()
+        # PHASE 3: COMBINE INTO 1000 POINTS WITH zip()
         # ========================================================================
 
         if verbose:
-            print(f"\n  FASE 2: Combinando amostras com zip()...")
+            print(f"\n  PHASE 2: Combining samples with zip()...")
 
-        # Combina amostras: [(y0_1[0], y0_2[0], ...), ...]
+        # Combine samples: [(y0_1[0], y0_2[0], ...), ...]
         y0_combined = list(zip(*y0_samples_per_dim))
         y0_combined = np.array(y0_combined)
 
-        # Combina parâmetros: [{'r': r[0], 'K': K[0]}, ...]
+        # Combine parameters: [{'r': r[0], 'K': K[0]}, ...]
         param_combined = []
         for i in range(n_samples):
             param_dict = {}
@@ -999,40 +1040,40 @@ class MonteCarloFuzzyODESolver:
                 param_dict[param_name] = param_samples_per_dim[param_name][i]
             param_combined.append(param_dict)
 
-        n_pontos_amostrados = len(y0_combined)
+        n_sampled_points = len(y0_combined)
         if verbose:
-            print(f"    ✓ {n_pontos_amostrados} pontos do hipercubo")
+            print(f"    ✓ {n_sampled_points} hypercube points")
 
         # ========================================================================
-        # FASE 4: COMBINAÇÕES DOS EXTREMOS DE α=0
+        # PHASE 4: COMBINATIONS OF EXTREMES FROM α=0
         # ========================================================================
 
         if verbose:
-            print(f"\n  FASE 3: Adicionando extremos de α=0...")
+            print(f"\n  PHASE 3: Adding extremes from α=0...")
 
-        # Extremos de cada CI
-        y0_extremos_alpha_0 = []
+        # Extremes of each IC
+        y0_extremes_alpha_0 = []
         for y_min, y_max in y0_intervals_alpha_0:
-            y0_extremos_alpha_0.append([y_min, y_max])
+            y0_extremes_alpha_0.append([y_min, y_max])
 
-        # Extremos de cada parâmetro
-        param_extremos_alpha_0 = {}
+        # Extremes of each parameter
+        param_extremes_alpha_0 = {}
         for param_name in param_names:
             p_min, p_max = params_intervals_alpha_0[param_name]
-            param_extremos_alpha_0[param_name] = [p_min, p_max]
+            param_extremes_alpha_0[param_name] = [p_min, p_max]
 
-        # PRODUTO CARTESIANO dos extremos
-        # Exemplo: [[y0_min, y0_max]] × [[r_min, r_max]] × [[K_min, K_max]]
-        y0_extremos_product = list(itertools.product(*y0_extremos_alpha_0))
-        param_extremos_product = list(itertools.product(*[
-            param_extremos_alpha_0[pname] for pname in param_names
+        # CARTESIAN PRODUCT of extremes
+        # Example: [[y0_min, y0_max]] × [[r_min, r_max]] × [[K_min, K_max]]
+        y0_extremes_product = list(itertools.product(*y0_extremes_alpha_0))
+        param_extremes_product = list(itertools.product(*[
+            param_extremes_alpha_0[pname] for pname in param_names
         ]))
 
-        n_vertices_alpha_0 = len(y0_extremos_product) * len(param_extremos_product)
+        n_vertices_alpha_0 = len(y0_extremes_product) * len(param_extremes_product)
 
-        # Combina y0 extremos com param extremos
-        for y0_vertex in y0_extremos_product:
-            for param_vertex in param_extremos_product:
+        # Combine y0 extremes with param extremes
+        for y0_vertex in y0_extremes_product:
+            for param_vertex in param_extremes_product:
                 y0_combined = np.vstack([y0_combined, [y0_vertex]])
 
                 param_dict = {}
@@ -1041,37 +1082,37 @@ class MonteCarloFuzzyODESolver:
                 param_combined.append(param_dict)
 
         if verbose:
-            print(f"    ✓ {n_vertices_alpha_0} combinações de extremos")
-            print(f"      = 2^{len(y0_extremos_alpha_0)} × 2^{len(param_names)} = {len(y0_extremos_product)} × {len(param_extremos_product)}")
+            print(f"    ✓ {n_vertices_alpha_0} extreme combinations")
+            print(f"      = 2^{len(y0_extremes_alpha_0)} × 2^{len(param_names)} = {len(y0_extremes_product)} × {len(param_extremes_product)}")
 
         # ========================================================================
-        # FASE 5: COMBINAÇÕES DOS EXTREMOS DE α=1.0
+        # PHASE 5: COMBINATIONS OF EXTREMES FROM α=1.0
         # ========================================================================
 
         if verbose:
-            print(f"\n  FASE 4: Adicionando extremos de α=1.0 (núcleo)...")
+            print(f"\n  PHASE 4: Adding extremes from α=1.0 (core)...")
 
-        # Extremos de α=1.0 (pode ser apenas um ponto se é triangular)
-        y0_extremos_alpha_1 = []
+        # Extremes of α=1.0 (may be just one point if triangular)
+        y0_extremes_alpha_1 = []
         for y_min, y_max in y0_intervals_alpha_1:
-            y0_extremos_alpha_1.append([y_min, y_max])
+            y0_extremes_alpha_1.append([y_min, y_max])
 
-        param_extremos_alpha_1 = {}
+        param_extremes_alpha_1 = {}
         for param_name in param_names:
             p_min, p_max = params_intervals_alpha_1[param_name]
-            param_extremos_alpha_1[param_name] = [p_min, p_max]
+            param_extremes_alpha_1[param_name] = [p_min, p_max]
 
-        # PRODUTO CARTESIANO dos extremos α=1.0
-        y0_extremos_product_alpha_1 = list(itertools.product(*y0_extremos_alpha_1))
-        param_extremos_product_alpha_1 = list(itertools.product(*[
-            param_extremos_alpha_1[pname] for pname in param_names
+        # CARTESIAN PRODUCT of extremes α=1.0
+        y0_extremes_product_alpha_1 = list(itertools.product(*y0_extremes_alpha_1))
+        param_extremes_product_alpha_1 = list(itertools.product(*[
+            param_extremes_alpha_1[pname] for pname in param_names
         ]))
 
-        n_vertices_alpha_1 = len(y0_extremos_product_alpha_1) * len(param_extremos_product_alpha_1)
+        n_vertices_alpha_1 = len(y0_extremes_product_alpha_1) * len(param_extremes_product_alpha_1)
 
-        # Adiciona aos pontos
-        for y0_vertex in y0_extremos_product_alpha_1:
-            for param_vertex in param_extremos_product_alpha_1:
+        # Add to points
+        for y0_vertex in y0_extremes_product_alpha_1:
+            for param_vertex in param_extremes_product_alpha_1:
                 y0_combined = np.vstack([y0_combined, [y0_vertex]])
 
                 param_dict = {}
@@ -1080,15 +1121,15 @@ class MonteCarloFuzzyODESolver:
                 param_combined.append(param_dict)
 
         if verbose:
-            print(f"    ✓ {n_vertices_alpha_1} combinações de extremos α=1")
-            print(f"      = 2^{len(y0_extremos_alpha_1)} × 2^{len(param_names)} = {len(y0_extremos_product_alpha_1)} × {len(param_extremos_product_alpha_1)}")
+            print(f"    ✓ {n_vertices_alpha_1} extreme combinations α=1")
+            print(f"      = 2^{len(y0_extremes_alpha_1)} × 2^{len(param_names)} = {len(y0_extremes_product_alpha_1)} × {len(param_extremes_product_alpha_1)}")
 
         # ========================================================================
-        # FASE 6: CALCULA PERTINÊNCIAS
+        # PHASE 6: COMPUTE MEMBERSHIPS
         # ========================================================================
 
         if verbose:
-            print(f"\n  FASE 5: Calculando pertinências...")
+            print(f"\n  PHASE 5: Computing memberships...")
 
         n_total = len(y0_combined)
         pertinences_CI = []
@@ -1100,16 +1141,16 @@ class MonteCarloFuzzyODESolver:
         pertinences_CI = np.array(pertinences_CI)
 
         # ========================================================================
-        # FASE 7: RETORNA
+        # PHASE 7: RETURN
         # ========================================================================
 
         if verbose:
-            print(f"\n  RESUMO:")
-            print(f"    Total de pontos: {n_total}")
-            print(f"      = {n_pontos_amostrados} (zip) + {n_vertices_alpha_0} (extremos α=0) + {n_vertices_alpha_1} (extremos α=1)")
-            print(f"\n    Pertinências: min={np.min(pertinences_CI):.3f}, max={np.max(pertinences_CI):.3f}, média={np.mean(pertinences_CI):.3f}")
+            print(f"\n  SUMMARY:")
+            print(f"    Total points: {n_total}")
+            print(f"      = {n_sampled_points} (zip) + {n_vertices_alpha_0} (extremes α=0) + {n_vertices_alpha_1} (extremes α=1)")
+            print(f"\n    Memberships: min={np.min(pertinences_CI):.3f}, max={np.max(pertinences_CI):.3f}, mean={np.mean(pertinences_CI):.3f}")
 
-        # Reorganiza param_combined em dicts por parâmetro
+        # Reorganize param_combined into dicts per parameter
         param_samples_final = {pname: [] for pname in param_names}
         for param_dict in param_combined:
             for pname in param_names:
@@ -1126,7 +1167,7 @@ class MonteCarloFuzzyODESolver:
         param_samples: Dict[str, np.ndarray]
     ) -> Tuple[List[np.ndarray], np.ndarray]:
         """
-        Resolve ODEs para todos os pontos amostrados.
+        Solves ODEs for all sampled points.
         """
 
         t_eval = self.solver.t_eval
@@ -1152,14 +1193,14 @@ class MonteCarloFuzzyODESolver:
                 else:
                     params[pname] = pvals[0]
 
-            # Adiciona parâmetros crisp
+            # Add crisp parameters
             for param_name, param_val in self.solver.params.items():
                 if param_name not in params:
                     params[param_name] = param_val
 
             solve_tasks.append((y0, params))
 
-        # Resolve
+        # Solve
         try:
             from joblib import Parallel, delayed
             HAS_JOBLIB = True
@@ -1186,17 +1227,17 @@ class MonteCarloFuzzyODESolver:
         alphas: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Calcula α-níveis usando APENAS a pertinência da CI.
+        Computes α-levels using ONLY IC membership.
 
-        ALGORITMO (muito simples!):
+        ALGORITHM (very simple!):
 
-        1. Ordena soluções por pertinência: decrescente
-        2. Para cada α:
-           - Seleciona soluções com μ(CI) ≥ α
-           - Calcula min/max
+        1. Sort solutions by membership: descending
+        2. For each α:
+           - Select solutions with μ(IC) ≥ α
+           - Compute min/max
         """
 
-        # Valida soluções
+        # Validate solutions
         valid_mask = np.array([
             not np.any(np.isnan(sol)) for sol in solutions
         ])
@@ -1206,7 +1247,7 @@ class MonteCarloFuzzyODESolver:
         valid_pertinences = pertinences_CI[valid_mask]
 
         if len(valid_solutions) == 0:
-            raise RuntimeError("Nenhuma solução válida")
+            raise RuntimeError("No valid solutions")
 
         solutions_array = np.stack(valid_solutions, axis=0)
         n_points, n_vars, n_time = solutions_array.shape
@@ -1216,11 +1257,11 @@ class MonteCarloFuzzyODESolver:
         alphas_valid = []
 
         for alpha in alphas:
-            # Seleciona APENAS soluções com μ(CI) ≥ α
+            # Select ONLY solutions with μ(IC) ≥ α
             alpha_mask = valid_pertinences >= (alpha - 1e-10)
 
             if np.sum(alpha_mask) == 0:
-                # Se nenhuma solução atingir este α, pula
+                # If no solution reaches this α, skip
                 continue
 
             solutions_alpha = solutions_array[alpha_mask]
@@ -1236,45 +1277,45 @@ class MonteCarloFuzzyODESolver:
 
     def solve_monte_carlo(self, verbose: bool = False):
         """
-        Resolve com o método Monte Carlo CORRETO.
+        Solves with the CORRECT Monte Carlo method.
         """
 
         if verbose:
             print("=" * 80)
-            print("SOLVER MONTE CARLO + PERTINÊNCIA (CORRIGIDO)")
+            print("MONTE CARLO SOLVER + MEMBERSHIP (CORRECTED)")
             print("=" * 80)
 
-        # 1. Amostragem com pertinências
+        # 1. Sampling with memberships
         if verbose:
-            print(f"\n⏳ Amostrando {self.n_samples} pontos...")
+            print(f"\n⏳ Sampling {self.n_samples} points...")
 
         y0_samples, param_samples, pertinences_CI = (
             self._sample_hypercube_with_pertinence(
                 self.n_samples,
-                verbose=verbose  # ← PASSAR
+                verbose=verbose  # ← PASS
             )
         )
 
         n_total = len(y0_samples)+len(param_samples)
-        
-        if verbose:
-            print(f"✓ {n_total} pontos amostrados (+ vértices)")
-            print(f"  Pertinências: min={np.min(pertinences_CI):.3f}, "
-                  f"max={np.max(pertinences_CI):.3f}, "
-                  f"média={np.mean(pertinences_CI):.3f}")
 
-        # 2. Resolve TODAS as ODEs uma única vez
         if verbose:
-            print(f"\n⏳ Resolvendo {n_total} ODEs...")
+            print(f"✓ {n_total} sampled points (+ vertices)")
+            print(f"  Memberships: min={np.min(pertinences_CI):.3f}, "
+                  f"max={np.max(pertinences_CI):.3f}, "
+                  f"mean={np.mean(pertinences_CI):.3f}")
+
+        # 2. Solve ALL ODEs once
+        if verbose:
+            print(f"\n⏳ Solving {n_total} ODEs...")
 
         solutions, t_eval = self._solve_all_samples(y0_samples, param_samples)
 
         if verbose:
-            print(f"✓ {n_total} ODEs resolvidas")
+            print(f"✓ {n_total} ODEs solved")
 
-        # 3. Calcula α-níveis (MUITO rápido!)
+        # 3. Compute α-levels (VERY fast!)
         if verbose:
-            print(f"\n⏳ Calculando α-níveis...")
+            print(f"\n⏳ Computing α-levels...")
 
         alphas = self.solver._generate_alpha_levels()
 
@@ -1285,11 +1326,11 @@ class MonteCarloFuzzyODESolver:
         )
 
         if verbose:
-            print(f"✓ {len(alphas_valid)} α-níveis calculados")
-            print("\nESTATÍSTICAS:")
-            print(f"  Total de ODEs resolvidas: {n_total}")
+            print(f"✓ {len(alphas_valid)} α-levels computed")
+            print("\nSTATISTICS:")
+            print(f"  Total ODEs solved: {n_total}")
             print(
-                f"  Vs. método padrão: 1/{self.solver.n_alpha_cuts} do custo")
+                f"  Vs. standard method: 1/{self.solver.n_alpha_cuts} of cost")
             print("=" * 80)
 
         return FuzzySolution(
@@ -1306,19 +1347,19 @@ class HierarchicalFuzzyODESolver:
     def __init__(self, base_solver):
         """
         Args:
-            base_solver: Instância de FuzzyODESolver
+            base_solver: FuzzyODESolver instance
         """
         self.solver = base_solver
         self.alpha_levels = self._generate_alpha_levels()
 
-        # Novos atributos para guardar dados
-        self.solutions_per_alpha = {}   # alpha -> [soluções]
-        self.pertinences_per_alpha = {}  # alpha -> [pertinências]
-        self.y0_grids_per_alpha = {}    # alpha -> grid de CI
-        self.t_eval = None              # Tempos de avaliação
+        # New attributes to store data
+        self.solutions_per_alpha = {}   # alpha -> [solutions]
+        self.pertinences_per_alpha = {}  # alpha -> [memberships]
+        self.y0_grids_per_alpha = {}    # alpha -> IC grid
+        self.t_eval = None              # Evaluation times
 
     def _generate_alpha_levels(self) -> np.ndarray:
-        """Gera α-níveis em ordem DECRESCENTE."""
+        """Generates α-levels in DESCENDING order."""
         alphas = np.linspace(0, 1, self.solver.n_alpha_cuts)
         return alphas[::-1]  # [1.0, 0.9, ..., 0.1, 0.0]
 
@@ -1328,21 +1369,21 @@ class HierarchicalFuzzyODESolver:
         params: Dict[str, float]
     ) -> float:
         """
-        Calcula pertinência de uma condição inicial.
+        Computes membership of an initial condition.
 
-        μ(CI) = min(μ_y0_1, μ_y0_2, ..., μ_r, μ_K, ...)
-        (t-norma: mínimo)
+        μ(IC) = min(μ_y0_1, μ_y0_2, ..., μ_r, μ_K, ...)
+        (t-norm: minimum)
         """
         pertinence = 1.0
 
-        # Pertinência em condições iniciais fuzzy
+        # Membership in fuzzy initial conditions
         for i, y0_fuzzy_var in enumerate(self.solver.initial_condition):
             mu_y0 = y0_fuzzy_var.fuzzy_set.membership(y0[i])
             pertinence = min(pertinence, mu_y0)
 
-        # Pertinência em parâmetros fuzzy
+        # Membership in fuzzy parameters
         for param_name, param_fuzzy in self.solver.params.items():
-            if hasattr(param_fuzzy, 'fuzzy_set'):  # É FuzzyNumber
+            if hasattr(param_fuzzy, 'fuzzy_set'):  # It's FuzzyNumber
                 param_val = params.get(param_name, param_fuzzy)
                 mu_param = param_fuzzy.fuzzy_set.membership(param_val)
                 pertinence = min(pertinence, mu_param)
@@ -1355,25 +1396,25 @@ class HierarchicalFuzzyODESolver:
         verbose: bool = False
     ) -> Tuple[np.ndarray, List[np.ndarray], np.ndarray]:
         """
-        Resolve α-nível guardando:
-        - Soluções individuais de cada ponto
-        - Pertinência de cada CI
+        Solves α-level storing:
+        - Individual solutions for each point
+        - Membership of each IC
 
         Returns:
             (t_eval, solutions, pertinences)
         """
 
-        # Extrai α-cortes
+        # Extract α-cuts
         y0_intervals, params_intervals = (
             self.solver._extract_alpha_cuts(alpha)
         )
 
-        # Cria grid
+        # Create grid
         y0_grid, params_grid = self.solver._create_grid(
             y0_intervals, params_intervals
         )
 
-        # Define tempos de avaliação (usando primeira resolução)
+        # Define evaluation times (using first resolution)
         if self.t_eval is None:
             self.t_eval = np.linspace(
                 self.solver.t_span[0],
@@ -1381,7 +1422,7 @@ class HierarchicalFuzzyODESolver:
                 100
             )
 
-        # Resolve ODEs com paralelização
+        # Solve ODEs with parallelization
         try:
             from joblib import Parallel, delayed
             HAS_JOBLIB = True
@@ -1402,7 +1443,7 @@ class HierarchicalFuzzyODESolver:
                 for y0, params in zip(y0_grid, params_grid)
             ]
 
-        # Calcula pertinências das CIs
+        # Compute IC memberships
         pertinences = []
         for y0, params in zip(y0_grid, params_grid):
             mu = self._compute_ci_pertinence(y0, params)
@@ -1412,7 +1453,7 @@ class HierarchicalFuzzyODESolver:
 
         if verbose:
             print(f"  α = {alpha:.3f}: {len(y0_grid)} ODEs, "
-                  f"pertinências ∈ [{np.min(pertinences):.3f}, "
+                  f"memberships ∈ [{np.min(pertinences):.3f}, "
                   f"{np.max(pertinences):.3f}]")
 
         return self.t_eval, solutions, pertinences
@@ -1423,15 +1464,15 @@ class HierarchicalFuzzyODESolver:
         verbose: bool = False
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Recalcula α-níveis filtrando por pertinência.
+        Recomputes α-levels filtering by membership.
 
-        ALGORITMO CORRETO:
-        Para cada α:
-            Seleciona soluções com μ(CI) ≥ α
-            Calcula min/max DESSAS
+        CORRECT ALGORITHM:
+        For each α:
+            Select solutions with μ(IC) ≥ α
+            Compute min/max of THESE
 
         Returns:
-            (y_min_all, y_max_all) com shape (n_alpha, n_vars, n_time)
+            (y_min_all, y_max_all) with shape (n_alpha, n_vars, n_time)
         """
 
         y_min_all = []
@@ -1439,23 +1480,23 @@ class HierarchicalFuzzyODESolver:
         alphas_valid = []
 
         for alpha in alphas:
-            # Obtém dados armazenados para este α
+            # Get stored data for this α
             if alpha not in self.solutions_per_alpha:
                 continue
 
             solutions = self.solutions_per_alpha[alpha]
             pertinences = self.pertinences_per_alpha[alpha]
 
-            # FILTRO CRÍTICO: seleciona por pertinência
+            # CRITICAL FILTER: select by membership
             valid_mask = pertinences >= (alpha - 1e-10)
 
             if np.sum(valid_mask) == 0:
-                # Nenhuma solução com pertinência ≥ α
-                # Usa a com maior pertinência
+                # No solution with membership ≥ α
+                # Use the one with highest membership
                 max_pert = np.max(pertinences)
                 valid_mask = pertinences >= (max_pert - 1e-10)
 
-            # Seleciona apenas soluções válidas
+            # Select only valid solutions
             valid_solutions = [
                 sol for sol, valid in zip(solutions, valid_mask)
                 if valid and not np.any(np.isnan(sol))
@@ -1463,10 +1504,10 @@ class HierarchicalFuzzyODESolver:
 
             if len(valid_solutions) == 0:
                 if verbose:
-                    print(f"  ⚠ α = {alpha:.3f}: sem soluções válidas")
+                    print(f"  ⚠ α = {alpha:.3f}: no valid solutions")
                 continue
 
-            # Calcula envelopes APENAS das soluções selecionadas
+            # Compute envelopes ONLY from selected solutions
             solutions_array = np.stack(valid_solutions, axis=0)
             y_min = np.min(solutions_array, axis=0)
             y_max = np.max(solutions_array, axis=0)
@@ -1478,51 +1519,51 @@ class HierarchicalFuzzyODESolver:
             if verbose:
                 n_used = np.sum(valid_mask)
                 n_total = len(valid_mask)
-                print(f"  ✓ α = {alpha:.3f}: {n_used}/{n_total} soluções "
+                print(f"  ✓ α = {alpha:.3f}: {n_used}/{n_total} solutions "
                       f"({100*n_used/n_total:.0f}%)")
 
         return np.stack(y_min_all), np.stack(y_max_all), np.array(alphas_valid)
 
     def solve_hierarchical(self, verbose: bool = True) -> 'FuzzySolution':
         """
-        Resolve com método hierárquico CORRIGIDO.
+        Solves with CORRECTED hierarchical method.
 
-        Fluxo:
-        1. Resolve cada α-nível (em ordem decrescente)
-        2. Guarda TODAS as soluções individuais
-        3. Guarda pertinências das CIs
-        4. Filtra e recalcula α-níveis
+        Flow:
+        1. Solve each α-level (in descending order)
+        2. Store ALL individual solutions
+        3. Store IC memberships
+        4. Filter and recompute α-levels
         """
 
         if verbose:
             print("=" * 80)
-            print("SOLVER HIERÁRQUICO (CORRIGIDO)")
+            print("HIERARCHICAL SOLVER (CORRECTED)")
             print("=" * 80)
-            print(f"Variáveis: {self.solver.n_vars}")
-            print(f"α-níveis: {len(self.alpha_levels)}")
-            print(f"Método: Guarda soluções individuais + filtro por pertinência")
+            print(f"Variables: {self.solver.n_vars}")
+            print(f"α-levels: {len(self.alpha_levels)}")
+            print(f"Method: Store individual solutions + membership filter")
             print("=" * 80 + "\n")
 
-        # FASE 1: Resolve e armazena para cada α
+        # PHASE 1: Solve and store for each α
         if verbose:
-            print("FASE 1: Resolvendo ODEs para cada α-nível...")
+            print("PHASE 1: Solving ODEs for each α-level...")
 
         for idx, alpha in enumerate(self.alpha_levels):
             if verbose and idx > 0:
-                print()  # Linha em branco
+                print()  # Blank line
 
             t, solutions, pertinences = self._solve_alpha_level_with_storage(
                 alpha, verbose=verbose
             )
 
-            # Armazena dados
+            # Store data
             self.solutions_per_alpha[alpha] = solutions
             self.pertinences_per_alpha[alpha] = pertinences
 
-        # FASE 2: Recalcula α-níveis com filtro correto
+        # PHASE 2: Recompute α-levels with correct filter
         if verbose:
             print("\n" + "-" * 80)
-            print("FASE 2: Calculando α-níveis com filtro de pertinência...")
+            print("PHASE 2: Computing α-levels with membership filter...")
             print("-" * 80)
 
         y_min_all, y_max_all, alphas_valid = (
@@ -1533,7 +1574,7 @@ class HierarchicalFuzzyODESolver:
 
         if verbose:
             print("\n" + "=" * 80)
-            print("✅ Solução hierárquica CORRIGIDA computada!")
+            print("✅ CORRECTED hierarchical solution computed!")
             print("=" * 80 + "\n")
 
         from fuzzy_ode import FuzzySolution
@@ -1549,14 +1590,14 @@ class HierarchicalFuzzyODESolver:
 
 @dataclass
 class AlphaGridPoint:
-    """Ponto no grid associado a um intervalo fuzzy."""
-    point: np.ndarray  # Coordenadas (y0_1, y0_2, ..., y0_n)
-    alpha_min: float   # Menor α para o qual este ponto pertence ao intervalo
-    alpha_max: float   # Maior α
-    grid_index: int    # Índice no grid cartesiano
+    """Point in grid associated with a fuzzy interval."""
+    point: np.ndarray  # Coordinates (y0_1, y0_2, ..., y0_n)
+    alpha_min: float   # Minimum α for which this point belongs to interval
+    alpha_max: float   # Maximum α
+    grid_index: int    # Index in Cartesian grid
 
 
-# Mensagem de sucesso
+# Success message
 if HAS_JOBLIB:
     print("Automatic parallelization (joblib)")
 else:

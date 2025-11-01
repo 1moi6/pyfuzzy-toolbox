@@ -10,13 +10,13 @@ Complete collection of quick start guides for all modules in the pyfuzzy-toolbox
 
 Learn fuzzy systems from data using various learning techniques.
 
-#### 1. [ANFIS - Adaptive Neuro-Fuzzy Inference System](ANFIS_QUICKSTART.md)
+#### 1. [ANFIS - Adaptive Neuro-Fuzzy Inference System](anfis.md)
 **Hybrid learning combining neural networks and fuzzy logic**
 
 - ✅ Supervised learning for regression/classification
 - ✅ Two training methods: `fit()` (gradient descent) and `fit_metaheuristic()` (PSO/DE/GA)
 - ✅ Automatic parameter optimization
-- 📓 **Notebooks**: `03_learning/01_anfis_regression.ipynb`, `03_learning/02_anfis_classification.ipynb`
+- 📓 **Notebooks**: `03_learning/anfis_regression.ipynb`, `03_learning/anfis_iris.ipynb`
 
 **Key Features:**
 - Gaussian, Bell, and Sigmoid membership functions
@@ -34,7 +34,7 @@ Learn fuzzy systems from data using various learning techniques.
 - ✅ Fast rule generation from training data
 - ✅ Automatic task detection (regression/classification)
 - ✅ No iterative optimization needed
-- 📓 **Notebooks**: `03_learning/03_wang_mendel_regression.ipynb`, `03_learning/04_wang_mendel_classification.ipynb`
+- 📓 **Notebooks**: `03_learning/wang_mendel_nonlinear.ipynb`, `03_learning/wang_mendel_iris.ipynb`
 
 **Key Features:**
 - One-pass algorithm (very fast)
@@ -52,7 +52,7 @@ Learn fuzzy systems from data using various learning techniques.
 - ✅ Optimize rule consequents for existing Mamdani FIS
 - ✅ Four metaheuristic algorithms: SA, GA, PSO, DE
 - ✅ Preserves linguistic interpretability
-- 📓 **Notebooks**: `03_learning/05_mamdani_learning_optimization.ipynb`
+- 📓 **Notebooks**: `03_learning/rules_optimization.ipynb`, `03_learning/rules_optimization_iris.ipynb`
 
 **Key Features:**
 - Simulated Annealing (SA): local search with probabilistic acceptance
@@ -74,7 +74,7 @@ Build and use fuzzy inference systems for control and decision-making.
 - ✅ Manual or automatic membership function generation
 - ✅ Intuitive rule creation (dictionaries, lists, indices)
 - ✅ Multiple defuzzification methods
-- 📓 **Notebooks**: `02_inference/01_mamdani_tipping.ipynb`, `02_inference/04_voting_prediction.ipynb`
+- 📓 **Notebooks**: `02_inference/01_mamdani_tipping.ipynb`, `02_inference/02_voting_prediction.ipynb`
 
 **Key Features:**
 - `add_auto_mfs()`: automatic MF generation with linguistic labels
@@ -92,7 +92,7 @@ Build and use fuzzy inference systems for control and decision-making.
 - ✅ Order 0 (constant) or Order 1 (linear) consequents
 - ✅ No defuzzification needed (weighted average)
 - ✅ Ideal for ANFIS and optimization
-- 📓 **Notebooks**: `02_inference/02_sugeno_zero_order.ipynb`, `02_inference/03_sugeno_first_order.ipynb`
+- 📓 **Notebooks**: `02_inference/03_sugeno_zero_order.ipynb`, `02_inference/04_sugeno_first_order.ipynb`
 
 **Key Features:**
 - **Order 0**: IF-THEN rules with constant outputs (singletons)
@@ -114,7 +114,7 @@ Model temporal evolution with fuzzy rules.
 - ✅ Model discrete-time evolution: x_{n+1} = x_n + f(x_n)
 - ✅ Absolute or relative modes
 - ✅ Single-step execution for analysis
-- 📓 **Notebooks**: `04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb`, `04_dynamics/03_pfuzzy_discrete_population.ipynb`
+- 📓 **Notebooks**: `04_dynamics/pfuzzy_discrete_predator_prey.ipynb`, `04_dynamics/pfuzzy_population.ipynb`
 
 **Key Features:**
 - Absolute mode: x_{n+1} = x_n + f(x_n) (additive change)
@@ -133,7 +133,7 @@ Model temporal evolution with fuzzy rules.
 - ✅ Model continuous evolution: dx/dt = f(x)
 - ✅ Euler or RK4 integration methods
 - ✅ Fixed or adaptive time stepping
-- 📓 **Notebooks**: `04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb`
+- 📓 **Notebooks**: `04_dynamics/pfuzzy_continuous_predator_prey.ipynb`
 
 **Key Features:**
 - Absolute mode: dx/dt = f(x) (rate independent of state)
@@ -152,7 +152,7 @@ Model temporal evolution with fuzzy rules.
 - ✅ Propagate uncertainty through differential equations
 - ✅ Fuzzy numbers for initial conditions and parameters
 - ✅ Three solution methods: standard, Monte Carlo, hierarchical
-- 📓 **Notebooks**: `04_dynamics/04_fuzzy_ode_logistic.ipynb`, `04_dynamics/05_fuzzy_ode_holling_tanner.ipynb`
+- 📓 **Notebooks**: `04_dynamics/fuzzy_ode_logistic.ipynb`, `04_dynamics/fuzzy_ode_holling_tanner.ipynb`
 
 **Key Features:**
 - **Fuzzy numbers**: triangular, gaussian, trapezoidal

@@ -5,7 +5,7 @@ Dynamic systems with fuzzy uncertainty using `fuzzy_systems.dynamics`.
 ## Notebooks
 
 ### 01. p-Fuzzy Discrete: Predator-Prey
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_discrete_predator_prey.ipynb)
 
 **Topics:**
 - p-Fuzzy discrete systems: x_{n+1} = x_n + f(x_n)
@@ -50,7 +50,7 @@ pfuzzy.plot_phase_space('prey', 'predator')
 ---
 
 ### 02. p-Fuzzy Continuous: Predator-Prey
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_continuous_predator_prey.ipynb)
 
 **Topics:**
 - p-Fuzzy continuous systems: dx/dt = f(x)
@@ -83,7 +83,7 @@ time, trajectory = pfuzzy.simulate(
 ---
 
 ### 03. p-Fuzzy Discrete: Population
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/03_pfuzzy_discrete_population.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_population.ipynb)
 
 **Topics:**
 - Single population growth model
@@ -93,7 +93,7 @@ time, trajectory = pfuzzy.simulate(
 ---
 
 ### 04. Fuzzy ODE: Logistic Growth
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/04_fuzzy_ode_logistic.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/fuzzy_ode_logistic.ipynb)
 
 **Topics:**
 - ODEs with fuzzy parameters/initial conditions
@@ -136,7 +136,7 @@ solver.plot_envelope()
 ---
 
 ### 05. Fuzzy ODE: Holling-Tanner
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/05_fuzzy_ode_holling_tanner.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/fuzzy_ode_holling_tanner.ipynb)
 
 **Topics:**
 - System of ODEs with fuzzy uncertainty

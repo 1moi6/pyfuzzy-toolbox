@@ -50,7 +50,7 @@ Build complete fuzzy inference systems.
 ---
 
 ### Sugeno Zero-Order System
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/02_sugeno_zero_order.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/03_sugeno_zero_order.ipynb)
 
 **What you'll learn:**
 - Sugeno system with constant outputs
@@ -62,7 +62,7 @@ Build complete fuzzy inference systems.
 ---
 
 ### Sugeno First-Order System
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/03_sugeno_first_order.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/04_sugeno_first_order.ipynb)
 
 **What you'll learn:**
 - Sugeno with linear output functions: y = ax + b
@@ -74,7 +74,7 @@ Build complete fuzzy inference systems.
 ---
 
 ### Voting Prediction
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/04_voting_prediction.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/02_voting_prediction.ipynb)
 
 **What you'll learn:**
 - Real-world application
@@ -90,7 +90,7 @@ Build complete fuzzy inference systems.
 Automatic rule generation and system optimization.
 
 ### Wang-Mendel: Nonlinear Approximation
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/01_wang_mendel_nonlinear.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_nonlinear.ipynb)
 
 **What you'll learn:**
 - Automatic rule generation from data
@@ -103,7 +103,7 @@ Automatic rule generation and system optimization.
 ---
 
 ### Wang-Mendel: Linear Function
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/02_wang_mendel_linear.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_linear.ipynb)
 
 **What you'll learn:**
 - Simple case study
@@ -115,7 +115,7 @@ Automatic rule generation and system optimization.
 ---
 
 ### Wang-Mendel: Iris Classification
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/03_wang_mendel_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_iris.ipynb)
 
 **What you'll learn:**
 - Classification with Wang-Mendel
@@ -127,7 +127,7 @@ Automatic rule generation and system optimization.
 ---
 
 ### ANFIS: Iris Classification
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/04_anfis_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/anfis_iris.ipynb)
 
 **What you'll learn:**
 - Adaptive Neuro-Fuzzy Inference System
@@ -140,7 +140,7 @@ Automatic rule generation and system optimization.
 ---
 
 ### ANFIS: Regression
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/06_anfis_regression.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/anfis_regression.ipynb)
 
 **What you'll learn:**
 - ANFIS for regression problems
@@ -152,7 +152,7 @@ Automatic rule generation and system optimization.
 ---
 
 ### Rules Optimization with PSO
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/05_rules_optimization.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/rules_optimization.ipynb)
 
 **What you'll learn:**
 - Particle Swarm Optimization (PSO)
@@ -164,7 +164,7 @@ Automatic rule generation and system optimization.
 ---
 
 ### Rules Optimization: Iris
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/07_rules_optimization_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/rules_optimization_iris.ipynb)
 
 **What you'll learn:**
 - Comparison: PSO vs DE vs GA
@@ -180,7 +180,7 @@ Automatic rule generation and system optimization.
 Fuzzy systems with time evolution.
 
 ### p-Fuzzy Discrete: Predator-Prey
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_discrete_predator_prey.ipynb)
 
 **What you'll learn:**
 - Discrete p-fuzzy systems: x_{n+1} = x_n + f(x_n)
@@ -193,7 +193,7 @@ Fuzzy systems with time evolution.
 ---
 
 ### p-Fuzzy Continuous: Predator-Prey
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_continuous_predator_prey.ipynb)
 
 **What you'll learn:**
 - Continuous p-fuzzy: dx/dt = f(x)
@@ -206,7 +206,7 @@ Fuzzy systems with time evolution.
 ---
 
 ### p-Fuzzy Discrete: Population Growth
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/03_pfuzzy_discrete_population.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/pfuzzy_population.ipynb)
 
 **What you'll learn:**
 - Single population model
@@ -218,7 +218,7 @@ Fuzzy systems with time evolution.
 ---
 
 ### Fuzzy ODE: Logistic Growth
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/04_fuzzy_ode_logistic.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/fuzzy_ode_logistic.ipynb)
 
 **What you'll learn:**
 - ODEs with fuzzy parameters/initial conditions
@@ -230,7 +230,7 @@ Fuzzy systems with time evolution.
 ---
 
 ### Fuzzy ODE: Holling-Tanner
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/05_fuzzy_ode_holling_tanner.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/04_dynamics/fuzzy_ode_holling_tanner.ipynb)
 
 **What you'll learn:**
 - System of ODEs with fuzzy uncertainty

@@ -49,7 +49,7 @@ result = system.evaluate({'service': 7.5})
 ---
 
 ### 02. Sugeno Zero-Order
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/02_sugeno_zero_order.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/03_sugeno_zero_order.ipynb)
 
 **Topics:**
 - Sugeno/TSK system with constant outputs (order 0)
@@ -84,7 +84,7 @@ result = system.evaluate({'x': 6})
 ---
 
 ### 03. Sugeno First-Order
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/03_sugeno_first_order.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/04_sugeno_first_order.ipynb)
 
 **Topics:**
 - Sugeno system with linear outputs (order 1)
@@ -114,7 +114,7 @@ result = system.evaluate({'x': 7})
 ---
 
 ### 04. Voting Prediction
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/04_voting_prediction.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/02_inference/02_voting_prediction.ipynb)
 
 **Topics:**
 - Real-world application: voting prediction

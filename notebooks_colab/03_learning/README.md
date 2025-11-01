@@ -5,7 +5,7 @@ Automatic rule generation and fuzzy system optimization using `fuzzy_systems.lea
 ## Notebooks
 
 ### 01. Wang-Mendel Nonlinear
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/01_wang_mendel_nonlinear.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_nonlinear.ipynb)
 
 **Topics:**
 - Wang-Mendel algorithm for automatic rule generation
@@ -44,7 +44,7 @@ stats = wm.get_training_stats()
 ---
 
 ### 02. Wang-Mendel Linear
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/02_wang_mendel_linear.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_linear.ipynb)
 
 **Topics:**
 - Wang-Mendel for linear functions
@@ -54,7 +54,7 @@ stats = wm.get_training_stats()
 ---
 
 ### 03. Wang-Mendel Iris Classification
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/03_wang_mendel_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/wang_mendel_iris.ipynb)
 
 **Topics:**
 - Classification with Wang-Mendel
@@ -64,7 +64,7 @@ stats = wm.get_training_stats()
 ---
 
 ### 04. ANFIS Iris
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/04_anfis_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/anfis_iris.ipynb)
 
 **Topics:**
 - ANFIS (Adaptive Neuro-Fuzzy Inference System)
@@ -96,7 +96,7 @@ history = anfis.get_training_history()
 ---
 
 ### 05. Rules Optimization
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/05_rules_optimization.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/rules_optimization.ipynb)
 
 **Topics:**
 - Optimize Mamdani systems with metaheuristics
@@ -136,7 +136,7 @@ optimized_system = learner.to_mamdani()
 ---
 
 ### 06. ANFIS Regression
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/06_anfis_regression.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/anfis_regression.ipynb)
 
 **Topics:**
 - ANFIS for regression problems
@@ -146,7 +146,7 @@ optimized_system = learner.to_mamdani()
 ---
 
 ### 07. Rules Optimization Iris
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/07_rules_optimization_iris.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/1moi6/pyfuzzy-toolbox/blob/main/notebooks_colab/03_learning/rules_optimization_iris.ipynb)
 
 **Topics:**
 - Classification with optimized rules

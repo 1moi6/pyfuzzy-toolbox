@@ -32,7 +32,11 @@
       "Bash(ENABLE_PDF_EXPORT=0 mkdocs gh-deploy:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nFix GitHub Actions: install mkdocs-with-pdf plugin\n\nThe plugin needs to be installed even when disabled via\nENABLE_PDF_EXPORT=0. Without it, mkdocs fails to load the config.\n\nThis fixes the deployment workflow failures.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(find:*)",
+      "Bash(gh run:*)",
+      "Bash(git rm ANFIS_QUICKSTART.md WANG_MENDEL_QUICKSTART.md MAMDANI_LEARNING_QUICKSTART.md MAMDANI_SYSTEM_QUICKSTART.md SUGENO_SYSTEM_QUICKSTART.md PFUZZY_DISCRETE_QUICKSTART.md PFUZZY_CONTINUOUS_QUICKSTART.md FUZZY_ODE_QUICKSTART.md)",
+      "Bash(git mv QUICKSTART_INDEX.md docs/quick_start/quickstart_index.md)"
     ],
     "deny": [],
     "ask": []

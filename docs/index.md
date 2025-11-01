@@ -31,6 +31,16 @@ Welcome to **pyfuzzy-toolbox**, a comprehensive Python library for Fuzzy Systems
     [:octicons-arrow-right-24: Fundamentals](user_guide/fundamentals.md)
     [:octicons-arrow-right-24: Inference Systems](user_guide/inference_systems.md)
 
+-   :material-rocket-launch:{ .lg .middle } __Quick Start Guides__
+
+    ---
+
+    Step-by-step practical guides for all modules with complete examples
+
+    [:octicons-arrow-right-24: All Quick Starts](quick_start/index.md)
+    [:octicons-arrow-right-24: ANFIS](quick_start/anfis.md)
+    [:octicons-arrow-right-24: Mamdani System](quick_start/mamdani_system.md)
+
 -   :material-api:{ .lg .middle } __API Reference__
 
     ---
