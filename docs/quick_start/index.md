@@ -6,69 +6,11 @@ Complete collection of quick start guides for all modules in the pyfuzzy-toolbox
 
 ## 📚 Available Guides
 
-### 🧠 Learning Algorithms
-
-Learn fuzzy systems from data using various learning techniques.
-
-#### 1. [ANFIS - Adaptive Neuro-Fuzzy Inference System](anfis.md)
-**Hybrid learning combining neural networks and fuzzy logic**
-
-- ✅ Supervised learning for regression/classification
-- ✅ Two training methods: `fit()` (gradient descent) and `fit_metaheuristic()` (PSO/DE/GA)
-- ✅ Automatic parameter optimization
-- 📓 **Notebooks**: `03_learning/anfis_regression.ipynb`, `03_learning/anfis_iris.ipynb`
-
-**Key Features:**
-- Gaussian, Bell, and Sigmoid membership functions
-- Hybrid learning: LSE for consequents + gradient descent for premises
-- Metaheuristic optimization: PSO, DE, GA
-- Early stopping and adaptive learning rate
-
-**When to use:** Complex nonlinear regression/classification with automatic rule extraction.
-
----
-
-#### 2. [Wang-Mendel Learning](WANG_MENDEL_QUICKSTART.md)
-**Single-pass fuzzy rule extraction from data**
-
-- ✅ Fast rule generation from training data
-- ✅ Automatic task detection (regression/classification)
-- ✅ No iterative optimization needed
-- 📓 **Notebooks**: `03_learning/wang_mendel_nonlinear.ipynb`, `03_learning/wang_mendel_iris.ipynb`
-
-**Key Features:**
-- One-pass algorithm (very fast)
-- Automatic membership function generation
-- Rule conflict resolution
-- Handles multi-output systems
-
-**When to use:** Quick fuzzy model from data, interpretable rules, baseline models.
-
----
-
-#### 3. [Mamdani Learning](MAMDANI_LEARNING_QUICKSTART.md)
-**Optimize Mamdani fuzzy system consequents with metaheuristics**
-
-- ✅ Optimize rule consequents for existing Mamdani FIS
-- ✅ Four metaheuristic algorithms: SA, GA, PSO, DE
-- ✅ Preserves linguistic interpretability
-- 📓 **Notebooks**: `03_learning/rules_optimization.ipynb`, `03_learning/rules_optimization_iris.ipynb`
-
-**Key Features:**
-- Simulated Annealing (SA): local search with probabilistic acceptance
-- Genetic Algorithm (GA): population-based with crossover/mutation
-- Particle Swarm Optimization (PSO): swarm intelligence
-- Differential Evolution (DE): mutation-based evolution
-
-**When to use:** Fine-tune existing Mamdani systems, optimize rule consequents while keeping antecedents.
-
----
-
 ### 🎛️ Fuzzy Inference Systems
 
 Build and use fuzzy inference systems for control and decision-making.
 
-#### 4. [Mamdani System](MAMDANI_SYSTEM_QUICKSTART.md)
+#### 1. [Mamdani System](mamdani_system.md)
 **Linguistic fuzzy inference with fuzzy outputs**
 
 - ✅ Manual or automatic membership function generation
@@ -86,7 +28,7 @@ Build and use fuzzy inference systems for control and decision-making.
 
 ---
 
-#### 5. [Sugeno System](SUGENO_SYSTEM_QUICKSTART.md)
+#### 2. [Sugeno System](sugeno_system.md)
 **Efficient fuzzy inference with mathematical consequents**
 
 - ✅ Order 0 (constant) or Order 1 (linear) consequents
@@ -104,11 +46,69 @@ Build and use fuzzy inference systems for control and decision-making.
 
 ---
 
+### 🧠 Learning Algorithms
+
+Learn fuzzy systems from data using various learning techniques.
+
+#### 3. [Wang-Mendel Learning](wang_mendel.md)
+**Single-pass fuzzy rule extraction from data**
+
+- ✅ Fast rule generation from training data
+- ✅ Automatic task detection (regression/classification)
+- ✅ No iterative optimization needed
+- 📓 **Notebooks**: `03_learning/wang_mendel_nonlinear.ipynb`, `03_learning/wang_mendel_iris.ipynb`
+
+**Key Features:**
+- One-pass algorithm (very fast)
+- Automatic membership function generation
+- Rule conflict resolution
+- Handles multi-output systems
+
+**When to use:** Quick fuzzy model from data, interpretable rules, baseline models.
+
+---
+
+#### 4. [ANFIS - Adaptive Neuro-Fuzzy Inference System](anfis.md)
+**Hybrid learning combining neural networks and fuzzy logic**
+
+- ✅ Supervised learning for regression/classification
+- ✅ Two training methods: `fit()` (gradient descent) and `fit_metaheuristic()` (PSO/DE/GA)
+- ✅ Automatic parameter optimization
+- 📓 **Notebooks**: `03_learning/anfis_regression.ipynb`, `03_learning/anfis_iris.ipynb`
+
+**Key Features:**
+- Gaussian, Bell, and Sigmoid membership functions
+- Hybrid learning: LSE for consequents + gradient descent for premises
+- Metaheuristic optimization: PSO, DE, GA
+- Early stopping and adaptive learning rate
+
+**When to use:** Complex nonlinear regression/classification with automatic rule extraction.
+
+---
+
+#### 5. [Mamdani Learning](mamdani_learning.md)
+**Optimize Mamdani fuzzy system consequents with metaheuristics**
+
+- ✅ Optimize rule consequents for existing Mamdani FIS
+- ✅ Four metaheuristic algorithms: SA, GA, PSO, DE
+- ✅ Preserves linguistic interpretability
+- 📓 **Notebooks**: `03_learning/rules_optimization.ipynb`, `03_learning/rules_optimization_iris.ipynb`
+
+**Key Features:**
+- Simulated Annealing (SA): local search with probabilistic acceptance
+- Genetic Algorithm (GA): population-based with crossover/mutation
+- Particle Swarm Optimization (PSO): swarm intelligence
+- Differential Evolution (DE): mutation-based evolution
+
+**When to use:** Fine-tune existing Mamdani systems, optimize rule consequents while keeping antecedents.
+
+---
+
 ### 🔄 Dynamical Systems
 
 Model temporal evolution with fuzzy rules.
 
-#### 6. [p-Fuzzy Discrete](PFUZZY_DISCRETE_QUICKSTART.md)
+#### 6. [p-Fuzzy Discrete](pfuzzy_discrete.md)
 **Discrete-time fuzzy dynamical systems**
 
 - ✅ Model discrete-time evolution: x_{n+1} = x_n + f(x_n)
@@ -127,7 +127,7 @@ Model temporal evolution with fuzzy rules.
 
 ---
 
-#### 7. [p-Fuzzy Continuous](PFUZZY_CONTINUOUS_QUICKSTART.md)
+#### 7. [p-Fuzzy Continuous](pfuzzy_continuous.md)
 **Continuous-time fuzzy dynamical systems with ODEs**
 
 - ✅ Model continuous evolution: dx/dt = f(x)
@@ -146,7 +146,7 @@ Model temporal evolution with fuzzy rules.
 
 ---
 
-#### 8. [Fuzzy ODE Solver](FUZZY_ODE_QUICKSTART.md)
+#### 8. [Fuzzy ODE Solver](fuzzy_ode.md)
 **Solve ODEs with fuzzy initial conditions and parameters**
 
 - ✅ Propagate uncertainty through differential equations
@@ -170,16 +170,16 @@ Model temporal evolution with fuzzy rules.
 
 ## 🗂️ Quick Reference Table
 
-| Module | Type | Input | Output | Best For | Notebooks |
-|--------|------|-------|--------|----------|-----------|
-| **ANFIS** | Learning | Data (X, y) | Sugeno FIS | Regression, classification | 01, 02 |
-| **Wang-Mendel** | Learning | Data (X, y) | Mamdani FIS | Fast rule extraction | 03, 04 |
-| **Mamdani Learning** | Learning | FIS + Data | Optimized FIS | Fine-tuning consequents | 05 |
-| **Mamdani System** | Inference | Variables + Rules | FIS | Linguistic control | 01, 04 |
-| **Sugeno System** | Inference | Variables + Rules | FIS | Efficient inference | 02, 03 |
-| **p-Fuzzy Discrete** | Dynamics | FIS + x₀ | Trajectory | Discrete-time evolution | 01, 03 |
-| **p-Fuzzy Continuous** | Dynamics | FIS + x₀ | Trajectory | Continuous-time evolution | 02 |
-| **Fuzzy ODE** | Dynamics | ODE + Fuzzy params | Fuzzy trajectory | Uncertainty propagation | 04, 05 |
+| Module | Type | Input | Output | Best For | Guide |
+|--------|------|-------|--------|----------|-------|
+| **Mamdani System** | Inference | Variables + Rules | FIS | Linguistic control | [Guide](mamdani_system.md) |
+| **Sugeno System** | Inference | Variables + Rules | FIS | Efficient inference | [Guide](sugeno_system.md) |
+| **Wang-Mendel** | Learning | Data (X, y) | Mamdani FIS | Fast rule extraction | [Guide](wang_mendel.md) |
+| **ANFIS** | Learning | Data (X, y) | Sugeno FIS | Regression, classification | [Guide](anfis.md) |
+| **Mamdani Learning** | Learning | FIS + Data | Optimized FIS | Fine-tuning consequents | [Guide](mamdani_learning.md) |
+| **p-Fuzzy Discrete** | Dynamics | FIS + x₀ | Trajectory | Discrete-time evolution | [Guide](pfuzzy_discrete.md) |
+| **p-Fuzzy Continuous** | Dynamics | FIS + x₀ | Trajectory | Continuous-time evolution | [Guide](pfuzzy_continuous.md) |
+| **Fuzzy ODE** | Dynamics | ODE + Fuzzy params | Fuzzy trajectory | Uncertainty propagation | [Guide](fuzzy_ode.md) |
 
 ---
 
@@ -228,17 +228,17 @@ pip install pyfuzzy-toolbox
 
 ### Choose Your Path
 
-#### 1️⃣ **I want to learn from data**
-→ Start with [Wang-Mendel](WANG_MENDEL_QUICKSTART.md) for quick rules, or [ANFIS](ANFIS_QUICKSTART.md) for accurate models
+#### 1️⃣ **I want to build a control system**
+→ Start with [Mamdani System](mamdani_system.md) for interpretability, or [Sugeno System](sugeno_system.md) for efficiency
 
-#### 2️⃣ **I want to build a control system**
-→ Start with [Mamdani System](MAMDANI_SYSTEM_QUICKSTART.md) for interpretability, or [Sugeno System](SUGENO_SYSTEM_QUICKSTART.md) for efficiency
+#### 2️⃣ **I want to learn from data**
+→ Start with [Wang-Mendel](wang_mendel.md) for quick rules, or [ANFIS](anfis.md) for accurate models
 
 #### 3️⃣ **I want to model temporal dynamics**
-→ Start with [p-Fuzzy Discrete](PFUZZY_DISCRETE_QUICKSTART.md) for discrete-time, or [p-Fuzzy Continuous](PFUZZY_CONTINUOUS_QUICKSTART.md) for continuous-time
+→ Start with [p-Fuzzy Discrete](pfuzzy_discrete.md) for discrete-time, or [p-Fuzzy Continuous](pfuzzy_continuous.md) for continuous-time
 
 #### 4️⃣ **I have uncertain parameters**
-→ Start with [Fuzzy ODE Solver](FUZZY_ODE_QUICKSTART.md)
+→ Start with [Fuzzy ODE Solver](fuzzy_ode.md)
 
 ---
 
@@ -246,38 +246,38 @@ pip install pyfuzzy-toolbox
 
 ### Beginner Path
 1. **Fundamentals** → Notebooks `01_fundamentals/`
-2. **Inference** → [Mamdani System](MAMDANI_SYSTEM_QUICKSTART.md)
-3. **Learning** → [Wang-Mendel](WANG_MENDEL_QUICKSTART.md)
+2. **Inference** → [Mamdani System](mamdani_system.md)
+3. **Learning** → [Wang-Mendel](wang_mendel.md)
 
 ### Intermediate Path
-1. **Advanced Inference** → [Sugeno System](SUGENO_SYSTEM_QUICKSTART.md)
-2. **Learning** → [ANFIS](ANFIS_QUICKSTART.md)
-3. **Dynamics** → [p-Fuzzy Discrete](PFUZZY_DISCRETE_QUICKSTART.md)
+1. **Advanced Inference** → [Sugeno System](sugeno_system.md)
+2. **Learning** → [ANFIS](anfis.md)
+3. **Dynamics** → [p-Fuzzy Discrete](pfuzzy_discrete.md)
 
 ### Advanced Path
-1. **Optimization** → [Mamdani Learning](MAMDANI_LEARNING_QUICKSTART.md)
-2. **Continuous Dynamics** → [p-Fuzzy Continuous](PFUZZY_CONTINUOUS_QUICKSTART.md)
-3. **Uncertainty** → [Fuzzy ODE Solver](FUZZY_ODE_QUICKSTART.md)
+1. **Optimization** → [Mamdani Learning](mamdani_learning.md)
+2. **Continuous Dynamics** → [p-Fuzzy Continuous](pfuzzy_continuous.md)
+3. **Uncertainty** → [Fuzzy ODE Solver](fuzzy_ode.md)
 
 ---
 
 ## 💡 Common Use Cases
 
 ### Control Systems
-- **Tipping problem**: [Mamdani System](MAMDANI_SYSTEM_QUICKSTART.md) → Notebook `02_inference/01_mamdani_tipping.ipynb`
-- **Temperature control**: [Sugeno System](SUGENO_SYSTEM_QUICKSTART.md) → Notebook `02_inference/02_sugeno_zero_order.ipynb`
+- **Tipping problem**: [Mamdani System](mamdani_system.md) → Notebook `02_inference/01_mamdani_tipping.ipynb`
+- **Temperature control**: [Sugeno System](sugeno_system.md) → Notebook `02_inference/03_sugeno_zero_order.ipynb`
 
 ### Machine Learning
-- **Regression**: [ANFIS](ANFIS_QUICKSTART.md) → Notebook `03_learning/01_anfis_regression.ipynb`
-- **Classification**: [Wang-Mendel](WANG_MENDEL_QUICKSTART.md) → Notebook `03_learning/04_wang_mendel_classification.ipynb`
+- **Regression**: [ANFIS](anfis.md) → Notebook `03_learning/anfis_regression.ipynb`
+- **Classification**: [Wang-Mendel](wang_mendel.md) → Notebook `03_learning/wang_mendel_iris.ipynb`
 
 ### Population Dynamics
-- **Predator-prey (discrete)**: [p-Fuzzy Discrete](PFUZZY_DISCRETE_QUICKSTART.md) → Notebook `04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb`
-- **Predator-prey (continuous)**: [p-Fuzzy Continuous](PFUZZY_CONTINUOUS_QUICKSTART.md) → Notebook `04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb`
+- **Predator-prey (discrete)**: [p-Fuzzy Discrete](pfuzzy_discrete.md) → Notebook `04_dynamics/pfuzzy_discrete_predator_prey.ipynb`
+- **Predator-prey (continuous)**: [p-Fuzzy Continuous](pfuzzy_continuous.md) → Notebook `04_dynamics/pfuzzy_continuous_predator_prey.ipynb`
 
 ### Uncertainty Modeling
-- **Logistic growth with fuzzy parameters**: [Fuzzy ODE Solver](FUZZY_ODE_QUICKSTART.md) → Notebook `04_dynamics/04_fuzzy_ode_logistic.ipynb`
-- **Epidemic model with uncertain transmission**: [Fuzzy ODE Solver](FUZZY_ODE_QUICKSTART.md) → Notebook `04_dynamics/05_fuzzy_ode_holling_tanner.ipynb`
+- **Logistic growth with fuzzy parameters**: [Fuzzy ODE Solver](fuzzy_ode.md) → Notebook `04_dynamics/fuzzy_ode_logistic.ipynb`
+- **Epidemic model with uncertain transmission**: [Fuzzy ODE Solver](fuzzy_ode.md) → Notebook `04_dynamics/fuzzy_ode_holling_tanner.ipynb`
 
 ---
 
@@ -311,9 +311,9 @@ Each quickstart guide follows the same structure:
 
 ## 🎯 Quick Navigation
 
-- [ANFIS](ANFIS_QUICKSTART.md) | [Wang-Mendel](WANG_MENDEL_QUICKSTART.md) | [Mamdani Learning](MAMDANI_LEARNING_QUICKSTART.md)
-- [Mamdani System](MAMDANI_SYSTEM_QUICKSTART.md) | [Sugeno System](SUGENO_SYSTEM_QUICKSTART.md)
-- [p-Fuzzy Discrete](PFUZZY_DISCRETE_QUICKSTART.md) | [p-Fuzzy Continuous](PFUZZY_CONTINUOUS_QUICKSTART.md) | [Fuzzy ODE](FUZZY_ODE_QUICKSTART.md)
+- **Inference**: [Mamdani System](mamdani_system.md) | [Sugeno System](sugeno_system.md)
+- **Learning**: [Wang-Mendel](wang_mendel.md) | [ANFIS](anfis.md) | [Mamdani Learning](mamdani_learning.md)
+- **Dynamics**: [p-Fuzzy Discrete](pfuzzy_discrete.md) | [p-Fuzzy Continuous](pfuzzy_continuous.md) | [Fuzzy ODE](fuzzy_ode.md)
 
 ---
 
