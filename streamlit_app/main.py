@@ -45,7 +45,7 @@ def load_css():
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    # header {visibility: hidden;}
 
     /* Reduce top padding */
     .main .block-container {
@@ -55,7 +55,7 @@ def load_css():
     }
 
     .stMainBlockContainer {
-        padding-top: 0rem;
+        padding-top: 2rem;
         padding-bottom: 0;
         max-width: 90%;
     }
@@ -320,15 +320,18 @@ load_css()
 # Import modules
 from modules import home, inference, learning, dynamics
 
-# Render current page
-current_page = st.session_state.page
+# Define pages using st.Page with unique url_path
+home_page = st.Page(home.run, title="Home", icon="🏠", url_path="home", default=True)
+inference_page = st.Page(inference.run, title="Inference Systems", icon="⚙️", url_path="inference")
+learning_page = st.Page(learning.run, title="Learning & Optimization", icon="🧠", url_path="learning")
+dynamics_page = st.Page(dynamics.run, title="Dynamic Systems", icon="📊", url_path="dynamics")
 
-# Render pages
-if current_page == 'home':
-    home.run()
-elif current_page == 'inference':
-    inference.run()
-elif current_page == 'learning':
-    learning.run()
-elif current_page == 'dynamics':
-    dynamics.run()
+# Organize pages with sections
+pages = {
+    "Home": [home_page],  # Home without section label
+    "Modules": [inference_page, learning_page, dynamics_page]
+}
+
+# Navigation with sidebar control
+pg = st.navigation(pages, position="top")
+pg.run()

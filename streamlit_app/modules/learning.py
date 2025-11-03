@@ -10,26 +10,6 @@ def run():
 
     # Sidebar
     with st.sidebar:
-        # Navigation pills
-        selected_page = st.pills(
-            "Navigation",
-            ["🏠 Home", "⚙️ Inference", "🧠 Learning", "📊 Dynamics"],
-            selection_mode="single",
-            default="🧠 Learning",
-            label_visibility="collapsed"
-        )
-
-        # Handle navigation
-        if selected_page == "🏠 Home":
-            st.session_state.page = 'home'
-            st.rerun()
-        elif selected_page == "⚙️ Inference":
-            st.session_state.page = 'inference'
-            st.rerun()
-        elif selected_page == "📊 Dynamics":
-            st.session_state.page = 'dynamics'
-            st.rerun()
-
         st.markdown("""
         <div style="text-align: center; padding: 0.25rem 0 0.125rem 0; margin-top: 0.5rem;">
             <h2 style="margin: 0.25rem 0 0.125rem 0; color: #667eea;">Learning & Optimization</h2>

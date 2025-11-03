@@ -1207,26 +1207,6 @@ def run():
 
     # Sidebar configuration
     with st.sidebar:
-        # Navigation pills
-        selected_page = st.pills(
-            "Navigation",
-            ["🏠 Home", "⚙️ Inference", "🧠 Learning", "📊 Dynamics"],
-            selection_mode="single",
-            default="⚙️ Inference",
-            label_visibility="collapsed"
-        )
-
-        # Handle navigation
-        if selected_page == "🏠 Home":
-            st.session_state.page = 'home'
-            st.rerun()
-        elif selected_page == "🧠 Learning":
-            st.session_state.page = 'learning'
-            st.rerun()
-        elif selected_page == "📊 Dynamics":
-            st.session_state.page = 'dynamics'
-            st.rerun()
-
         st.markdown("""
         <div style="text-align: center; padding: 0.25rem 0 0.125rem 0; margin-top: 0.5rem;">
             <h2 style="margin: 0.25rem 0 0.125rem 0; color: #667eea;">Inference Systems</h2>
@@ -1241,12 +1221,10 @@ def run():
         st.markdown("**Fuzzy Inference Systems**")
 
         # New FIS and Load FIS buttons in columns
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➕ New", use_container_width=True):
+       
+        if st.button("New FIS", use_container_width=True):
                 new_fis_dialog()
-        with col2:
-            if st.button("📥 Load", use_container_width=True):
+        if st.button("Load FIS", use_container_width=True):
                 load_fis_dialog()
 
         # Only show FIS management controls if there's at least one FIS
@@ -1270,13 +1248,11 @@ def run():
                 st.markdown(f"<div style='text-align: center; padding: 0.5rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem;'><strong>{active_fis['name']}</strong></div>", unsafe_allow_html=True)
 
             # FIS actions
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✏️ Rename", use_container_width=True):
-                    rename_fis_dialog()
-            with col2:
-                if st.button("🗑️ Delete", use_container_width=True, disabled=len(st.session_state.fis_list)==1):
-                    delete_fis_dialog()
+            
+            if st.button("Rename FIS", use_container_width=True):
+                rename_fis_dialog()
+            if st.button("Delete FIS", use_container_width=True, disabled=len(st.session_state.fis_list)==1):
+                delete_fis_dialog()
 
             st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 1rem 0;'>", unsafe_allow_html=True)
 
@@ -1316,7 +1292,6 @@ def run():
         # Welcome screen when no FIS exists
         st.markdown("""
         <div style="text-align: center; padding: 4rem 2rem;">
-            <div style="font-size: 4rem; margin-bottom: 1.5rem;">⚙️</div>
             <h1 style="color: #667eea; font-size: 2.5rem; margin-bottom: 1rem;">
                 Welcome to Fuzzy Inference Systems
             </h1>
@@ -1369,7 +1344,7 @@ def run():
         ])
 
         with tab1:
-            st.markdown("### Input Variables")
+            # st.markdown("##### ")
     
             # Initialize counters if needed
             if 'new_var_counter' not in st.session_state:
@@ -1486,7 +1461,7 @@ def run():
                                 
 
                                 fig.update_layout(
-                                    title=f"Membership Functions for '{variable['name']}'",
+                                    title=f"Membership Functions - {variable['name']}",
                                     xaxis_title=var_name,
                                     yaxis_title="Membership Degree (μ)",
                                     hovermode='closest',
@@ -1527,7 +1502,7 @@ def run():
                 st.info("No input variables configured. Click '➕ Add New Input Variable' to get started.")
     
         with tab2:
-            st.markdown("### Output Variables")
+            # st.markdown("### Output Variables")
     
             # Initialize counter if needed
             if 'new_output_var_counter' not in st.session_state:
@@ -1644,7 +1619,7 @@ def run():
                                 
 
                                 fig.update_layout(
-                                    title=f"Membership Functions for '{variable['name']}'",
+                                    title=f"Membership Functions - {variable['name']}",
                                     xaxis_title=var_name,
                                     yaxis_title="Membership Degree (μ)",
                                     hovermode='closest',
@@ -1686,7 +1661,7 @@ def run():
                 st.info("No output variables configured. Click '➕ Add New Output Variable' to get started.")
     
         with tab3:
-            st.markdown("### Fuzzy Rules")
+            # st.markdown("### Fuzzy Rules")
     
             # Initialize counter for rule form reset
             if 'new_rule_counter' not in st.session_state:
@@ -1899,7 +1874,7 @@ def run():
                     st.info("No rules defined yet. Click '➕ Add New Fuzzy Rule' to get started.")
     
         with tab4:
-            st.markdown("### Inference Engine")
+            # st.markdown("### Inference Engine")
 
             
             # Validate FIS
@@ -1914,7 +1889,7 @@ def run():
                     st.success("✓ FIS is ready for inference!")
 
                     # Input values section
-                    st.markdown("#### 📊 Input Values")
+                    st.markdown("##### Set Input Values")
 
                     # Create input sliders/number inputs
                     input_values = {}
@@ -2053,7 +2028,7 @@ def run():
     
         # Example code
         st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("### 💻 Example Code")
+        st.markdown("##### Example Code")
     
         with st.expander("View example Mamdani system"):
             st.code("""
