@@ -18,7 +18,7 @@ def init_session_state():
 
 init_session_state()
 
-# Page configuration - always expanded (control visibility with CSS)
+# Page configuration
 st.set_page_config(
     page_title="pyfuzzy-toolbox",
     page_icon="🔬",
@@ -323,41 +323,7 @@ from modules import home, inference, learning, dynamics
 # Render current page
 current_page = st.session_state.page
 
-# Control sidebar visibility based on current page
-if current_page == 'home':
-    # Hide sidebar on home page
-    st.markdown("""
-    <style id="hide-sidebar-style">
-        section[data-testid="stSidebar"] {
-            display: none !important;
-        }
-        button[kind="header"][data-testid="collapsedControl"] {
-            display: none !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    # Remove hiding styles on other pages
-    st.markdown("""
-    <script>
-        // Remove any hide-sidebar-style elements
-        const styles = parent.document.querySelectorAll('#hide-sidebar-style');
-        styles.forEach(style => style.remove());
-
-        // Force sidebar to be visible
-        const sidebar = parent.document.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar) {
-            sidebar.style.removeProperty('display');
-        }
-
-        // Force collapse button to be visible
-        const collapseBtn = parent.document.querySelector('button[data-testid="collapsedControl"]');
-        if (collapseBtn) {
-            collapseBtn.style.removeProperty('display');
-        }
-    </script>
-    """, unsafe_allow_html=True)
-
+# Render pages
 if current_page == 'home':
     home.run()
 elif current_page == 'inference':

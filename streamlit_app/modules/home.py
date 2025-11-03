@@ -8,6 +8,32 @@ import streamlit as st
 def run():
     """Render home page"""
 
+    # Sidebar for home page
+    with st.sidebar:
+        st.markdown("""
+        <div style="text-align: center; padding: 0.5rem 0;">
+            <h2 style="margin: 0.5rem 0; color: #667eea;">Navigation</h2>
+            <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">
+                Select a module to explore
+            </p>
+        </div>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0.5rem 0;">
+        """, unsafe_allow_html=True)
+
+        st.markdown("**Quick Access**")
+
+        if st.button("⚙️ Inference Systems", use_container_width=True):
+            st.session_state.page = 'inference'
+            st.rerun()
+
+        if st.button("🧠 Learning & Optimization", use_container_width=True):
+            st.session_state.page = 'learning'
+            st.rerun()
+
+        if st.button("📊 Dynamic Systems", use_container_width=True):
+            st.session_state.page = 'dynamics'
+            st.rerun()
+
     # Hero section with text animation
     st.markdown("""
     <div class="hero-container">
