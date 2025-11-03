@@ -323,7 +323,7 @@ from modules import home, inference, learning, dynamics
 # Render current page
 current_page = st.session_state.page
 
-# Hide sidebar on home page using st.markdown with display:none
+# Control sidebar visibility based on current page
 if current_page == 'home':
     st.markdown("""
     <style>
@@ -332,6 +332,18 @@ if current_page == 'home':
         }
         [data-testid="collapsedControl"] {
             display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    # Ensure sidebar is visible on other pages (override any previous hiding)
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {
+            display: flex !important;
+        }
+        [data-testid="collapsedControl"] {
+            display: block !important;
         }
     </style>
     """, unsafe_allow_html=True)
