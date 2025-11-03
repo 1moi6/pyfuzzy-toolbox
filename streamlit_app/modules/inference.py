@@ -5,6 +5,11 @@ Interactive interface for creating Mamdani and Sugeno fuzzy systems
 
 import streamlit as st
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+# Import inference engine
+from modules.inference_engine import InferenceEngine
+
 def close_dialog(variable_idx):
     """Callback to reset action selection"""
     st.session_state[f"actions_{variable_idx}"] = None
@@ -1431,7 +1436,7 @@ def run():
     
                         # Action buttons using icons
                         action_icons = {
-                            "view": "👁️ View",
+                            # "view": "👁️ View",
                             "edit": "✏️ Edit",
                             "add_term": "➕ Add Term",
                             "delete": "🗑️ Delete"
@@ -1464,6 +1469,32 @@ def run():
                         # Display terms in expander
                         if variable['terms']:
                             with st.expander(f"📋 Terms ({len(variable['terms'])})", expanded=False):
+                                # var_data = next(v for v in active_fis['input_variables'] if v['name'] == var_name)
+                                engine = InferenceEngine(active_fis)
+                                fig = go.Figure()
+
+                                # Plot each term
+                                for term in variable['terms']:
+                                    x, y = engine.get_term_membership_curve(variable['name'], term['name'])
+                                    fig.add_trace(go.Scatter(
+                                        x=x, y=y,
+                                        mode='lines',
+                                        name=term['name'],
+                                        hovertemplate=f"{term['name']}<br>x=%{{x:.2f}}<br>μ=%{{y:.3f}}<extra></extra>"
+                                    ))
+
+                                
+
+                                fig.update_layout(
+                                    title=f"Membership Functions for '{variable['name']}'",
+                                    xaxis_title=var_name,
+                                    yaxis_title="Membership Degree (μ)",
+                                    hovermode='closest',
+                                    height=350
+                                )
+
+                                st.plotly_chart(fig, use_container_width=True,key=f"input_chart_for_{variable['name']}")
+                                
                                 for t_idx, term in enumerate(variable['terms']):
                                     col_t1, col_t2 = st.columns([3, 1])
                                     with col_t1:
@@ -1563,7 +1594,7 @@ def run():
     
                         # Action buttons using icons
                         action_icons = {
-                            "view": "👁️ View",
+                            # "view": "👁️ View",
                             "edit": "✏️ Edit",
                             "add_term": "➕ Add Term",
                             "delete": "🗑️ Delete"
@@ -1596,6 +1627,33 @@ def run():
                         # Display terms in expander
                         if variable['terms']:
                             with st.expander(f"📋 Terms ({len(variable['terms'])})", expanded=False):
+
+                                engine = InferenceEngine(active_fis)
+                                fig = go.Figure()
+
+                                # Plot each term
+                                for term in variable['terms']:
+                                    x, y = engine.get_term_membership_curve(variable['name'], term['name'])
+                                    fig.add_trace(go.Scatter(
+                                        x=x, y=y,
+                                        mode='lines',
+                                        name=term['name'],
+                                        hovertemplate=f"{term['name']}<br>x=%{{x:.2f}}<br>μ=%{{y:.3f}}<extra></extra>"
+                                    ))
+
+                                
+
+                                fig.update_layout(
+                                    title=f"Membership Functions for '{variable['name']}'",
+                                    xaxis_title=var_name,
+                                    yaxis_title="Membership Degree (μ)",
+                                    hovermode='closest',
+                                    height=350
+                                )
+
+                                st.plotly_chart(fig, use_container_width=True,key=f"output_chart_for_{variable['name']}")
+
+
                                 for t_idx, term in enumerate(variable['terms']):
                                     col_t1, col_t2 = st.columns([3, 1])
                                     with col_t1:
@@ -1843,11 +1901,7 @@ def run():
         with tab4:
             st.markdown("### Inference Engine")
 
-            # Import inference engine
-            from modules.inference_engine import InferenceEngine
-            import plotly.graph_objects as go
-            from plotly.subplots import make_subplots
-
+            
             # Validate FIS
             try:
                 engine = InferenceEngine(active_fis)
