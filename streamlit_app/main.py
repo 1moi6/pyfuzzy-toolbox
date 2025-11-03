@@ -325,27 +325,37 @@ current_page = st.session_state.page
 
 # Control sidebar visibility based on current page
 if current_page == 'home':
+    # Hide sidebar on home page
     st.markdown("""
-    <style>
-        [data-testid="stSidebar"] {
+    <style id="hide-sidebar-style">
+        section[data-testid="stSidebar"] {
             display: none !important;
         }
-        [data-testid="collapsedControl"] {
+        button[kind="header"][data-testid="collapsedControl"] {
             display: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
 else:
-    # Ensure sidebar is visible on other pages (override any previous hiding)
+    # Remove hiding styles on other pages
     st.markdown("""
-    <style>
-        [data-testid="stSidebar"] {
-            display: flex !important;
+    <script>
+        // Remove any hide-sidebar-style elements
+        const styles = parent.document.querySelectorAll('#hide-sidebar-style');
+        styles.forEach(style => style.remove());
+
+        // Force sidebar to be visible
+        const sidebar = parent.document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.removeProperty('display');
         }
-        [data-testid="collapsedControl"] {
-            display: block !important;
+
+        // Force collapse button to be visible
+        const collapseBtn = parent.document.querySelector('button[data-testid="collapsedControl"]');
+        if (collapseBtn) {
+            collapseBtn.style.removeProperty('display');
         }
-    </style>
+    </script>
     """, unsafe_allow_html=True)
 
 if current_page == 'home':
