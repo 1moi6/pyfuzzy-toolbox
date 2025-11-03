@@ -1,0 +1,8 @@
+streamlit>=1.28.0
+streamlit-lottie>=0.0.5
+pyfuzzy-toolbox>=1.0.7
+numpy>=1.20.0
+matplotlib>=3.3.0
+plotly>=5.0.0
+pandas>=1.2.0
+requests>=2.25.0

@@ -36,7 +36,20 @@
       "Bash(find:*)",
       "Bash(gh run:*)",
       "Bash(git rm ANFIS_QUICKSTART.md WANG_MENDEL_QUICKSTART.md MAMDANI_LEARNING_QUICKSTART.md MAMDANI_SYSTEM_QUICKSTART.md SUGENO_SYSTEM_QUICKSTART.md PFUZZY_DISCRETE_QUICKSTART.md PFUZZY_CONTINUOUS_QUICKSTART.md FUZZY_ODE_QUICKSTART.md)",
-      "Bash(git mv QUICKSTART_INDEX.md docs/quick_start/quickstart_index.md)"
+      "Bash(git mv QUICKSTART_INDEX.md docs/quick_start/quickstart_index.md)",
+      "Bash(cd /Users/1moi6/Desktop/Minicurso\\ Fuzzy/fuzzy_systems && python -m build:*)",
+      "Bash(python -m twine upload:*)",
+      "Bash(export TESTPYPI_TOKEN:*)",
+      "Bash(export:*)",
+      "Bash(git tag -a v1.0.7 -m \"Release version 1.0.7 - Documentation reorganization and Quick Start cards\")",
+      "Bash(git push:*)",
+      "Bash(cd /Users/1moi6/Desktop/Minicurso\\ Fuzzy/fuzzy_systems/streamlit_app:*)",
+      "Bash(cd /Users/1moi6/Desktop/Minicurso\\ Fuzzy/fuzzy_systems/streamlit_app && streamlit run:*)",
+      "Bash(streamlit run:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []
