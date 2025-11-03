@@ -18,14 +18,12 @@ def init_session_state():
 
 init_session_state()
 
-# Page configuration - show sidebar only if not on home
-sidebar_state = "collapsed" if st.session_state.page == 'home' else "expanded"
-
+# Page configuration - always expanded (control visibility with CSS)
 st.set_page_config(
     page_title="pyfuzzy-toolbox",
     page_icon="🔬",
     layout="wide",
-    initial_sidebar_state=sidebar_state
+    initial_sidebar_state="expanded"
 )
 
 # Custom CSS for modern academic look
@@ -324,6 +322,19 @@ from modules import home, inference, learning, dynamics
 
 # Render current page
 current_page = st.session_state.page
+
+# Hide sidebar on home page using st.markdown with display:none
+if current_page == 'home':
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {
+            display: none !important;
+        }
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 if current_page == 'home':
     home.run()
