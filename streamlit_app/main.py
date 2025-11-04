@@ -318,18 +318,63 @@ def navigate_to(page_name):
 load_css()
 
 # Import modules
-from modules import home, inference, learning, dynamics
+from modules import home, inference, learning, dynamics, dynamics_ode
 
 # Define pages using st.Page with unique url_path
 home_page = st.Page(home.run, title="Home", icon="🏠", url_path="home", default=True)
-inference_page = st.Page(inference.run, title="Inference Systems", icon="⚙️", url_path="inference")
-learning_page = st.Page(learning.run, title="Learning & Optimization", icon="🧠", url_path="learning")
-dynamics_page = st.Page(dynamics.run, title="Dynamic Systems", icon="📊", url_path="dynamics")
+
+# Inference module pages
+def inference_mamdani():
+    st.session_state.inference_system_type = "Mamdani"
+    inference.run()
+
+def inference_sugeno():
+    st.session_state.inference_system_type = "Sugeno"
+    inference.run()
+
+mamdani_page = st.Page(inference_mamdani, title="Mamdani", icon="🎯", url_path="mamdani")
+sugeno_page = st.Page(inference_sugeno, title="Sugeno", icon="🎲", url_path="sugeno")
+
+# Learning module pages
+def learning_anfis():
+    st.session_state.learning_method = "ANFIS"
+    learning.run()
+
+def learning_wang_mendel():
+    st.session_state.learning_method = "Wang-Mendel"
+    learning.run()
+
+def learning_optimization():
+    st.session_state.learning_method = "Rule Optimization"
+    learning.run()
+
+anfis_page = st.Page(learning_anfis, title="ANFIS", icon="🧠", url_path="anfis")
+wang_mendel_page = st.Page(learning_wang_mendel, title="Wang-Mendel", icon="📚", url_path="wang-mendel")
+optimization_page = st.Page(learning_optimization, title="Rule Optimization", icon="🔧", url_path="optimization")
+
+# Dynamics module pages
+def dynamics_discrete():
+    st.session_state.dynamics_system_type = "p-Fuzzy Discrete"
+    dynamics.run()
+
+def dynamics_continuous():
+    st.session_state.dynamics_system_type = "p-Fuzzy Continuous"
+    dynamics.run()
+
+def dynamics_fuzzy_ode():
+    st.session_state.dynamics_system_type = "Fuzzy ODE"
+    dynamics_ode.run()
+
+discrete_page = st.Page(dynamics_discrete, title="p-Fuzzy Discrete", icon="📊", url_path="pfuzzy-discrete")
+continuous_page = st.Page(dynamics_continuous, title="p-Fuzzy Continuous", icon="📈", url_path="pfuzzy-continuous")
+fuzzy_ode_page = st.Page(dynamics_fuzzy_ode, title="Fuzzy ODE", icon="🧮", url_path="fuzzy-ode")
 
 # Organize pages with sections
 pages = {
-    "Home": [home_page],  # Home without section label
-    "Modules": [inference_page, learning_page, dynamics_page]
+    "Home": [home_page],
+    "Inference": [mamdani_page, sugeno_page],
+    "Learning": [anfis_page, wang_mendel_page, optimization_page],
+    "Dynamics": [discrete_page, continuous_page, fuzzy_ode_page]
 }
 
 # Navigation with sidebar control

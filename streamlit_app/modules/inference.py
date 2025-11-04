@@ -821,7 +821,12 @@ def new_fis_dialog():
     st.markdown("**Create a new Fuzzy Inference System**")
 
     fis_name = st.text_input("FIS Name", placeholder="e.g., Temperature Controller")
-    fis_type = st.selectbox("System Type", ["Mamdani", "Sugeno (TSK)"])
+
+    # Get default system type from navigation (if set)
+    default_type = st.session_state.get('inference_system_type', 'Mamdani')
+    default_idx = 0 if default_type == "Mamdani" else 1
+
+    fis_type = st.selectbox("System Type", ["Mamdani", "Sugeno (TSK)"], index=default_idx)
 
     st.markdown("---")
 

@@ -8,42 +8,40 @@ import streamlit as st
 def run():
     """Render learning & optimization page"""
 
+    # Get method from session_state (set by navigation)
+    method = st.session_state.get('learning_method', 'ANFIS')
+
+    # Map method names
+    method_map = {
+        'ANFIS': 'ANFIS (Adaptive Neuro-Fuzzy Inference System)',
+        'Wang-Mendel': 'Wang-Mendel (Rule Extraction)',
+        'Rule Optimization': 'Mamdani Learning (Metaheuristic Optimization)'
+    }
+
+    algorithm = method_map.get(method, method_map['ANFIS'])
+
     # Sidebar
     with st.sidebar:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 0.25rem 0 0.125rem 0; margin-top: 0.5rem;">
-            <h2 style="margin: 0.25rem 0 0.125rem 0; color: #667eea;">Learning & Optimization</h2>
+            <h2 style="margin: 0.25rem 0 0.125rem 0; color: #667eea;">{method}</h2>
             <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">
-                Learn fuzzy systems from data using advanced algorithms
+                Learn fuzzy systems from data
             </p>
         </div>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0.25rem 0 0.5rem 0;">
         """, unsafe_allow_html=True)
 
-    # Main content - Just title
-    st.markdown("""
+    # Main content
+    st.markdown(f"""
     <div style="text-align: center; padding: 0.5rem 0;">
         <h3 style="color: #6b7280; font-weight: 500; margin: 0; font-size: 1.1rem;">
-            Learning & Optimization
+            {method}
         </h3>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='border-bottom: 1px solid #e5e7eb; margin: 0.5rem 0 1.5rem 0;'></div>", unsafe_allow_html=True)
-
-    # Algorithm selection
-    st.markdown("### Learning Algorithm")
-
-    algorithm = st.selectbox(
-        "Choose Algorithm",
-        [
-            "ANFIS (Adaptive Neuro-Fuzzy Inference System)",
-            "Wang-Mendel (Rule Extraction)",
-            "Mamdani Learning (Metaheuristic Optimization)"
-        ]
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
 
     # Algorithm-specific interface
     if "ANFIS" in algorithm:
