@@ -116,13 +116,39 @@ def get_predefined_ode_config(system_name):
 
     return systems.get(system_name)
 
+def close_edit_dialog():
+    st.session_state["edit_custom_equation"]=None
+
+@st.dialog("Edit Custom Equation")
+def edit_dialog():
+    custom_config = st.session_state['custom_config']
+    eqs = []
+    i = 0
+    for eq in custom_config['equations']:
+        equation = st.text_input(
+            rf"$dx_{i+1}/dt$ =",
+            value = eq,
+            key=f"custom_equation_edit_{i}",
+            placeholder=f"e.g., r * x[{i}] * (1 - x[{i}] / K)",
+            help="Use x[0], x[1], ... for state variables"
+        )
+        eqs.append(equation)
+        i += 1
+    if st.button('Save Changes'):
+        if all(eqs):
+            custom_config['equations'] = eqs
+            custom_config[vars] = extract_parameters(eqs)
+            close_edit_dialog()
+            st.rerun()
+
 
 def get_custom_ode_config():
     """Returns configuration for custom ODE system"""
 
     n_vars = st.session_state.get('n_custom_vars', 2)
-    var_names = [st.session_state.get(f"custom_var_name_{i}", f"x{i}") for i in range(n_vars)]
+    var_names = [st.session_state.get(f"custom_var_name_{i}", f"x_{i+1}") for i in range(n_vars)]
     equations = [st.session_state.get(f"custom_equation_{i}", "") for i in range(n_vars)]
+  
 
     # Check if all equations are provided
     if not all(equations):
@@ -149,9 +175,10 @@ def render_custom_ode_definition():
     st.markdown("#### Custom ODE System")
 
     n_vars = st.session_state.get('n_custom_vars', 2)
-
-    st.caption(f"Define {n_vars} differential equation(s):")
-
+    
+    renames = ", ".join([f"$x_{i+1}=x[{i}]$" for i in range(n_vars)])
+    st.caption(f"Define {n_vars} differential equation(s): "+renames)
+    eqs = []
     for i in range(n_vars):
         equation = st.text_input(
             rf"$dx_{i+1}/dt$ =",
@@ -159,7 +186,25 @@ def render_custom_ode_definition():
             placeholder=f"e.g., r * x[{i}] * (1 - x[{i}] / K)",
             help="Use x[0], x[1], ... for state variables"
         )
+        eqs.append(equation)
+    if all(eqs):
+        params = extract_parameters(eqs)
+        ode_config = {
+                    "name": "Custom ODE System",
+                    "dim": n_vars,
+                    "vars": [ f"x_{i+1}" for i in range(n_vars)],
+                    "equations": eqs,
+                    "params": params,
+                    "default_params": {},
+                    "default_ic": [1.0] * n_vars,
+                    "ic_ranges": [(-10.0, 10.0)] * n_vars
+                }
+        # if 'custom_config' not in st.session_state:
+        st.session_state['custom_config'] = ode_config
+        st.rerun()
 
+
+    
     with st.expander("💡 How to write equations"):
         st.markdown("""
         **Syntax:**
@@ -237,6 +282,28 @@ def build_ode_function(equations, safe_names):
 
 def render_configuration_and_solve(ode_config):
     """Render configuration UI and solve"""
+    with st.sidebar:
+        st.markdown("#### Solver Configuration")
+
+        t_end = st.number_input("Simulation time", min_value=1.0, max_value=1000.0, value=10.0, step=5.0)
+
+        n_alpha = st.number_input("α-levels", min_value=3, max_value=21, value=11, step=2)
+
+        ode_method = st.selectbox(
+                "ODE Method",
+                ["RK45", "RK23", "DOP853", "Radau", "BDF"],
+                help="Integration method for ODEs"
+            )
+
+        fuzzy_method = st.selectbox(
+                "Fuzzy Method",
+                ["standard", "monte_carlo"],
+                help="Method for fuzzy propagation"
+            )
+        if fuzzy_method=='monte_carlo':
+            num_of_points_mc = st.number_input("No of samples", min_value=100, max_value=10000, value=1000, step=100)
+        else:
+            num_of_points = st.number_input("Grid points", min_value=2, max_value=100, value=10, step=1)
 
     # Extract parameters
     all_params = extract_parameters(ode_config['equations'])
@@ -279,9 +346,9 @@ def render_configuration_and_solve(ode_config):
                                     key=f"fuzzy_ci_selectbox_{var_name}"
                                 )
                 if mf_type=='Triangular':
-                    a = ic_cols[0].number_input("Value for $a$", value=float(default_val * 0.8), format="%.4f", step=0.1)
-                    b = ic_cols[0].number_input("Value for $b$", value=float(default_val *1), format="%.4f", step=0.1)
-                    c = ic_cols[0].number_input("Value for $c$", value=float(default_val * 1.2), format="%.4f", step=0.1)
+                    a = ic_cols[0].number_input("Value for $a$", value=float(default_val * 0.8), format="%.4f", step=0.1,key=f"fuzzy_ci_tri_a_{var_name}")
+                    b = ic_cols[0].number_input("Value for $b$", value=float(default_val *1), format="%.4f", step=0.1,key=f"fuzzy_ci_tri_b_{var_name}")
+                    c = ic_cols[0].number_input("Value for $c$", value=float(default_val * 1.2), format="%.4f", step=0.1, key=f"fuzzy_ci_tri_c_{var_name}")
                     config = {'type': 'triangular', 'a': a, 'b': b, 'c': c}
                     
                     x = np.linspace(a-0.2*np.abs(a),c+0.2*np.abs(c),200)
@@ -289,17 +356,17 @@ def render_configuration_and_solve(ode_config):
 
 
                 elif mf_type=='Gaussian':
-                    mean = ic_cols[0].number_input("Mean $\mu$", value=float(default_val), format="%.4f", step=0.1)
-                    sigma = ic_cols[0].number_input("Std Dev $\sigma$", value=float(abs(default_val) * 0.1), format="%.4f", step=0.01)
+                    mean = ic_cols[0].number_input("Mean $\mu$", value=float(default_val), format="%.4f", step=0.1,key=f"fuzzy_ci_gauss_mu_{var_name}")
+                    sigma = ic_cols[0].number_input("Std Dev $\sigma$", value=float(abs(default_val) * 0.1), format="%.4f", step=0.01,key=f"fuzzy_ci_gauss_sigma_{var_name}")
                     config = {'type': 'gaussian', 'mean': mean, 'sigma': sigma}
                     x = np.linspace(mean-5*sigma,mean+5*sigma,500)
                     y = np.exp(-0.5 * ((x - mean) /sigma)**2)
     
                 else:
-                    a = ic_cols[0].number_input("Value for $a$", value=float(default_val * 0.7), format="%.4f", step=0.1)
-                    b = ic_cols[0].number_input("Value for $b$", value=float(default_val *0.9), format="%.4f", step=0.1)
-                    c = ic_cols[0].number_input("Value for $c$", value=float(default_val * 1.1), format="%.4f", step=0.1)
-                    d= ic_cols[0].number_input("Value for $d$", value=float(default_val * 1.3), format="%.4f", step=0.1)
+                    a = ic_cols[0].number_input("Value for $a$", value=float(default_val * 0.7), format="%.4f", step=0.1,key=f"fuzzy_ci_trap_a_{var_name}")
+                    b = ic_cols[0].number_input("Value for $b$", value=float(default_val *0.9), format="%.4f", step=0.1,key=f"fuzzy_ci_trap_b_{var_name}")
+                    c = ic_cols[0].number_input("Value for $c$", value=float(default_val * 1.1), format="%.4f", step=0.1,key=f"fuzzy_ci_trap_c_{var_name}")
+                    d= ic_cols[0].number_input("Value for $d$", value=float(default_val * 1.3), format="%.4f", step=0.1,key=f"fuzzy_ci_trap_d_{var_name}")
                     config = {'type': 'trapezoidal', 'a': a, 'b': b, 'c': c,'d': d}
 
                     x = np.linspace(a-0.2*np.abs(a),d+0.2*np.abs(d),200)
@@ -423,28 +490,7 @@ def render_configuration_and_solve(ode_config):
 
         all_params_dict = {**fuzzy_params, **crisp_params}
 
-    with st.sidebar:
-        st.markdown("#### Solver Configuration")
-
-        t_end = st.number_input("Simulation time", min_value=1.0, max_value=1000.0, value=50.0, step=5.0)
-
-        n_alpha = st.number_input("α-levels", min_value=3, max_value=21, value=11, step=2)
-
-        ode_method = st.selectbox(
-                "ODE Method",
-                ["RK45", "RK23", "DOP853", "Radau", "BDF"],
-                help="Integration method for ODEs"
-            )
-
-        fuzzy_method = st.selectbox(
-                "Fuzzy Method",
-                ["standard", "monte_carlo"],
-                help="Method for fuzzy propagation"
-            )
-        if fuzzy_method=='monte_carlo':
-            num_of_points_mc = st.number_input("No of samples", min_value=100, max_value=10000, value=1000, step=100)
-        else:
-            num_of_points = st.number_input("Grid points", min_value=2, max_value=100, value=10, step=1)
+    
 
 
     # Solve button
@@ -911,7 +957,9 @@ def run():
     if st.session_state.ode_system_type == "Pre-defined":
         ode_config = get_predefined_ode_config(st.session_state.selected_predefined_system)
     else:
-        ode_config = get_custom_ode_config()
+        # ode_config = get_custom_ode_config()
+        ode_config = st.session_state.get('custom_config',None)
+        print(ode_config)
         if ode_config is None:
             render_custom_ode_definition()
             return
@@ -920,8 +968,38 @@ def run():
 
     # Show equations
     with st.expander(f"System Equations - {ode_config['name']}", expanded=True):
+    
+        code = ""
         for var, eq in zip(ode_config['vars'], ode_config['equations']):
-            st.code(f"d{var}/dt = {eq}", language="python")
+            if st.session_state.ode_system_type == "Pre-defined":
+                st.code(f"d{var}/dt = {eq}", language="python")
+            else:
+                code += f"d{var}/dt = {eq}\n"
+        
+        if st.session_state.ode_system_type == "Pre-defined":
+            pass
+        else:
+            renames = ", ".join([f"x_{i+1}"  for i in range(len(ode_config['equations']))])
+            real_vars = ", ".join([f"x[{i}]"  for i in range(len(ode_config['equations']))])
+            st.code(f"{renames} = {real_vars}\n"+code, language="python")
+            term_action = st.segmented_control(
+                                            f"Actions",
+                                            options=['Edit','Delete'],
+                                            selection_mode="single",
+                                            label_visibility="collapsed",
+                                            key="edit_custom_equation",
+                                        )
+            dialog_opened = False
+            if not dialog_opened and term_action:
+                if term_action=='Delete':
+                    st.session_state.pop('custom_config',None)
+                    st.rerun()
+                # dialog_opened = True
+                if term_action=='Edit':
+                    edit_dialog()
+                    dialog_opened = True
+
+                
 
     # Configuration and solve
     render_configuration_and_solve(ode_config)
