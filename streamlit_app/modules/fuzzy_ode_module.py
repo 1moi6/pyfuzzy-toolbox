@@ -595,7 +595,7 @@ def render_results(solution, ode_config):
     # Time evolution
     with st.expander("Time Evolution", expanded=True):
         # Get figure settings
-        fill_color = st.session_state.get('ode_fig_fill_color', '#6496FF')
+        fill_color = st.session_state.get('ode_fig_fill_color', "#01050D")
         alpha_opacity = st.session_state.get('ode_fig_alpha_opacity', 0.4)
         alpha_skip = st.session_state.get('ode_fig_alpha_skip', 5)
 
