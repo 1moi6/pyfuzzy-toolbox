@@ -318,7 +318,7 @@ def navigate_to(page_name):
 load_css()
 
 # Import modules
-from modules import home, inference, learning, dynamics, dynamics_ode
+from modules import home, inference, learning, fuzzy_ode_module, dynamics_pfuzzy_discrete,dynamics_pfuzzy_continuous
 
 # Define pages using st.Page with unique url_path
 home_page = st.Page(home.run, title="Home", icon="🏠", url_path="home", default=True)
@@ -333,6 +333,7 @@ def inference_sugeno():
     inference.run()
 
 mamdani_page = st.Page(inference_mamdani, title="Mamdani", icon="🎯", url_path="mamdani")
+st.session_state['app_pages'] = [mamdani_page]
 sugeno_page = st.Page(inference_sugeno, title="Sugeno", icon="🎲", url_path="sugeno")
 
 # Learning module pages
@@ -355,15 +356,15 @@ optimization_page = st.Page(learning_optimization, title="Rule Optimization", ic
 # Dynamics module pages
 def dynamics_discrete():
     st.session_state.dynamics_system_type = "p-Fuzzy Discrete"
-    dynamics.run()
+    dynamics_pfuzzy_discrete.run()
 
 def dynamics_continuous():
     st.session_state.dynamics_system_type = "p-Fuzzy Continuous"
-    dynamics.run()
+    dynamics_pfuzzy_continuous.run()
 
 def dynamics_fuzzy_ode():
     st.session_state.dynamics_system_type = "Fuzzy ODE"
-    dynamics_ode.run()
+    fuzzy_ode_module.run()
 
 discrete_page = st.Page(dynamics_discrete, title="p-Fuzzy Discrete", icon="📊", url_path="pfuzzy-discrete")
 continuous_page = st.Page(dynamics_continuous, title="p-Fuzzy Continuous", icon="📈", url_path="pfuzzy-continuous")
