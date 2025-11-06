@@ -36,13 +36,13 @@ def render_custom_p_fuzzy_definition(output_vars):
         eqs.append(equation)
     if all(eqs):
         ode_config = {
-                    "name": "Custom Discrete p-Fuzzy",
+                    "name": "Custom Continuous p-Fuzzy",
                     "dim": n_vars,
                     "vars": [ f"x_{i+1}" for i in range(n_vars)],
                     "equations": eqs,
                 }
         # if 'custom_config' not in st.session_state:
-        st.session_state['custom_config_discre_p_fuzzy'] = ode_config
+        st.session_state['custom_config_continuous_p_fuzzy'] = ode_config
         st.rerun()
 
 
@@ -63,7 +63,7 @@ def render_custom_p_fuzzy_definition(output_vars):
         """)
 
 def build_p_fuzzy_function(equations):
-    """Build discrete p-fuzzy function from string equations
+    """Build continuous p-fuzzy function from string equations
     
     Parameters:
     -----------
@@ -97,7 +97,7 @@ def close_edit_dialog():
 
 @st.dialog("Edit Custom Equation")
 def edit_dialog():
-    custom_config = st.session_state['custom_config_discre_p_fuzzy']
+    custom_config = st.session_state['custom_config_continuous_p_fuzzy']
     eqs = []
     i = 0
     for eq in custom_config['equations']:
@@ -151,7 +151,7 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
         state_vars.append(var['name'])
     
     if mode=='custom':
-        ode_config = st.session_state.get('custom_config_discre_p_fuzzy',None)
+        ode_config = st.session_state.get('custom_config_continuous_p_fuzzy',None)
         if not ode_config is None:
             with st.expander(f"System Equations - {ode_config['name']}", expanded=True):
             
@@ -173,7 +173,7 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
                 dialog_opened = False
                 if not dialog_opened and term_action:
                     if term_action=='Delete':
-                        st.session_state.pop('custom_config_discre_p_fuzzy',None)
+                        st.session_state.pop('custom_config_continuous_p_fuzzy',None)
                         st.rerun()
                     # dialog_opened = True
                     if term_action=='Edit':
@@ -212,7 +212,7 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
                     state_vars=state_vars
                 )
             else:
-                custom_config = st.session_state.get('custom_config_discre_p_fuzzy',None)
+                custom_config = st.session_state.get('custom_config_continuous_p_fuzzy',None)
                 pfuzzy_func = build_p_fuzzy_function(custom_config['equations'])
                 pfuzzy = PFuzzyContinuous(
                     fis=engine.system,
@@ -267,7 +267,7 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
                             "X-axis variable",
                             range(n_vars),
                             format_func=lambda x: state_vars[x],
-                            key="phase_x_discrete"
+                            key="phase_x_continuous"
                         )
                     with col2:
                         # Default to second variable, or first if only one
@@ -277,7 +277,7 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
                             range(n_vars),
                             format_func=lambda x: state_vars[x],
                             index=default_y,
-                            key="phase_y_discrete"
+                            key="phase_y_continuous"
                         )
 
                     # Phase space plot
@@ -337,7 +337,7 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
                 st.download_button(
                     label="📥 Download CSV",
                     data=csv,
-                    file_name=f"{selected_fis['name']}_pfuzzy_discrete.csv",
+                    file_name=f"{selected_fis['name']}_pfuzzy_continuous.csv",
                     mime="text/csv"
                 )
 
@@ -355,9 +355,9 @@ def run():
     with st.sidebar:
         st.markdown("""
         <div style="text-align: center; padding: 0.25rem 0 0.125rem 0; margin-top: 0.5rem;">
-            <h2 style="margin: 0.25rem 0 0.125rem 0; color: #667eea;">Discrete p-Fuzzy</h2>
+            <h2 style="margin: 0.25rem 0 0.125rem 0; color: #667eea;">Continuous p-Fuzzy</h2>
             <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">
-                Model discrete temporal evolution with FIS
+                Model Continuous temporal evolution with FIS
             </p>
         </div>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0.25rem 0 0.5rem 0;">
@@ -375,7 +375,6 @@ def run():
                 "Mode",
                 ["absolute", "relative","custom"],
                 help="Absolute: x_{n+1} = x_n + f(x_n)\n\nRelative: x_{n+1} =x_nf(x_n)",
-                # key = 'select_mode_p_fuzzy_discrete'
                 )
 
             t_end = st.number_input(
@@ -401,12 +400,11 @@ def run():
         st.page_link(st.session_state['app_pages'][0], label="Go to Inference Page",width='stretch')
         return
        
-    if mode == 'custom' and st.session_state.get('custom_config_discre_p_fuzzy',None) is None:
+    if mode == 'custom' and st.session_state.get('custom_config_continuous_p_fuzzy',None) is None:
         if st.button('Define Custom p-Fuzzy System',width='stretch'):
             output_vars = selected_fis['fis']['output_variables']
             render_custom_p_fuzzy_definition(output_vars)
         return
-    # print(st.session_state.get('custom_config_discre_p_fuzzy',None))
     render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method)
     
     
