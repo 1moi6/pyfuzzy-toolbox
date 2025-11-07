@@ -906,7 +906,7 @@ def render_results(solution, ode_config):
             with col1:
                 st.color_picker(
                     "Fill color",
-                    value=st.session_state.get('ode_fig_fill_color', '#6496FF'),
+                    value=st.session_state.get('ode_fig_fill_color', "#01050D"),
                     key='ode_fig_fill_color',
                     help="Color for α-level fills"
                 )
