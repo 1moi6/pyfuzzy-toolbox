@@ -9,6 +9,79 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from fuzzy_systems.dynamics import PFuzzyContinuous
 from modules.inference_engine import InferenceEngine
+import traceback
+import re
+from typing import Tuple
+
+
+def check_fis_available(show_styled_button: bool = False) -> bool:
+    """Centraliza verificação de FIS disponível com mensagem padrão.
+
+    Args:
+        show_styled_button: Se True, mostra botão estilizado com gradiente
+
+    Returns:
+        True se FIS está disponível, False caso contrário (exibe mensagem)
+    """
+    if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
+        st.warning("⚠️ **No FIS available**")
+        st.info("Please go to the **Inference** module to create or load a FIS first")
+
+        if 'app_pages' in st.session_state:
+            if show_styled_button:
+                # Botão primário estilizado (página principal)
+                if st.button("🚀 Go to Inference Module", type="primary", use_container_width=True, key="go_to_inference_continuous"):
+                    st.switch_page(st.session_state['app_pages'][0])
+            else:
+                # Botão primário para sidebar também
+                if st.button("Go to Inference Page", type="primary", use_container_width=True, key="sidebar_go_to_inference_continuous"):
+                    st.switch_page(st.session_state['app_pages'][0])
+
+        return False
+    return True
+
+
+def validate_equation(equation: str, n_vars: int) -> Tuple[bool, str]:
+    """Valida sintaxe de equações antes de executar.
+
+    Args:
+        equation: String com a equação a ser validada
+        n_vars: Número de variáveis de estado disponíveis
+
+    Returns:
+        (is_valid, error_message): Tupla com resultado da validação
+    """
+    if not equation or equation.strip() == "":
+        return False, "Equação vazia"
+
+    # Caracteres permitidos: letras, números, [], ., +, -, *, /, (), espaços
+    allowed_pattern = r'^[\w\s\[\]\.+\-*/()]+$'
+
+    if not re.match(allowed_pattern, equation):
+        return False, "Caracteres inválidos detectados. Use apenas letras, números e operadores matemáticos"
+
+    # Verifica se todos os índices x[i] estão no range válido
+    x_indices = re.findall(r'x\[(\d+)\]', equation)
+    for idx in x_indices:
+        if int(idx) >= n_vars:
+            return False, f"Índice x[{idx}] fora do range válido [0, {n_vars-1}]"
+
+    # Verifica se todos os índices f[i] estão no range válido
+    f_indices = re.findall(r'f\[(\d+)\]', equation)
+    for idx in f_indices:
+        if int(idx) >= n_vars:
+            return False, f"Índice f[{idx}] fora do range válido [0, {n_vars-1}]"
+
+    # Testa compilação da expressão
+    try:
+        # Cria variáveis dummy para teste
+        test_vars = {f'x': [0.0] * n_vars, f'f': [0.0] * n_vars}
+        test_code = f"lambda: {equation}"
+        compile(test_code, '<string>', 'eval')
+    except SyntaxError as e:
+        return False, f"Erro de sintaxe: {str(e)}"
+
+    return True, ""
 
 
 @st.dialog('Custom p-Fuzzy definition')
@@ -121,11 +194,8 @@ def edit_dialog():
 def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
     """Render p-Fuzzy continuous interface with full implementation"""
 
-    # Check if FIS is available
-    if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
-        st.warning("⚠️ **No FIS available**")
-        st.info("Please go to the **Inference** module to create or load a FIS first")
-        st.page_link(st.session_state['app_pages'][0], label="Go to Inference Page",width='stretch')
+    # Check if FIS is available (usa botão estilizado na página principal)
+    if not check_fis_available(show_styled_button=True):
         return
        
 
@@ -341,6 +411,9 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
                     mime="text/csv"
                 )
 
+            # Espaçamento final
+            st.markdown("<br><br>", unsafe_allow_html=True)
+
         except Exception as e:
             st.error(f"❌ Error during simulation: {str(e)}")
             import traceback
@@ -350,6 +423,8 @@ def render_pfuzzy_continuous_interface(selected_fis,mode,t_end,dt,method):
 def run():
     """Render dynamic systems page"""
 
+    # Verificar se há FIS disponível ANTES de renderizar sidebar
+    has_fis = 'fis_list' in st.session_state and len(st.session_state.fis_list) > 0
 
     # Sidebar
     with st.sidebar:
@@ -362,11 +437,8 @@ def run():
         </div>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0.25rem 0 0.5rem 0;">
         """, unsafe_allow_html=True)
-        if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
-            st.warning("⚠️ **No FIS available**")
-            st.info("Please go to the **Inference** module to create or load a FIS first")
-            # return
-        else:
+
+        if has_fis:
             fis_options= [{'fis_index':i,'fis':fis} for i,fis in enumerate(st.session_state.fis_list)]
             selected_fis = st.selectbox('Select a FIS',fis_options,key="selected_fis_for_dynamics",format_func=lambda x: x['fis']['name'])
             st.markdown("#### Simulation Configuration")
@@ -374,7 +446,7 @@ def run():
             mode = st.selectbox(
                 "Mode",
                 ["absolute", "relative","custom"],
-                help="Absolute: x_{n+1} = x_n + f(x_n)\n\nRelative: x_{n+1} =x_nf(x_n)",
+                help="Absolute: dx/dt = f(x)\n\nRelative: dx/dt = x*f(x)"
                 )
 
             t_end = st.number_input(
@@ -383,7 +455,7 @@ def run():
                         max_value=1000.0,
                         value=50.0,
                         step=1.0)
-                        
+
             dt = st.number_input(
                 "Time step (dt)",
                 min_value=0.001,
@@ -392,12 +464,14 @@ def run():
                 step=0.01,
                 format="%.3f")
             method = st.selectbox("Integration method", ["rk4", "euler"])
+        else:
+            # Sidebar usa botão simples (sem emoji)
+            check_fis_available(show_styled_button=False)
 
-     # Check if FIS is available
-    if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
-        st.warning("⚠️ **No FIS available**")
-        st.info("Please go to the **Inference** module to create or load a FIS first")
-        st.page_link(st.session_state['app_pages'][0], label="Go to Inference Page",width='stretch')
+    # PÁGINA PRINCIPAL - Sempre renderiza, mesmo sem FIS
+    if not has_fis:
+        # Mostra mensagem com botão estilizado na página principal
+        check_fis_available(show_styled_button=True)
         return
        
     if mode == 'custom' and st.session_state.get('custom_config_continuous_p_fuzzy',None) is None:

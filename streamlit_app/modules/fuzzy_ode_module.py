@@ -8,6 +8,45 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import re
+import traceback
+from typing import Tuple, Dict, List, Any, Set, Callable
+
+
+def validate_equation(equation: str, n_vars: int) -> Tuple[bool, str]:
+    """Valida sintaxe de equações antes de executar.
+
+    Args:
+        equation: String com a equação a ser validada
+        n_vars: Número de variáveis de estado disponíveis
+
+    Returns:
+        (is_valid, error_message): Tupla com resultado da validação
+    """
+    if not equation or equation.strip() == "":
+        return False, "Equação vazia"
+
+    # Caracteres permitidos: letras, números, [], ., +, -, *, /, (), espaços
+    allowed_pattern = r'^[\w\s\[\]\.+\-*/()]+$'
+
+    if not re.match(allowed_pattern, equation):
+        return False, "Caracteres inválidos detectados. Use apenas letras, números e operadores matemáticos"
+
+    # Verifica se todos os índices x[i] estão no range válido
+    x_indices = re.findall(r'x\[(\d+)\]', equation)
+    for idx in x_indices:
+        if int(idx) >= n_vars:
+            return False, f"Índice x[{idx}] fora do range válido [0, {n_vars-1}]"
+
+    # Testa compilação da expressão
+    try:
+        # Cria variáveis dummy para teste
+        test_vars = {'x': [0.0] * n_vars}
+        test_code = f"lambda: {equation}"
+        compile(test_code, '<string>', 'eval')
+    except SyntaxError as e:
+        return False, f"Erro de sintaxe: {str(e)}"
+
+    return True, ""
 
 
 # ========== SIDEBAR ==========
@@ -41,7 +80,6 @@ def render_sidebar():
             key="selected_predefined_system"
         )
 
-        # st.caption(predefined_systems[system_name])
         st.markdown("<div style='border-bottom: 1px solid #e5e7eb; margin: 0.5rem 0 1.5rem 0;'></div>", unsafe_allow_html=True)
 
     else:  # Custom
@@ -122,6 +160,7 @@ def close_edit_dialog():
 @st.dialog("Edit Custom Equation")
 def edit_dialog():
     custom_config = st.session_state['custom_config']
+    n_vars = custom_config['dim']
     eqs = []
     i = 0
     for eq in custom_config['equations']:
@@ -134,12 +173,21 @@ def edit_dialog():
         )
         eqs.append(equation)
         i += 1
-    if st.button('Save Changes'):
+    if st.button('Save Changes', width='stretch'):
         if all(eqs):
-            custom_config['equations'] = eqs
-            custom_config[vars] = extract_parameters(eqs)
-            close_edit_dialog()
-            st.rerun()
+            # Validar todas as equações antes de salvar
+            all_valid = True
+            for i, eq in enumerate(eqs):
+                valid, msg = validate_equation(eq, n_vars)
+                if not valid:
+                    st.error(f"❌ Equation {i+1} invalid: {msg}")
+                    all_valid = False
+
+            if all_valid:
+                custom_config['equations'] = eqs
+                custom_config['params'] = extract_parameters(eqs)
+                close_edit_dialog()
+                st.rerun()
 
 
 def get_custom_ode_config():
@@ -187,21 +235,30 @@ def render_custom_ode_definition():
             help="Use x[0], x[1], ... for state variables"
         )
         eqs.append(equation)
+
     if all(eqs):
-        params = extract_parameters(eqs)
-        ode_config = {
-                    "name": "Custom ODE System",
-                    "dim": n_vars,
-                    "vars": [ f"x_{i+1}" for i in range(n_vars)],
-                    "equations": eqs,
-                    "params": params,
-                    "default_params": {},
-                    "default_ic": [1.0] * n_vars,
-                    "ic_ranges": [(-10.0, 10.0)] * n_vars
-                }
-        # if 'custom_config' not in st.session_state:
-        st.session_state['custom_config'] = ode_config
-        st.rerun()
+        # Validar todas as equações antes de salvar
+        all_valid = True
+        for i, eq in enumerate(eqs):
+            valid, msg = validate_equation(eq, n_vars)
+            if not valid:
+                st.error(f"❌ Equation {i+1} invalid: {msg}")
+                all_valid = False
+
+        if all_valid:
+            params = extract_parameters(eqs)
+            ode_config = {
+                        "name": "Custom ODE System",
+                        "dim": n_vars,
+                        "vars": [ f"x_{i+1}" for i in range(n_vars)],
+                        "equations": eqs,
+                        "params": params,
+                        "default_params": {},
+                        "default_ic": [1.0] * n_vars,
+                        "ic_ranges": [(-10.0, 10.0)] * n_vars
+                    }
+            st.session_state['custom_config'] = ode_config
+            st.rerun()
 
 
     
@@ -256,8 +313,36 @@ def build_fuzzy_number(config):
         )
 
 
-def build_ode_function(equations, safe_names):
-    """Build ODE function from string equations"""
+def build_ode_function(equations: List[str], safe_names: Set[str]) -> Callable:
+    """Build ODE function from string equations (SAFE VERSION)
+
+    Uses isolated namespace to prevent execution of arbitrary code.
+
+    Args:
+        equations: List of equation strings
+        safe_names: Set of safe parameter names
+
+    Returns:
+        Callable ODE function
+    """
+    # Namespace restrito com apenas funções seguras
+    safe_namespace = {
+        'sin': np.sin,
+        'cos': np.cos,
+        'exp': np.exp,
+        'log': np.log,
+        'sqrt': np.sqrt,
+        'abs': np.abs,
+        'tan': np.tan,
+        'arcsin': np.arcsin,
+        'arccos': np.arccos,
+        'arctan': np.arctan,
+        'sinh': np.sinh,
+        'cosh': np.cosh,
+        'tanh': np.tanh,
+        'np': np,
+        '__builtins__': {}  # Bloqueia acesso a funções built-in perigosas
+    }
 
     func_code = "def ode_system(t, x"
     param_names = sorted(safe_names - {'t', 'x'})
@@ -265,17 +350,15 @@ def build_ode_function(equations, safe_names):
     if param_names:
         func_code += ", " + ", ".join(param_names)
     func_code += "):\n"
-    func_code += "    from numpy import sin, cos, exp, log, sqrt, abs\n"
-    func_code += "    import numpy as np\n"
     func_code += "    return np.array([\n"
 
     for eq in equations:
         func_code += f"        {eq},\n"
     func_code += "    ])\n"
 
-    namespace = {}
-    exec(func_code, namespace)
-    return namespace['ode_system']
+    # Executar em namespace isolado
+    exec(func_code, safe_namespace)
+    return safe_namespace['ode_system']
 
 
 # ========== MAIN CONFIGURATION UI ==========
@@ -490,13 +573,17 @@ def render_configuration_and_solve(ode_config):
 
         all_params_dict = {**fuzzy_params, **crisp_params}
 
-    
+    # Detectar se há algum parâmetro ou IC fuzzy
+    has_fuzzy_params = len(fuzzy_params) > 0
+    has_fuzzy_ics = len([ic for ic in initial_conditions if hasattr(ic, 'alpha_cut')]) > 0
+    is_fuzzy_problem = has_fuzzy_params or has_fuzzy_ics
 
 
     # Solve button
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("Solve Fuzzy ODE", type="primary", use_container_width=True):
+    button_label = "Solve Fuzzy ODE" if is_fuzzy_problem else "Solve ODE"
+    if st.button(button_label, type="primary", use_container_width=True):
         # Validate fuzzy ICs
         for var_name in st.session_state.fuzzy_ics_config.keys():
             if f"fuzzy_ic_{var_name}" in st.session_state and st.session_state[f"fuzzy_ic_{var_name}"]:
@@ -512,49 +599,113 @@ def render_configuration_and_solve(ode_config):
                     return
 
         try:
-            from fuzzy_systems.dynamics.fuzzy_ode import FuzzyODESolver
-
             # Build ODE function
             ode_func = build_ode_function(ode_config['equations'], set(all_params).union({'t'}))
 
-            with st.spinner("Solving Fuzzy ODE..."):
-                solver = FuzzyODESolver(
-                    ode_func=ode_func,
-                    t_span=(0.0, t_end),
-                    initial_condition=initial_conditions,
-                    params=all_params_dict if all_params else None,
-                    n_alpha_cuts=n_alpha,
-                    method=ode_method,  # ODE integration method
-                    var_names=ode_config['vars']
-                )
+            if not is_fuzzy_problem:
+                # SOLUÇÃO NORMAL (SEM FUZZY)
+                from scipy.integrate import solve_ivp
 
-                # Solve with fuzzy method
-                if fuzzy_method == 'monte_carlo':
-                    try:
-                        solution = solver.solve(method='monte_carlo', n_samples=num_of_points_mc, verbose=False)
-                    except:
-                        solution = solver.solve(method='monte_carlo', n_samples=1000, verbose=False)
-                elif fuzzy_method == 'hierarchical':
-                    try:
-                        solution = solver.solve(method='hierarchical', verbose=False)
-                    except:
-                        solution = solver.solve(method='hierarchical', verbose=False)
-                else:  # standard
-                    try:
-                        solution = solver.solve(method='standard', n_grid_points=5, verbose=False)
-                    except:
-                        solution = solver.solve(method='standard', n_grid_points=num_of_points, verbose=False)
-                    
-            # Store solution in session state
-            st.session_state.ode_solution = solution
-            st.session_state.ode_config = ode_config
-            st.toast("✅ Fuzzy ODE solved successfully!")
+                # Converter ICs para valores numéricos
+                crisp_ics = [float(ic) if not hasattr(ic, 'alpha_cut') else float(ic.center)
+                            for ic in initial_conditions]
 
+                with st.spinner("Solving ODE..."):
+                    # Resolver EDO normal com scipy
+                    if all_params:
+                        # Com parâmetros
+                        sol = solve_ivp(
+                            lambda t, y: ode_func(t, y, **all_params_dict),
+                            (0.0, t_end),
+                            crisp_ics,
+                            method='RK45' if ode_method == 'rk4' else 'RK23',
+                            dense_output=True,
+                            max_step=0.1
+                        )
+                    else:
+                        # Sem parâmetros
+                        sol = solve_ivp(
+                            ode_func,
+                            (0.0, t_end),
+                            crisp_ics,
+                            method='RK45' if ode_method == 'rk4' else 'RK23',
+                            dense_output=True,
+                            max_step=0.1
+                        )
+
+                    # Criar objeto de solução compatível
+                    class CrispSolution:
+                        def __init__(self, t, y, var_names):
+                            self.t = t
+                            self.y = y
+                            self.var_names = var_names
+                            self.is_fuzzy = False
+
+                        def to_dataframe(self, alpha=None):
+                            import pandas as pd
+                            data = {'time': self.t}
+                            for i, var in enumerate(self.var_names):
+                                data[var] = self.y[i, :]
+                            return pd.DataFrame(data)
+
+                    solution = CrispSolution(sol.t, sol.y, ode_config['vars'])
+
+                # Store solution in session state
+                st.session_state.ode_solution = solution
+                st.session_state.ode_config = ode_config
+                st.toast("✅ ODE solved successfully! (Crisp/Deterministic solution)")
+
+            else:
+                # SOLUÇÃO FUZZY (ORIGINAL)
+                from fuzzy_systems.dynamics.fuzzy_ode import FuzzyODESolver
+
+                with st.spinner("Solving Fuzzy ODE..."):
+                    solver = FuzzyODESolver(
+                        ode_func=ode_func,
+                        t_span=(0.0, t_end),
+                        initial_condition=initial_conditions,
+                        params=all_params_dict if all_params else None,
+                        n_alpha_cuts=n_alpha,
+                        method=ode_method,  # ODE integration method
+                        var_names=ode_config['vars']
+                    )
+
+                    # Solve with fuzzy method
+                    if fuzzy_method == 'monte_carlo':
+                        try:
+                            solution = solver.solve(method='monte_carlo', n_samples=num_of_points_mc, verbose=False)
+                        except:
+                            solution = solver.solve(method='monte_carlo', n_samples=1000, verbose=False)
+                    elif fuzzy_method == 'hierarchical':
+                        try:
+                            solution = solver.solve(method='hierarchical', verbose=False)
+                        except:
+                            solution = solver.solve(method='hierarchical', verbose=False)
+                    else:  # standard
+                        try:
+                            solution = solver.solve(method='standard', n_grid_points=5, verbose=False)
+                        except:
+                            solution = solver.solve(method='standard', n_grid_points=num_of_points, verbose=False)
+
+                # Store solution in session state
+                st.session_state.ode_solution = solution
+                st.session_state.ode_config = ode_config
+                st.toast("✅ Fuzzy ODE solved successfully!")
+
+        except ValueError as e:
+            st.error(f"❌ Invalid value: {str(e)}")
+            st.info("💡 Check if initial conditions and parameters are valid")
+        except KeyError as e:
+            st.error(f"❌ Variable not found: {str(e)}")
+            st.info("💡 Verify that all parameters are properly defined")
+        except ZeroDivisionError:
+            st.error(f"❌ Division by zero in equations")
+            st.info("💡 Check your equations for potential division by zero")
         except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
-            import traceback
-            with st.expander("🐛 Debug"):
+            st.error(f"❌ Unexpected error during simulation")
+            with st.expander("🐛 Technical details"):
                 st.code(traceback.format_exc())
+                st.caption("Please report this error with the details above")
 
     # Check if solver configuration changed (should reset solution)
     current_solver_config = {
@@ -588,73 +739,109 @@ def render_configuration_and_solve(ode_config):
 # ========== RESULTS VISUALIZATION ==========
 
 def render_results(solution, ode_config):
-    """Render Fuzzy ODE results"""
+    """Render ODE results (Fuzzy or Crisp)"""
 
     n_vars = len(ode_config['vars'])
+    is_crisp = hasattr(solution, 'is_fuzzy') and solution.is_fuzzy == False
 
     # Time evolution
     with st.expander("Time Evolution", expanded=True):
-        # Get figure settings
-        fill_color = st.session_state.get('ode_fig_fill_color', "#01050D")
-        alpha_opacity = st.session_state.get('ode_fig_alpha_opacity', 0.4)
-        alpha_skip = st.session_state.get('ode_fig_alpha_skip', 5)
+        if is_crisp:
+            # SOLUÇÃO CRISP (NÃO FUZZY)
+            st.info("ℹ️ Displaying deterministic (crisp) solution - No fuzzy parameters were selected")
 
-        # Convert hex color to RGB
-        fill_color_rgb = tuple(int(fill_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-        if 'ode_fig_title' not in st.session_state:
-            st.session_state['ode_fig_title'] = f"Fuzzy Solution - {ode_config['name']}"
+            for var_idx in range(n_vars):
+                fig = go.Figure()
 
-        for var_idx in range(n_vars):
-            fig = go.Figure()
-            for alpha_idx, alpha in enumerate(solution.alphas):
-                y_min, y_max = solution.get_alpha_level(alpha)
-
-                # Calculate opacity based on alpha level and user setting
-                opacity = (0.1 + 0.9 * alpha) * alpha_opacity
-
-                # Lower bound
+                # Plot single trajectory
                 fig.add_trace(
                     go.Scatter(
                         x=solution.t,
-                        y=y_min[var_idx],
+                        y=solution.y[var_idx],
                         mode='lines',
-                        line=dict(width=0),
-                        showlegend=False,
-                        hoverinfo='skip'
+                        name=ode_config['vars'][var_idx],
+                        line=dict(color='#667eea', width=2),
+                        hovertemplate=f't=%{{x:.2f}}<br>{ode_config["vars"][var_idx]}=%{{y:.4f}}<extra></extra>'
                     )
                 )
 
-                # Upper bound with fill
-                show_in_legend =  alpha_idx % alpha_skip == 0
-                fig.add_trace(
-                    go.Scatter(
-                        x=solution.t,
-                        y=y_max[var_idx],
-                        mode='lines',
-                        line=dict(width=0),
-                        fill='tonexty',
-                        fillcolor=f'rgba({fill_color_rgb[0]}, {fill_color_rgb[1]}, {fill_color_rgb[2]}, {opacity})',
-                        name=f'α={alpha:.2f}' if show_in_legend else None,
-                        showlegend=show_in_legend,
-                        hovertemplate=f'α={alpha:.2f}<br>t=%{{x:.2f}}<br>%{{y:.4f}}'
-                    )
+                fig.update_xaxes(title_text="Time")
+                fig.update_yaxes(title_text=ode_config['vars'][var_idx])
+                fig.update_layout(
+                    height=500,
+                    showlegend=True,
+                    title=f"Solution - {ode_config['vars'][var_idx]}",
+                    title_font_size=16,
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    font_size=12
                 )
 
-            fig.update_xaxes(title_text="Time")
-            fig.update_yaxes(title_text=ode_config['vars'][var_idx])
+                st.plotly_chart(fig, use_container_width=True)
 
-        # Apply figure layout with session state settings
-            fig.update_layout(
-                height=st.session_state.get('ode_fig_height', 500),
-                showlegend=st.session_state.get('ode_fig_showlegend', True),
-                title=st.session_state.get('ode_fig_title', ''),
-                title_font_size=st.session_state.get('ode_fig_title_size', 16),
-                plot_bgcolor=st.session_state.get('ode_fig_bgcolor', 'white'),
-                paper_bgcolor=st.session_state.get('ode_fig_paper_bgcolor', 'white'),
-                font_size=st.session_state.get('ode_fig_font_size', 12)
-            )
+        else:
+            # SOLUÇÃO FUZZY (ORIGINAL)
+            # Get figure settings
+            fill_color = st.session_state.get('ode_fig_fill_color', "#01050D")
+            alpha_opacity = st.session_state.get('ode_fig_alpha_opacity', 0.4)
+            alpha_skip = st.session_state.get('ode_fig_alpha_skip', 5)
 
-            st.plotly_chart(fig, use_container_width=True)
+            # Convert hex color to RGB
+            fill_color_rgb = tuple(int(fill_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+            if 'ode_fig_title' not in st.session_state:
+                st.session_state['ode_fig_title'] = f"Fuzzy Solution - {ode_config['name']}"
+
+            for var_idx in range(n_vars):
+                fig = go.Figure()
+                for alpha_idx, alpha in enumerate(solution.alphas):
+                    y_min, y_max = solution.get_alpha_level(alpha)
+
+                    # Calculate opacity based on alpha level and user setting
+                    opacity = (0.1 + 0.9 * alpha) * alpha_opacity
+
+                    # Lower bound
+                    fig.add_trace(
+                        go.Scatter(
+                            x=solution.t,
+                            y=y_min[var_idx],
+                            mode='lines',
+                            line=dict(width=0),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        )
+                    )
+
+                    # Upper bound with fill
+                    show_in_legend =  alpha_idx % alpha_skip == 0
+                    fig.add_trace(
+                        go.Scatter(
+                            x=solution.t,
+                            y=y_max[var_idx],
+                            mode='lines',
+                            line=dict(width=0),
+                            fill='tonexty',
+                            fillcolor=f'rgba({fill_color_rgb[0]}, {fill_color_rgb[1]}, {fill_color_rgb[2]}, {opacity})',
+                            name=f'α={alpha:.2f}' if show_in_legend else None,
+                            showlegend=show_in_legend,
+                            hovertemplate=f'α={alpha:.2f}<br>t=%{{x:.2f}}<br>%{{y:.4f}}'
+                        )
+                    )
+
+                fig.update_xaxes(title_text="Time")
+                fig.update_yaxes(title_text=ode_config['vars'][var_idx])
+
+                # Apply figure layout with session state settings
+                fig.update_layout(
+                    height=st.session_state.get('ode_fig_height', 500),
+                    showlegend=st.session_state.get('ode_fig_showlegend', True),
+                    title=st.session_state.get('ode_fig_title', ''),
+                    title_font_size=st.session_state.get('ode_fig_title_size', 16),
+                    plot_bgcolor=st.session_state.get('ode_fig_bgcolor', 'white'),
+                    paper_bgcolor=st.session_state.get('ode_fig_paper_bgcolor', 'white'),
+                    font_size=st.session_state.get('ode_fig_font_size', 12)
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
 
         with st.popover('Figure Options', width="stretch"):
             st.markdown("#### Figure Customization")
@@ -767,152 +954,154 @@ def render_results(solution, ode_config):
                 )
 
             st.markdown("---")
-    
-    with st.expander("Fixed Time",expanded=True):
-        times = solution.t
-        
-        time_selected = st.select_slider('Selected time',times,
-                                        key=f"time_selector_for_{ode_config['name']}",
-                                        format_func = lambda x:f"{x:,.2f}")
-        time_idx = [i for i in range(len(times)) if times[i]==time_selected][0]
 
-        st.session_state['ode_time_fig_title'] = f"Fuzzy Solution at t = {time_selected:.2f}"
+    # Fixed Time - APENAS PARA SOLUÇÃO FUZZY
+    if not is_crisp:
+        with st.expander("Fixed Time",expanded=True):
+            times = solution.t
 
-        for var_idx in range(n_vars):
-            x_left,y_left,x_right,y_right = [],[],[],[]
-            for alpha_idx, alpha in enumerate(solution.alphas):
-                y_min, y_max = solution.get_alpha_level(alpha)
-                x_left.append(y_min[var_idx,time_idx])
-                x_right.append(y_max[var_idx,time_idx])
-                y_left.append(alpha)
-                y_right.append(alpha)
-            x = x_left+x_right[::-1]
-            y = y_left+y_right[::-1]
-            difx = max(x)-min(x)
-            fig = go.Figure()
-            x = [min(x)-difx]+x+[max(x)+difx]
-            y = [0]+y+[0]
+            time_selected = st.select_slider('Selected time',times,
+                                            key=f"time_selector_for_{ode_config['name']}",
+                                            format_func = lambda x:f"{x:,.2f}")
+            time_idx = [i for i in range(len(times)) if times[i]==time_selected][0]
 
-            fill_color = st.session_state.get('ode_time_fig_fill_color', "#295BC9")
-            fill_color = tuple(int(fill_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-            fig.add_trace(
-                    go.Scatter(
-                        x=x,
-                        y=y,
-                        mode='lines',
-                        line=dict(color=f'rgba({fill_color[0]}, {fill_color[1]}, {fill_color[2]}, 1)',
-                        width=st.session_state.get('ode_time_fig_line_width', 2)),
+            st.session_state['ode_time_fig_title'] = f"Fuzzy Solution at t = {time_selected:.2f}"
+
+            for var_idx in range(n_vars):
+                x_left,y_left,x_right,y_right = [],[],[],[]
+                for alpha_idx, alpha in enumerate(solution.alphas):
+                    y_min, y_max = solution.get_alpha_level(alpha)
+                    x_left.append(y_min[var_idx,time_idx])
+                    x_right.append(y_max[var_idx,time_idx])
+                    y_left.append(alpha)
+                    y_right.append(alpha)
+                x = x_left+x_right[::-1]
+                y = y_left+y_right[::-1]
+                difx = max(x)-min(x)
+                fig = go.Figure()
+                x = [min(x)-difx]+x+[max(x)+difx]
+                y = [0]+y+[0]
+
+                fill_color = st.session_state.get('ode_time_fig_fill_color', "#295BC9")
+                fill_color = tuple(int(fill_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+                fig.add_trace(
+                        go.Scatter(
+                            x=x,
+                            y=y,
+                            mode='lines',
+                            line=dict(color=f'rgba({fill_color[0]}, {fill_color[1]}, {fill_color[2]}, 1)',
+                            width=st.session_state.get('ode_time_fig_line_width', 2)),
+                        )
                     )
+
+                fig.update_yaxes(title_text="Membership")
+                fig.update_xaxes(title_text=ode_config['vars'][var_idx])
+
+                # Apply figure layout with session state settings
+                fig.update_layout(
+                    height=400,
+                    title=st.session_state.get('ode_time_fig_title',''),
+                    title_font_size=st.session_state.get('ode_time_fig_title_size', 16),
+                    plot_bgcolor=st.session_state.get('ode_time_fig_bgcolor', 'white'),
+                    paper_bgcolor=st.session_state.get('ode_time_fig_paper_bgcolor', 'white'),
+                    font_size=st.session_state.get('ode_time_fig_font_size', 12)
                 )
 
-            fig.update_yaxes(title_text="Membership")
-            fig.update_xaxes(title_text=ode_config['vars'][var_idx])
+                st.plotly_chart(fig, width="stretch")
 
-            # Apply figure layout with session state settings
-            fig.update_layout(
-                height=400,
-                title=st.session_state.get('ode_time_fig_title',''),
-                title_font_size=st.session_state.get('ode_time_fig_title_size', 16),
-                plot_bgcolor=st.session_state.get('ode_time_fig_bgcolor', 'white'),
-                paper_bgcolor=st.session_state.get('ode_time_fig_paper_bgcolor', 'white'),
-                font_size=st.session_state.get('ode_time_fig_font_size', 12)
-            )
+            with st.popover('Figure Options', width="stretch"):
+                st.markdown("#### Figure Customization")
 
-            st.plotly_chart(fig, width="stretch")
-        
-        with st.popover('Figure Options', width="stretch"):
-            st.markdown("#### Figure Customization")
+                # Layout options
+                st.markdown("**Layout**")
+                col1, col2 = st.columns(2)
 
-            # Layout options
-            st.markdown("**Layout**")
-            col1, col2 = st.columns(2)
+                with col1:
+                    st.number_input(
+                        "Height per subplot (px)",
+                        min_value=200,
+                        max_value=1000,
+                        value=st.session_state.get('ode_time_fig_height', 400),
+                        step=50,
+                        key='ode_time_fig_height',
+                        help="Height of each subplot"
+                    )
 
-            with col1:
-                st.number_input(
-                    "Height per subplot (px)",
-                    min_value=200,
-                    max_value=1000,
-                    value=st.session_state.get('ode_time_fig_height', 400),
-                    step=50,
-                    key='ode_time_fig_height',
-                    help="Height of each subplot"
+                    st.checkbox(
+                        "Show legend",
+                        value=st.session_state.get('ode_time_fig_showlegend', True),
+                        key='ode_time_fig_showlegend'
+                    )
+
+                with col2:
+                    st.number_input(
+                        "Font size",
+                        min_value=8,
+                        max_value=24,
+                        value=st.session_state.get('ode_time_fig_font_size', 12),
+                        step=1,
+                        key='ode_time_fig_font_size'
+                    )
+
+                    st.number_input(
+                        "Title font size",
+                        min_value=10,
+                        max_value=32,
+                        value=st.session_state.get('ode_time_fig_title_size', 16),
+                        step=1,
+                        key='ode_time_fig_title_size'
+                    )
+
+                st.markdown("---")
+
+                # Title
+                st.markdown("**Title**")
+                st.text_input(
+                    "Figure title",
+                    value=st.session_state.get('ode_time_fig_title',''),
+                    key='ode_time_fig_title',
+                    placeholder="Leave empty for no title"
                 )
 
-                st.checkbox(
-                    "Show legend",
-                    value=st.session_state.get('ode_time_fig_showlegend', True),
-                    key='ode_time_fig_showlegend'
-                )
+                st.markdown("---")
 
-            with col2:
-                st.number_input(
-                    "Font size",
-                    min_value=8,
-                    max_value=24,
-                    value=st.session_state.get('ode_time_fig_font_size', 12),
-                    step=1,
-                    key='ode_time_fig_font_size'
-                )
+                # Colors
+                st.markdown("**Colors**")
+                col1, col2, col3, col4,= st.columns(4)
 
-                st.number_input(
-                    "Title font size",
-                    min_value=10,
-                    max_value=32,
-                    value=st.session_state.get('ode_time_fig_title_size', 16),
-                    step=1,
-                    key='ode_time_fig_title_size'
-                )
+                with col1:
+                    st.color_picker(
+                        "Fill color",
+                        value=st.session_state.get('ode_time_fig_fill_color', "#295BC9"),
+                        key='ode_time_fig_fill_color',
+                        help="Color for α-level fills"
+                    )
 
-            st.markdown("---")
+                with col2:
+                    st.color_picker(
+                        "Plot background",
+                        value=st.session_state.get('ode_time_fig_bgcolor', '#FFFFFF'),
+                        key='ode_time_fig_bgcolor'
+                    )
 
-            # Title
-            st.markdown("**Title**")
-            st.text_input(
-                "Figure title",
-                value=st.session_state.get('ode_time_fig_title',''),
-                key='ode_time_fig_title',
-                placeholder="Leave empty for no title"
-            )
-
-            st.markdown("---")
-
-            # Colors
-            st.markdown("**Colors**")
-            col1, col2, col3, col4,= st.columns(4)
-
-            with col1:
-                st.color_picker(
-                    "Fill color",
-                    value=st.session_state.get('ode_time_fig_fill_color', "#295BC9"),
-                    key='ode_time_fig_fill_color',
-                    help="Color for α-level fills"
-                )
-
-            with col2:
-                st.color_picker(
-                    "Plot background",
-                    value=st.session_state.get('ode_time_fig_bgcolor', '#FFFFFF'),
-                    key='ode_time_fig_bgcolor'
-                )
-
-            with col3:
-                st.color_picker(
-                    "Paper background",
-                    value=st.session_state.get('ode_time_fig_paper_bgcolor', '#FFFFFF'),
-                    key='ode_time_fig_paper_bgcolor'
-                )
-            with col4:
-                st.number_input(
-                    "Line Width",
-                    min_value=1,
-                    max_value=10,
-                    value=st.session_state.get('ode_time_fig_line_width', 2),
-                    step=1,
-                    key='ode_time_fig_line_width'
-                )
+                with col3:
+                    st.color_picker(
+                        "Paper background",
+                        value=st.session_state.get('ode_time_fig_paper_bgcolor', '#FFFFFF'),
+                        key='ode_time_fig_paper_bgcolor'
+                    )
+                with col4:
+                    st.number_input(
+                        "Line Width",
+                        min_value=1,
+                        max_value=10,
+                        value=st.session_state.get('ode_time_fig_line_width', 2),
+                        step=1,
+                        key='ode_time_fig_line_width'
+                    )
 
 
-            st.markdown("---")
+                st.markdown("---")
 
     
 
@@ -920,19 +1109,36 @@ def render_results(solution, ode_config):
     with st.expander("Export Data"):
         import pandas as pd
 
-        alpha_export = st.selectbox("Select α-level to export", solution.alphas, index=len(solution.alphas)//2)
-        df = solution.to_dataframe(alpha=alpha_export)
+        if is_crisp:
+            # Para solução crisp, exportar diretamente
+            df = solution.to_dataframe()
+            st.dataframe(df.head(20), use_container_width=True)
 
-        st.dataframe(df.head(20), use_container_width=True)
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name=f"ode_solution.csv",
+                mime="text/csv"
+            )
+        else:
+            # Para solução fuzzy, selecionar α-level
+            alpha_export = st.selectbox("Select α-level to export", solution.alphas, index=len(solution.alphas)//2)
+            df = solution.to_dataframe(alpha=alpha_export)
 
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download CSV",
-            data=csv,
-            file_name=f"fuzzy_ode_alpha_{alpha_export:.2f}.csv",
-            mime="text/csv"
-        )
-#
+            st.dataframe(df.head(20), use_container_width=True)
+
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name=f"fuzzy_ode_alpha_{alpha_export:.2f}.csv",
+                mime="text/csv"
+            )
+
+    # Espaçamento final
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
 
 # ========== MAIN RENDER FUNCTION ==========
 
@@ -995,7 +1201,6 @@ def run():
                 if term_action=='Delete':
                     st.session_state.pop('custom_config',None)
                     st.rerun()
-                # dialog_opened = True
                 if term_action=='Edit':
                     edit_dialog()
                     dialog_opened = True

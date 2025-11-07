@@ -9,6 +9,79 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from fuzzy_systems.dynamics import PFuzzyDiscrete
 from modules.inference_engine import InferenceEngine
+import traceback
+import re
+from typing import Tuple
+
+
+def check_fis_available(show_styled_button: bool = False) -> bool:
+    """Centraliza verificação de FIS disponível com mensagem padrão.
+
+    Args:
+        show_styled_button: Se True, mostra botão estilizado com gradiente
+
+    Returns:
+        True se FIS está disponível, False caso contrário (exibe mensagem)
+    """
+    if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
+        st.warning("⚠️ **No FIS available**")
+        st.info("Please go to the **Inference** module to create or load a FIS first")
+
+        if 'app_pages' in st.session_state:
+            if show_styled_button:
+                # Botão primário estilizado (página principal)
+                if st.button("🚀 Go to Inference Module", type="primary", use_container_width=True):
+                    st.switch_page(st.session_state['app_pages'][0])
+            else:
+                # Botão primário para sidebar também
+                if st.button("Go to Inference Page", type="primary", use_container_width=True, key="sidebar_go_to_inference"):
+                    st.switch_page(st.session_state['app_pages'][0])
+
+        return False
+    return True
+
+
+def validate_equation(equation: str, n_vars: int) -> Tuple[bool, str]:
+    """Valida sintaxe de equações antes de executar.
+
+    Args:
+        equation: String com a equação a ser validada
+        n_vars: Número de variáveis de estado disponíveis
+
+    Returns:
+        (is_valid, error_message): Tupla com resultado da validação
+    """
+    if not equation or equation.strip() == "":
+        return False, "Equação vazia"
+
+    # Caracteres permitidos: letras, números, [], ., +, -, *, /, (), espaços
+    allowed_pattern = r'^[\w\s\[\]\.+\-*/()]+$'
+
+    if not re.match(allowed_pattern, equation):
+        return False, "Caracteres inválidos detectados. Use apenas letras, números e operadores matemáticos"
+
+    # Verifica se todos os índices x[i] estão no range válido
+    x_indices = re.findall(r'x\[(\d+)\]', equation)
+    for idx in x_indices:
+        if int(idx) >= n_vars:
+            return False, f"Índice x[{idx}] fora do range válido [0, {n_vars-1}]"
+
+    # Verifica se todos os índices f[i] estão no range válido
+    f_indices = re.findall(r'f\[(\d+)\]', equation)
+    for idx in f_indices:
+        if int(idx) >= n_vars:
+            return False, f"Índice f[{idx}] fora do range válido [0, {n_vars-1}]"
+
+    # Testa compilação da expressão
+    try:
+        # Cria variáveis dummy para teste
+        test_vars = {f'x': [0.0] * n_vars, f'f': [0.0] * n_vars}
+        test_code = f"lambda: {equation}"
+        compile(test_code, '<string>', 'eval')
+    except SyntaxError as e:
+        return False, f"Erro de sintaxe: {str(e)}"
+
+    return True, ""
 
 
 @st.dialog('Custom p-Fuzzy definition')
@@ -31,19 +104,28 @@ def render_custom_p_fuzzy_definition(output_vars):
             rf"$dx_{i+1}/dt$ =",
             key=f"custom_equation_{i}",
             placeholder=f"e.g., r*x[{i}]+f[{i}]**2",
-            help="Use x[0], x[1], ... for state variables"
+            help="Use x[0], x[1], ... for state variables and f[0], f[1], ... for FIS outputs"
         )
         eqs.append(equation)
+
     if all(eqs):
-        ode_config = {
-                    "name": "Custom Discrete p-Fuzzy",
-                    "dim": n_vars,
-                    "vars": [ f"x_{i+1}" for i in range(n_vars)],
-                    "equations": eqs,
-                }
-        # if 'custom_config' not in st.session_state:
-        st.session_state['custom_config_discre_p_fuzzy'] = ode_config
-        st.rerun()
+        # Validar todas as equações antes de salvar
+        all_valid = True
+        for i, eq in enumerate(eqs):
+            valid, msg = validate_equation(eq, n_vars)
+            if not valid:
+                st.error(f"❌ Equation {i+1} invalid: {msg}")
+                all_valid = False
+
+        if all_valid:
+            ode_config = {
+                        "name": "Custom Discrete p-Fuzzy",
+                        "dim": n_vars,
+                        "vars": [ f"x_{i+1}" for i in range(n_vars)],
+                        "equations": eqs,
+                    }
+            st.session_state['custom_config_discre_p_fuzzy'] = ode_config
+            st.rerun()
 
 
     
@@ -63,33 +145,54 @@ def render_custom_p_fuzzy_definition(output_vars):
         """)
 
 def build_p_fuzzy_function(equations):
-    """Build discrete p-fuzzy function from string equations
-    
+    """Build discrete p-fuzzy function from string equations (SAFE VERSION)
+
+    Uses isolated namespace to prevent execution of arbitrary code.
+
     Parameters:
     -----------
     equations : list of str
         List of equations using 'x' for state and 'f' for fuzzy output
-        
+
     Returns:
     --------
     function : callable
-        Function with signature custom_pfuzzy(state, output_fis)
+        Function with signature custom_pfuzzy(state, output_fis) -> np.ndarray
     """
-    
-    func_code = "def custom_pfuzzy(state, output_fis):\n"
-    func_code += "    from numpy import sin, cos, exp, log, sqrt, abs\n"
-    func_code += "    import numpy as np\n"
-    func_code += "    x = state\n"
-    func_code += "    f = output_fis\n"
-    func_code += "    return np.array([\n"
-    
+
+    # Namespace restrito com apenas funções seguras
+    safe_namespace = {
+        'sin': np.sin,
+        'cos': np.cos,
+        'exp': np.exp,
+        'log': np.log,
+        'sqrt': np.sqrt,
+        'abs': np.abs,
+        'tan': np.tan,
+        'arcsin': np.arcsin,
+        'arccos': np.arccos,
+        'arctan': np.arctan,
+        'sinh': np.sinh,
+        'cosh': np.cosh,
+        'tanh': np.tanh,
+        'np': np,
+        '__builtins__': {}  # Bloqueia acesso a funções built-in perigosas
+    }
+
+    func_code = """
+def custom_pfuzzy(state, output_fis):
+    x = state
+    f = output_fis
+    return np.array([
+"""
+
     for eq in equations:
         func_code += f"        {eq},\n"
     func_code += "    ])\n"
-    
-    namespace = {}
-    exec(func_code, namespace)
-    return namespace['custom_pfuzzy']
+
+    # Executar em namespace isolado
+    exec(func_code, safe_namespace)
+    return safe_namespace['custom_pfuzzy']
 
 
 def close_edit_dialog():
@@ -98,6 +201,7 @@ def close_edit_dialog():
 @st.dialog("Edit Custom Equation")
 def edit_dialog():
     custom_config = st.session_state['custom_config_discre_p_fuzzy']
+    n_vars = custom_config['dim']
     eqs = []
     i = 0
     for eq in custom_config['equations']:
@@ -106,32 +210,35 @@ def edit_dialog():
             value = eq,
             key=f"custom_equation_edit_{i}",
             placeholder=f"e.g., r * x[{i}] * (1 - x[{i}] / K)",
-            help="Use x[0], x[1], ... for state variables"
+            help="Use x[0], x[1], ... for state variables and f[0], f[1], ... for FIS outputs"
         )
         eqs.append(equation)
         i += 1
-    if st.button('Save Changes',width = 'stretch'):
+    if st.button('Save Changes', width='stretch'):
         if all(eqs):
-            custom_config['equations'] = eqs
-            # custom_config[vars] = extract_parameters(eqs)
-            close_edit_dialog()
-            st.rerun()
+            # Validar todas as equações antes de salvar
+            all_valid = True
+            for i, eq in enumerate(eqs):
+                valid, msg = validate_equation(eq, n_vars)
+                if not valid:
+                    st.error(f"❌ Equation {i+1} invalid: {msg}")
+                    all_valid = False
+
+            if all_valid:
+                custom_config['equations'] = eqs
+                close_edit_dialog()
+                st.rerun()
 
 
 def render_pfuzzy_discrete_interface(selected_fis,mode,n_steps):
     """Render p-Fuzzy discrete interface with full implementation"""
 
-    # Check if FIS is available
-    if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
-        st.warning("⚠️ **No FIS available**")
-        st.info("Please go to the **Inference** module to create or load a FIS first")
-        st.page_link(st.session_state['app_pages'][0], label="Go to Inference Page",width='stretch')
+    # Check if FIS is available (usa botão estilizado na página principal)
+    if not check_fis_available(show_styled_button=True):
         return
-       
 
     # Get selected FIS
     selected_fis = st.session_state.selected_fis_for_dynamics['fis']
-    # # selected_fis = st.session_state.fis_list[fis_idx]
 
     # Validate FIS for p-Fuzzy
     input_vars = selected_fis['input_variables']
@@ -140,10 +247,6 @@ def render_pfuzzy_discrete_interface(selected_fis,mode,n_steps):
     if len(input_vars) == 0 or len(output_vars) == 0:
         st.error("❌ FIS must have at least one input and one output variable")
         return
-
-    # Configuration section
-    # with st.sidebar:
-        
 
     # Map each input variable to a state variable
     state_vars = []
@@ -175,7 +278,6 @@ def render_pfuzzy_discrete_interface(selected_fis,mode,n_steps):
                     if term_action=='Delete':
                         st.session_state.pop('custom_config_discre_p_fuzzy',None)
                         st.rerun()
-                    # dialog_opened = True
                     if term_action=='Edit':
                         edit_dialog()
                         dialog_opened = True
@@ -200,7 +302,6 @@ def render_pfuzzy_discrete_interface(selected_fis,mode,n_steps):
 # Simulate button
     if st.button("▶️ Run Simulation", type="primary", width='stretch'):
         try:
-            # Import p-fuzzy module
             # Build FIS using inference engine
             engine = InferenceEngine(selected_fis)
 
@@ -220,7 +321,6 @@ def render_pfuzzy_discrete_interface(selected_fis,mode,n_steps):
                     mode=mode,
                     state_vars=state_vars
                 )
-                # return
 
             # Run simulation
             with st.spinner("Simulating..."):
@@ -339,15 +439,29 @@ def render_pfuzzy_discrete_interface(selected_fis,mode,n_steps):
                     mime="text/csv"
                 )
 
+            # Espaçamento final
+            st.markdown("<br><br>", unsafe_allow_html=True)
+
+        except ValueError as e:
+            st.error(f"❌ Invalid value: {str(e)}")
+            st.info("💡 Check if initial conditions are within variable ranges")
+        except KeyError as e:
+            st.error(f"❌ Variable not found: {str(e)}")
+            st.info("💡 Verify that FIS variables match the expected state variables")
+        except ZeroDivisionError as e:
+            st.error(f"❌ Division by zero in custom equation")
+            st.info("💡 Check your custom equations for potential division by zero")
         except Exception as e:
-            st.error(f"❌ Error during simulation: {str(e)}")
-            import traceback
-            with st.expander("🐛 Debug Info"):
+            st.error(f"❌ Unexpected error during simulation")
+            with st.expander("🐛 Technical details"):
                 st.code(traceback.format_exc())
+                st.caption("Please report this error with the details above")
 
 def run():
     """Render dynamic systems page"""
 
+    # Verificar se há FIS disponível ANTES de renderizar sidebar
+    has_fis = 'fis_list' in st.session_state and len(st.session_state.fis_list) > 0
 
     # Sidebar
     with st.sidebar:
@@ -360,11 +474,8 @@ def run():
         </div>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0.25rem 0 0.5rem 0;">
         """, unsafe_allow_html=True)
-        if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
-            st.warning("⚠️ **No FIS available**")
-            st.info("Please go to the **Inference** module to create or load a FIS first")
-            # return
-        else:
+
+        if has_fis:
             fis_options= [{'fis_index':i,'fis':fis} for i,fis in enumerate(st.session_state.fis_list)]
             selected_fis = st.selectbox('Select a FIS',fis_options,key="selected_fis_for_dynamics",format_func=lambda x: x['fis']['name'])
             st.markdown("#### Simulation Configuration")
@@ -372,8 +483,7 @@ def run():
             mode = st.selectbox(
                 "Mode",
                 ["absolute", "relative","custom"],
-                help="Absolute: x_{n+1} = x_n + f(x_n)\n\nRelative: x_{n+1} =x_nf(x_n)",
-                # key = 'select_mode_p_fuzzy_discrete'
+                help="Absolute: x_{n+1} = x_n + f(x_n)\n\nRelative: x_{n+1} =x_nf(x_n)"
                 )
 
             n_steps = st.number_input(
@@ -382,22 +492,22 @@ def run():
                 max_value=10000,
                 value=100,
                 step=10)
-     # Check if FIS is available
-    if 'fis_list' not in st.session_state or len(st.session_state.fis_list) == 0:
-        st.warning("⚠️ **No FIS available**")
-        st.info("Please go to the **Inference** module to create or load a FIS first")
-        st.page_link(st.session_state['app_pages'][0], label="Go to Inference Page",width='stretch')
+        else:
+            # Sidebar usa link simples (sem botão estilizado)
+            check_fis_available(show_styled_button=False)
+
+    # PÁGINA PRINCIPAL - Sempre renderiza, mesmo sem FIS
+    if not has_fis:
+        # Mostra mensagem com botão estilizado na página principal
+        check_fis_available(show_styled_button=True)
         return
-       
+
     if mode == 'custom' and st.session_state.get('custom_config_discre_p_fuzzy',None) is None:
         if st.button('Define Custom p-Fuzzy System',width='stretch'):
-            output_vars = selected_fis['fis']['output_variables']
+            fis = st.session_state.selected_fis_for_dynamics['fis']
+            output_vars = fis['output_variables']
             render_custom_p_fuzzy_definition(output_vars)
         return
     render_pfuzzy_discrete_interface(selected_fis,mode,n_steps)
-    
-    
-
-
 
 
