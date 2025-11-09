@@ -318,7 +318,7 @@ def navigate_to(page_name):
 load_css()
 
 # Import modules
-from modules import home, inference, learning, fuzzy_ode_module, dynamics_pfuzzy_discrete,dynamics_pfuzzy_continuous
+from modules import home, inference, learning, fuzzy_ode_module, dynamics_pfuzzy_discrete,dynamics_pfuzzy_continuous, anfis_module
 
 # Define pages using st.Page with unique url_path
 home_page = st.Page(home.run, title="Home", icon="🏠", url_path="home", default=True)
@@ -338,8 +338,8 @@ sugeno_page = st.Page(inference_sugeno, title="Sugeno", icon="🎲", url_path="s
 
 # Learning module pages
 def learning_anfis():
-    st.session_state.learning_method = "ANFIS"
-    learning.run()
+    # Use dedicated ANFIS module instead of generic learning
+    anfis_module.run()
 
 def learning_wang_mendel():
     st.session_state.learning_method = "Wang-Mendel"
