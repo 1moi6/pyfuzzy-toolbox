@@ -74,6 +74,9 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/1moi6/pyfuzzy-toolbox',
     packages=find_packages(exclude=['tests', 'docs']),
+    package_data={
+        'fuzzy_systems': ['streamlit_app/**/*.py', 'streamlit_app/**/*.toml', 'streamlit_app/**/*.md'],
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Education',

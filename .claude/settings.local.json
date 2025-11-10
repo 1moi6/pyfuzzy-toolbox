@@ -50,7 +50,14 @@
       "Bash(xargs kill:*)",
       "WebFetch(domain:localhost)",
       "Bash(pkill:*)",
-      "WebFetch(domain:docs.streamlit.io)"
+      "WebFetch(domain:docs.streamlit.io)",
+      "Bash(python -c:*)",
+      "Bash(pip uninstall:*)",
+      "Bash(pyfuzzy --help:*)",
+      "Bash(python -m fuzzy_systems.cli:*)",
+      "Bash(cat:*)",
+      "Bash(pyfuzzy:*)",
+      "Bash(python -m zipfile:*)"
     ],
     "deny": [],
     "ask": []

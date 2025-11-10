@@ -130,13 +130,13 @@ def launch_interface(
             port = find_free_port(start_port=port)
             print(f"⚠️  Port {original_port} is occupied. Using port {port} instead.")
 
-    # Locate the Streamlit app
+    # Locate the Streamlit app (now inside fuzzy_systems package)
     app_path = Path(__file__).parent / 'streamlit_app' / 'main.py'
 
     if not app_path.exists():
         raise FileNotFoundError(
             f"Streamlit app not found at {app_path}\n"
-            f"Make sure pyfuzzy-toolbox is properly installed."
+            f"Make sure pyfuzzy-toolbox is properly installed with: pip install 'pyfuzzy-toolbox[ui]'"
         )
 
     # Build Streamlit command

@@ -1677,26 +1677,30 @@ class ANFIS:
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
         Predicts class probabilities (for classification).
-        
+
+        For ANFIS trained with MSE, the raw outputs are already in approximate
+        range [0, 1] representing class membership. We clip to ensure valid
+        probabilities without distorting the learned values with sigmoid.
+
         Parameters:
             X: Input data (n_samples, n_inputs)
-            
+
         Returns:
             Array with probabilities (n_samples, n_classes)
         """
         if not self.classification:
             raise ValueError("predict_proba only available for classification tasks")
-        
+
         # Validate input
         X, _ = self._validate_input(X, None, 'X', 'y')
-        
-        # Get raw predictions
+
+        # Get raw predictions (already ~[0,1] from MSE training)
         predictions = self.forward_batch(X)
-        
-        # Apply sigmoid to get probabilities
-        proba_class1 = self._sigmoid(predictions)
+
+        # Clip to valid probability range (no sigmoid needed for MSE-trained models)
+        proba_class1 = np.clip(predictions, 0, 1)
         proba_class0 = 1 - proba_class1
-        
+
         return np.column_stack([proba_class0, proba_class1])
 
     def _sigmoid(self, x: np.ndarray) -> np.ndarray:

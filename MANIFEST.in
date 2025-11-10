@@ -9,6 +9,11 @@ include setup.py
 recursive-include fuzzy_systems *.py
 recursive-include fuzzy_systems *.pyi
 
+# Include Streamlit app (now inside fuzzy_systems)
+recursive-include fuzzy_systems/streamlit_app *.py
+recursive-include fuzzy_systems/streamlit_app *.toml
+recursive-include fuzzy_systems/streamlit_app *.md
+
 # Include examples (important for users!)
 recursive-include examples *.py
 recursive-include examples *.ipynb
