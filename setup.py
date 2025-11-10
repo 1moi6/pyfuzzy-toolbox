@@ -53,6 +53,12 @@ EXTRAS_REQUIRE = {
         'pandas>=1.2',
         'joblib>=1.0',
     ],
+    'ui': [
+        'streamlit>=1.20.0',
+        'plotly>=5.0.0',
+        'typer[all]>=0.9.0',
+        'rich>=13.0.0',
+    ],
 }
 
 # Adiciona 'all' que instala todas as dependências extras
@@ -89,6 +95,11 @@ setup(
     python_requires='>=3.8',
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
+    entry_points={
+        'console_scripts': [
+            'pyfuzzy=fuzzy_systems.cli:app',
+        ],
+    },
     include_package_data=True,
     zip_safe=False,
     license='MIT',

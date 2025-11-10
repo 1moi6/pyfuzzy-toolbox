@@ -100,6 +100,9 @@ from . import learning
 # Dynamics - Sistemas Dinâmicos Fuzzy
 from . import dynamics
 
+# Interface - Web Interface Launcher
+from .interface import launch_interface
+
 # Utils - Em desenvolvimento
 # from .utils import plot_membership, plot_surface, ...
 
@@ -107,7 +110,7 @@ from . import dynamics
 # Metadata
 # ============================================================================
 
-__version__ = '1.0.7'
+__version__ = '1.1.0'
 __author__ = 'Moiseis Cecconello'
 __license__ = 'MIT'
 
@@ -189,6 +192,9 @@ __all__ = [
 
     # === Dynamics ===
     'dynamics',
+
+    # === Interface ===
+    'launch_interface',
 
     # === Metadata ===
     '__version__',

@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+"""
+pyfuzzy CLI entry point
+"""
+from fuzzy_systems.cli import app
+
+if __name__ == '__main__':
+    app()
