@@ -110,7 +110,7 @@ from .interface import launch_interface
 # Metadata
 # ============================================================================
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 __author__ = 'Moiseis Cecconello'
 __license__ = 'MIT'
 
