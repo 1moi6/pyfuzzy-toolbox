@@ -8,6 +8,7 @@ Welcome to **pyfuzzy-toolbox**, a comprehensive Python library for Fuzzy Systems
 - **🎛️ Inference**: Mamdani and Sugeno/TSK systems
 - **🧠 Learning**: ANFIS, Wang-Mendel, metaheuristic optimization (PSO, DE, GA)
 - **🌊 Dynamics**: Fuzzy ODEs and p-fuzzy systems
+- **🖥️ Web Interface**: Interactive Streamlit app with one-command launch
 
 ## Quick Links
 
@@ -21,6 +22,7 @@ Welcome to **pyfuzzy-toolbox**, a comprehensive Python library for Fuzzy Systems
 
     [:octicons-arrow-right-24: Installation](getting_started/installation.md)
     [:octicons-arrow-right-24: Quickstart](getting_started/quickstart.md)
+    [:octicons-arrow-right-24: CLI & Web Interface](getting_started/cli.md)
 
 -   :material-book-open-page-variant:{ .lg .middle } __User Guide__
 
@@ -62,9 +64,28 @@ Welcome to **pyfuzzy-toolbox**, a comprehensive Python library for Fuzzy Systems
 
 ## Installation
 
+### Basic (Library only)
 ```bash
 pip install pyfuzzy-toolbox
 ```
+
+### Full (with Web Interface)
+=== "macOS/Linux"
+    ```bash
+    pip install 'pyfuzzy-toolbox[ui]'
+    ```
+
+=== "Windows"
+    ```bash
+    pip install pyfuzzy-toolbox[ui]
+    ```
+
+### Launch Web Interface
+```bash
+pyfuzzy interface
+```
+
+Learn more in the [CLI Guide](getting_started/cli.md).
 
 ## Quick Example
 

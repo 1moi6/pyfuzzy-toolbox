@@ -19,13 +19,81 @@ A comprehensive Python library for Fuzzy Systems with focus on education and pro
 
 ## 📦 Installation
 
+### Basic Installation (Library only)
+
 ```bash
 pip install pyfuzzy-toolbox
+```
+
+### Full Installation (with Web Interface)
+
+For the complete experience including the interactive web interface:
+
+**macOS/Linux (Zsh/Bash):**
+```bash
+pip install 'pyfuzzy-toolbox[ui]'
+```
+
+**Windows (PowerShell/CMD):**
+```bash
+pip install pyfuzzy-toolbox[ui]
 ```
 
 **Note:** Package name is `pyfuzzy-toolbox`, import as `fuzzy_systems`:
 ```python
 import fuzzy_systems as fs
+```
+
+## 🖥️ Web Interface (NEW!)
+
+Launch the interactive web interface with a single command:
+
+```bash
+pyfuzzy interface
+```
+
+This opens a modern Streamlit-based interface featuring:
+- 🎯 **ANFIS**: Complete workflow (data → training → evaluation → prediction)
+- 📊 **Interactive visualizations**: Membership functions, decision surfaces, training curves
+- 🔮 **Real-time predictions**: Manual input or batch CSV upload
+- 📈 **Model analysis**: Rules visualization, feature importance, sensitivity analysis
+- 💾 **Export capabilities**: Models, predictions, and results
+
+### CLI Commands
+
+```bash
+# Launch web interface (browser opens automatically)
+pyfuzzy interface
+
+# Custom port and dark theme
+pyfuzzy interface --port 8080 --dark-theme
+
+# Headless mode (no browser)
+pyfuzzy interface --no-browser
+
+# Show version
+pyfuzzy version
+
+# Help
+pyfuzzy --help
+```
+
+### Programmatic API
+
+Launch the interface from Python code or Jupyter notebooks:
+
+```python
+from fuzzy_systems import launch_interface
+
+# Simple launch
+launch_interface()
+
+# Custom configuration
+launch_interface(
+    port=8080,
+    theme='dark',
+    open_browser=True
+)
 ```
 
 ## 🧩 Core Modules

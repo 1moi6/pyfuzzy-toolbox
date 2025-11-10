@@ -149,6 +149,7 @@ nav:
   - Getting Started:
     - Installation: getting_started/installation.md
     - Quickstart: getting_started/quickstart.md
+    - Command Line Interface: getting_started/cli.md
     - Key Concepts: getting_started/key_concepts.md
 
   - User Guide:
