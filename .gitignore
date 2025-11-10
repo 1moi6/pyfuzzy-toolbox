@@ -156,3 +156,4 @@ exported_rules/
 /examples/**/*.png
 /examples/**/*.csv
 /examples/**/exported_rules/
+site/

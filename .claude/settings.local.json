@@ -57,7 +57,9 @@
       "Bash(python -m fuzzy_systems.cli:*)",
       "Bash(cat:*)",
       "Bash(pyfuzzy:*)",
-      "Bash(python -m zipfile:*)"
+      "Bash(python -m zipfile:*)",
+      "Bash(kill:*)",
+      "Bash(.gitignore)"
     ],
     "deny": [],
     "ask": []
