@@ -30,11 +30,11 @@ def check_fis_available(show_styled_button: bool = False) -> bool:
         if 'app_pages' in st.session_state:
             if show_styled_button:
                 # Botão primário estilizado (página principal)
-                if st.button("🚀 Go to Inference Module", type="primary", use_container_width=True, key="go_to_inference_continuous"):
+                if st.button("🚀 Go to Inference Module", type="primary", width="stretch", key="go_to_inference_continuous"):
                     st.switch_page(st.session_state['app_pages'][0])
             else:
                 # Botão primário para sidebar também
-                if st.button("Go to Inference Page", type="primary", use_container_width=True, key="sidebar_go_to_inference_continuous"):
+                if st.button("Go to Inference Page", type="primary", width="stretch", key="sidebar_go_to_inference_continuous"):
                     st.switch_page(st.session_state['app_pages'][0])
 
         return False

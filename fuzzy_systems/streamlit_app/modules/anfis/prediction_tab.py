@@ -134,7 +134,7 @@ def render_manual_prediction(model, n_inputs, feature_names, target_name, scaler
         is_classification = st.session_state.get('anfis_problem_type', 'Regression') == 'Classification'
 
         with col_button:
-            if st.button("Predict", type="primary", use_container_width=True, key='manual_predict_btn'):
+            if st.button("Predict", type="primary", width="stretch", key='manual_predict_btn'):
                 # Create input array
                 X_input = np.array(input_values).reshape(1, -1)
 
@@ -273,7 +273,7 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
         with st.expander("Expected CSV Format"):
             example_data = {name: [0.0, 1.0, 2.0] for name in feature_names}
             example_df = pd.DataFrame(example_data)
-            st.dataframe(example_df, use_container_width=True)
+            st.dataframe(example_df, width="stretch")
             st.caption("CSV should have columns: " + ", ".join(feature_names))
 
         st.markdown("")
@@ -305,12 +305,12 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
 
                 # Show preview
                 with st.expander("Data Preview", expanded=False):
-                    st.dataframe(df.head(10), use_container_width=True)
+                    st.dataframe(df.head(10), width="stretch")
 
                 st.markdown("")
 
                 # Predict button
-                if st.button("🔮 Predict Batch", type="primary", use_container_width=True, key='batch_predict_btn'):
+                if st.button("🔮 Predict Batch", type="primary", width="stretch", key='batch_predict_btn'):
                     with st.spinner("Making predictions..."):
                         # Apply feature scaling if used during training
                         if scaler_X is not None:
@@ -382,7 +382,7 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
                     df_results = st.session_state.batch_prediction_results
 
                     # Display results
-                    st.dataframe(df_results, use_container_width=True, height=300)
+                    st.dataframe(df_results, width="stretch", height=300)
 
                     # Statistics
                     st.markdown("**Prediction Statistics**")
@@ -438,7 +438,7 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
                                 height=250,
                                 showlegend=False
                             )
-                            st.plotly_chart(fig_dist, use_container_width=True)
+                            st.plotly_chart(fig_dist, width="stretch")
 
                     else:
                         # Regression statistics
@@ -467,7 +467,7 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
                         data=csv,
                         file_name="anfis_batch_predictions.csv",
                         mime="text/csv",
-                        use_container_width=True
+                        width="stretch"
                     )
 
                     # Visualization
@@ -492,7 +492,7 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
                             showlegend=False
                         )
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width="stretch")
                     else:
                         st.markdown("**Prediction Distribution**")
 
@@ -514,7 +514,7 @@ def render_batch_prediction(model, feature_names, target_name, scaler_X, scaler_
                             showlegend=False
                         )
 
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width="stretch")
 
             except Exception as e:
                 st.error(f"❌ Error processing file: {str(e)}")
@@ -701,12 +701,12 @@ def render_test_set_evaluation(model, scaler_y):
             showlegend=True
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         st.markdown("")
 
         # Export results
-        if st.button(f"💾 Export {selected_dataset} Results", use_container_width=True, key=f'export_{selected_dataset.lower()}_results'):
+        if st.button(f"💾 Export {selected_dataset} Results", width="stretch", key=f'export_{selected_dataset.lower()}_results'):
             # Inverse transform if scalers were used
             if scaler_y is not None:
                 y_data_original = scaler_y.inverse_transform(y_data.reshape(-1, 1)).ravel()
@@ -730,6 +730,6 @@ def render_test_set_evaluation(model, scaler_y):
                 data=csv,
                 file_name=f"anfis_{selected_dataset.lower()}_results.csv",
                 mime="text/csv",
-                use_container_width=True,
+                width="stretch",
                 key='download_test_results'
             )

@@ -471,7 +471,7 @@ def render_configuration_and_solve(ode_config):
                                 height=400
                             )
 
-                ic_cols[1].plotly_chart(fig, use_container_width=True,key=f"fuzzy_ci_fig_{var_name}")    
+                ic_cols[1].plotly_chart(fig, width="stretch",key=f"fuzzy_ci_fig_{var_name}")    
 
                 initial_conditions.append(build_fuzzy_number(config))
             else:
@@ -555,7 +555,7 @@ def render_configuration_and_solve(ode_config):
                                     height=400
                                 )
 
-                    param_cols[1].plotly_chart(fig, use_container_width=True,key=f"fuzzy_param_fig_{param_name}")    
+                    param_cols[1].plotly_chart(fig, width="stretch",key=f"fuzzy_param_fig_{param_name}")    
 
                     fuzzy_params[param_name] = build_fuzzy_number(config)
                 else:
@@ -583,7 +583,7 @@ def render_configuration_and_solve(ode_config):
     st.markdown("<br>", unsafe_allow_html=True)
 
     button_label = "Solve Fuzzy ODE" if is_fuzzy_problem else "Solve ODE"
-    if st.button(button_label, type="primary", use_container_width=True):
+    if st.button(button_label, type="primary", width="stretch"):
         # Validate fuzzy ICs
         for var_name in st.session_state.fuzzy_ics_config.keys():
             if f"fuzzy_ic_{var_name}" in st.session_state and st.session_state[f"fuzzy_ic_{var_name}"]:
@@ -777,7 +777,7 @@ def render_results(solution, ode_config):
                     font_size=12
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         else:
             # SOLUÇÃO FUZZY (ORIGINAL)
@@ -841,7 +841,7 @@ def render_results(solution, ode_config):
                     font_size=st.session_state.get('ode_fig_font_size', 12)
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         with st.popover('Figure Options', width="stretch"):
             st.markdown("#### Figure Customization")
@@ -1112,7 +1112,7 @@ def render_results(solution, ode_config):
         if is_crisp:
             # Para solução crisp, exportar diretamente
             df = solution.to_dataframe()
-            st.dataframe(df.head(20), use_container_width=True)
+            st.dataframe(df.head(20), width="stretch")
 
             csv = df.to_csv(index=False)
             st.download_button(
@@ -1126,7 +1126,7 @@ def render_results(solution, ode_config):
             alpha_export = st.selectbox("Select α-level to export", solution.alphas, index=len(solution.alphas)//2)
             df = solution.to_dataframe(alpha=alpha_export)
 
-            st.dataframe(df.head(20), use_container_width=True)
+            st.dataframe(df.head(20), width="stretch")
 
             csv = df.to_csv(index=False)
             st.download_button(

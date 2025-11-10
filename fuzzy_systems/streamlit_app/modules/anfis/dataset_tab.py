@@ -227,7 +227,7 @@ def render_classic_dataset_section():
 
     st.markdown(info['details'])
 
-    if st.button(f"Load {selected} Dataset", type="primary", use_container_width=True, key='load_classic_btn'):
+    if st.button(f"Load {selected} Dataset", type="primary", width="stretch", key='load_classic_btn'):
         load_classic_dataset(selected, info['loader'], info['task'])
 
 
@@ -384,7 +384,7 @@ np.tanh(X[:, 0]) + np.sqrt(np.abs(X[:, 1]))
 
     st.markdown("")
 
-    if st.button("Generate Dataset", type="primary", use_container_width=True, key='generate_synth_btn'):
+    if st.button("Generate Dataset", type="primary", width="stretch", key='generate_synth_btn'):
         generate_synthetic_dataset(n_samples, n_features, noise, function_type, custom_formula, x_min, x_max)
 
 
@@ -554,10 +554,10 @@ def render_dataset_info():
         tab1, tab2, tab3 = st.tabs(["Preview", "Statistics", "Columns"])
 
         with tab1:
-            st.dataframe(df.head(10), use_container_width=True)
+            st.dataframe(df.head(10), width="stretch")
 
         with tab2:
-            st.dataframe(df.describe(), use_container_width=True)
+            st.dataframe(df.describe(), width="stretch")
 
         with tab3:
             col_info = pd.DataFrame({
@@ -566,7 +566,7 @@ def render_dataset_info():
                 'Non-Null': df.count().values,
                 'Unique': [df[col].nunique() for col in df.columns]
             })
-            st.dataframe(col_info, use_container_width=True)
+            st.dataframe(col_info, width="stretch")
 
 
 def render_preprocessing_section():
@@ -852,7 +852,7 @@ def render_dataset_split():
         st.warning("Please select at least one feature column")
         return
 
-    if st.button("Split Dataset", type="primary", use_container_width=True, key='split_button'):
+    if st.button("Split Dataset", type="primary", width="stretch", key='split_button'):
         split_dataset(df, feature_cols, target_col, train_size, val_size, test_size)
 
     msg = ""
@@ -968,7 +968,7 @@ def render_data_normalization():
                 key='anfis_scaler_type_y'
             )
 
-    if st.button("Apply Normalization", type="secondary", use_container_width=True, key='preprocess_button'):
+    if st.button("Apply Normalization", type="secondary", width="stretch", key='preprocess_button'):
         apply_preprocessing(normalize_X, normalize_y,
                           scaler_type_X if normalize_X else None,
                           scaler_type_y if normalize_y else None)

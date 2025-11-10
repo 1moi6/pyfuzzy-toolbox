@@ -119,7 +119,7 @@ def render_model_architecture(model):
         ]
 
         df_layers = pd.DataFrame(layers_info)
-        st.dataframe(df_layers, use_container_width=True, hide_index=True)
+        st.dataframe(df_layers, width="stretch", hide_index=True)
 
         st.markdown("---")
 
@@ -246,7 +246,7 @@ def render_membership_functions(model):
             )
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Show MF parameters
         with st.popover("MF Parameters Details",width='stretch',type='tertiary'):
@@ -283,7 +283,7 @@ def render_membership_functions(model):
                         })
 
                 df_params = pd.DataFrame(params_data)
-                st.dataframe(df_params, use_container_width=True, hide_index=True)
+                st.dataframe(df_params, width="stretch", hide_index=True)
             else:
                 st.info("MF parameters not available for this model")
 
@@ -378,9 +378,9 @@ def render_rules_table(model, feature_names, target_name):
 
         # Display dataframe
         if show_all or model.n_rules <= 20:
-            st.dataframe(df_rules, use_container_width=True, height=min(600, 35 * (len(df_rules) + 1)))
+            st.dataframe(df_rules, width="stretch", height=min(600, 35 * (len(df_rules) + 1)))
         else:
-            st.dataframe(df_rules.head(n_display), use_container_width=True, height=min(600, 35 * (n_display + 1)))
+            st.dataframe(df_rules.head(n_display), width="stretch", height=min(600, 35 * (n_display + 1)))
             st.caption(f"Showing {n_display} of {model.n_rules} rules")
 
         # Download button
@@ -391,7 +391,7 @@ def render_rules_table(model, feature_names, target_name):
             data=csv,
             file_name="anfis_fuzzy_rules.csv",
             mime="text/csv",
-            use_container_width=True
+            width="stretch"
         )
 
     except Exception as e:
@@ -426,7 +426,7 @@ def render_fallback_rules_table(model, feature_names, target_name):
         rule_idx += 1
 
     df_rules = pd.DataFrame(rules_data)
-    st.dataframe(df_rules, use_container_width=True, height=400)
+    st.dataframe(df_rules, width="stretch", height=400)
 
 
 def render_rules_visual_matrix(model, feature_names, target_name):
@@ -526,7 +526,7 @@ def render_rules_visual_matrix(model, feature_names, target_name):
             margin=dict(l=60, r=20, t=80, b=20)
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     except Exception as e:
         st.error(f"Error generating visual matrix: {str(e)}")
@@ -646,7 +646,7 @@ def render_rule_activation_analysis(model):
             )
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Rule importance table
         st.markdown("**Top 10 Most Active Rules**")
@@ -664,7 +664,7 @@ def render_rule_activation_analysis(model):
             })
 
         df_top = pd.DataFrame(top_rules_data)
-        st.dataframe(df_top, use_container_width=True, hide_index=True)
+        st.dataframe(df_top, width="stretch", hide_index=True)
 
     except Exception as e:
         st.error(f"Error computing rule activations: {str(e)}")
@@ -701,7 +701,7 @@ def render_all_rules(model, feature_names, target_name, n_mfs_per_input):
         rule_idx += 1
 
     df_rules = pd.DataFrame(rules_data)
-    st.dataframe(df_rules, use_container_width=True, hide_index=True, height=400)
+    st.dataframe(df_rules, width="stretch", hide_index=True, height=400)
 
 
 def render_sample_rules(model, feature_names, target_name, n_mfs_per_input):
@@ -737,7 +737,7 @@ def render_sample_rules(model, feature_names, target_name, n_mfs_per_input):
         rule_idx += 1
 
     df_rules = pd.DataFrame(rules_data)
-    st.dataframe(df_rules, use_container_width=True, hide_index=True, height=400)
+    st.dataframe(df_rules, width="stretch", hide_index=True, height=400)
 
 
 def generate_rule_combinations(n_mfs_per_input):
@@ -872,7 +872,7 @@ def render_surface_plot(model):
             showlegend=True
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 def render_sensitivity_analysis(model):
@@ -994,7 +994,7 @@ def render_sensitivity_analysis(model):
             # Table
             df_sensitivity = pd.DataFrame(sensitivities)
             st.dataframe(df_sensitivity[['Feature', 'Importance']],
-                        use_container_width=True, hide_index=True)
+                        width="stretch", hide_index=True)
 
         with col2:
             # Bar chart
@@ -1018,7 +1018,7 @@ def render_sensitivity_analysis(model):
                 showlegend=False
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         st.markdown("")
 

@@ -282,7 +282,7 @@ def render_training_configuration():
                 })
 
         with col_button:
-            if st.button("🚀 Train Model", type="primary", use_container_width=True, key='train_button'):
+            if st.button("🚀 Train Model", type="primary", width="stretch", key='train_button'):
                 train_model()
 
 

@@ -176,7 +176,7 @@ def render_pfuzzy_discrete_interface():
             )
 
     # Simulate button
-    if st.button("▶️ Run Simulation", type="primary", use_container_width=True):
+    if st.button("▶️ Run Simulation", type="primary", width="stretch"):
         try:
             # Import p-fuzzy module
             # Build FIS using inference engine
@@ -220,7 +220,7 @@ def render_pfuzzy_discrete_interface():
                     height=400
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
             # Phase Space (only if 2+ variables)
             if n_vars >= 2:
@@ -283,7 +283,7 @@ def render_pfuzzy_discrete_interface():
                         height=400
                     )
 
-                    st.plotly_chart(fig_phase, use_container_width=True)
+                    st.plotly_chart(fig_phase, width="stretch")
 
             # Export data
             with st.expander("💾 Export Data"):
@@ -296,7 +296,7 @@ def render_pfuzzy_discrete_interface():
 
                 df = pd.DataFrame(data)
 
-                st.dataframe(df, use_container_width=True)
+                st.dataframe(df, width="stretch")
 
                 csv = df.to_csv(index=False)
                 st.download_button(
@@ -387,7 +387,7 @@ def render_pfuzzy_continuous_interface():
             )
 
     # Simulate button
-    if st.button("▶️ Run Simulation", type="primary", use_container_width=True, key="run_cont"):
+    if st.button("▶️ Run Simulation", type="primary", width="stretch", key="run_cont"):
         try:
             # Import p-fuzzy module
             from fuzzy_systems.dynamics import PFuzzyContinuous
@@ -439,7 +439,7 @@ def render_pfuzzy_continuous_interface():
                     height=400
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
             # Phase Space - Only for 2+ variables
             if n_vars >= 2:
@@ -506,7 +506,7 @@ def render_pfuzzy_continuous_interface():
                         height=400
                     )
 
-                    st.plotly_chart(fig_phase, use_container_width=True)
+                    st.plotly_chart(fig_phase, width="stretch")
 
             # Export data
             with st.expander("💾 Export Data"):
@@ -519,7 +519,7 @@ def render_pfuzzy_continuous_interface():
 
                 df = pd.DataFrame(data)
 
-                st.dataframe(df, use_container_width=True)
+                st.dataframe(df, width="stretch")
 
                 csv = df.to_csv(index=False)
                 st.download_button(
@@ -859,7 +859,7 @@ def render_ode_configuration_and_solve(ode_config):
     all_params_dict = {**fuzzy_params, **crisp_params}
 
     # Solve
-    if st.button("▶️ Solve Fuzzy ODE", type="primary", use_container_width=True):
+    if st.button("▶️ Solve Fuzzy ODE", type="primary", width="stretch"):
         try:
             ode_func = build_ode_function(ode_config['equations'], all_params.union({'t'}))
 
@@ -965,7 +965,7 @@ def render_fuzzy_ode_results(solution, ode_config):
             fig.update_yaxis(title_text=ode_config['vars'][var_idx], row=var_idx + 1, col=1)
 
         fig.update_layout(height=300 * n_vars, showlegend=True)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with st.expander("💾 Export Data"):
         import pandas as pd
@@ -973,7 +973,7 @@ def render_fuzzy_ode_results(solution, ode_config):
         alpha_export = st.selectbox("α-level", solution.alphas, index=len(solution.alphas)//2)
         df = solution.to_dataframe(alpha=alpha_export)
 
-        st.dataframe(df.head(20), use_container_width=True)
+        st.dataframe(df.head(20), width="stretch")
 
         csv = df.to_csv(index=False)
         st.download_button(

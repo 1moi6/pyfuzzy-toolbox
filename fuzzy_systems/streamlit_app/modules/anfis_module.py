@@ -165,7 +165,7 @@ def render_sidebar():
         # Quick Actions
         st.markdown("### 🚀 Quick Actions")
 
-        if st.button("🔄 Reset All", use_container_width=True, type="secondary"):
+        if st.button("🔄 Reset All", width="stretch", type="secondary"):
             reset_all()
 
         if st.session_state.get('anfis_model', None) is not None:
@@ -173,7 +173,7 @@ def render_sidebar():
 
             import pickle
 
-            if st.button("📥 Export Model", use_container_width=True):
+            if st.button("📥 Export Model", width="stretch"):
                 try:
                     model_bytes = pickle.dumps(st.session_state.anfis_model)
                     st.download_button(

@@ -151,8 +151,10 @@ def launch_interface(
     if theme:
         cmd.append(f'--theme.base={theme}')
 
-    # Add headless mode if browser should not open
-    if not open_browser:
+    # Configure browser behavior
+    if open_browser:
+        cmd.append('--server.headless=false')
+    else:
         cmd.append('--server.headless=true')
 
     # Print startup message

@@ -81,7 +81,7 @@ def edit_output_variable_dialog(variable_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Save Changes", use_container_width=True, type="primary"):
+        if st.button("✓ Save Changes", width="stretch", type="primary"):
             if new_name and (new_name == variable['name'] or new_name not in [v['name'] for v in st.session_state.output_variables]):
                 st.session_state.output_variables[variable_idx]['name'] = new_name
 
@@ -103,7 +103,7 @@ def edit_output_variable_dialog(variable_idx):
             else:
                 st.error("Variable name already exists")
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_output_dialog, args=(variable_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
             pass
 
 @st.dialog("View Output Variable Details")
@@ -125,7 +125,7 @@ def view_output_variable_dialog(variable_idx):
     else:
         st.info("No terms defined yet")
 
-    if st.button("Close", use_container_width=True):
+    if st.button("Close", width="stretch"):
         close_output_dialog(variable_idx)
         st.rerun()
 
@@ -140,12 +140,12 @@ def delete_output_variable_dialog(variable_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Yes, Delete", use_container_width=True, type="primary"):
+        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
             st.session_state.output_variables.pop(variable_idx)
             close_output_dialog(variable_idx)
             st.rerun()
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_output_dialog, args=(variable_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
             pass
 
 @st.dialog("Add Output Term")
@@ -217,7 +217,7 @@ def add_output_term_dialog(variable_idx, variable):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Add Term", use_container_width=True, type="primary"):
+        if st.button("✓ Add Term", width="stretch", type="primary"):
             if term_name and term_name not in [t['name'] for t in variable['terms']]:
                 st.session_state.output_variables[variable_idx]['terms'].append({
                     'name': term_name,
@@ -232,7 +232,7 @@ def add_output_term_dialog(variable_idx, variable):
                 st.error("Term name already exists")
 
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_output_dialog, args=(variable_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
             pass
 
 @st.dialog("Edit Output Term")
@@ -308,7 +308,7 @@ def edit_output_term_dialog(variable_idx, term_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Save Changes", use_container_width=True, type="primary"):
+        if st.button("✓ Save Changes", width="stretch", type="primary"):
             other_terms = [t['name'] for i, t in enumerate(variable['terms']) if i != term_idx]
             if new_term_name and new_term_name not in other_terms:
                 st.session_state.output_variables[variable_idx]['terms'][term_idx] = {
@@ -323,7 +323,7 @@ def edit_output_term_dialog(variable_idx, term_idx):
             else:
                 st.error("Term name already exists")
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             close_output_term_dialog(variable_idx, term_idx)
             st.rerun()
 
@@ -338,12 +338,12 @@ def delete_output_term_dialog(variable_idx, term_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Yes, Delete", use_container_width=True, type="primary"):
+        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
             st.session_state.output_variables[variable_idx]['terms'].pop(term_idx)
             close_output_term_dialog(variable_idx, term_idx)
             st.rerun()
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             close_output_term_dialog(variable_idx, term_idx)
             st.rerun()
 
@@ -422,7 +422,7 @@ def edit_term_dialog(variable_idx, term_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Save Changes", use_container_width=True, type="primary"):
+        if st.button("✓ Save Changes", width="stretch", type="primary"):
             other_terms = [t['name'] for i, t in enumerate(variable['terms']) if i != term_idx]
             if new_term_name and new_term_name not in other_terms:
                 st.session_state.input_variables[variable_idx]['terms'][term_idx] = {
@@ -437,7 +437,7 @@ def edit_term_dialog(variable_idx, term_idx):
             else:
                 st.error("Term name already exists")
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             close_term_dialog(variable_idx, term_idx)
             st.rerun()
 
@@ -452,12 +452,12 @@ def delete_term_dialog(variable_idx, term_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Yes, Delete", use_container_width=True, type="primary"):
+        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
             st.session_state.input_variables[variable_idx]['terms'].pop(term_idx)
             close_term_dialog(variable_idx, term_idx)
             st.rerun()
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             close_term_dialog(variable_idx, term_idx)
             st.rerun()
 
@@ -482,7 +482,7 @@ def edit_variable_dialog(variable_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Save Changes", use_container_width=True, type="primary"):
+        if st.button("✓ Save Changes", width="stretch", type="primary"):
             if new_name and (new_name == variable['name'] or new_name not in [v['name'] for v in st.session_state.input_variables]):
                 # Update name and domain
                 st.session_state.input_variables[variable_idx]['name'] = new_name
@@ -506,7 +506,7 @@ def edit_variable_dialog(variable_idx):
             else:
                 st.error("Variable name already exists")
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_dialog, args=(variable_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
             pass
 
 @st.dialog("View Variable Details")
@@ -528,7 +528,7 @@ def view_variable_dialog(variable_idx):
     else:
         st.info("No terms defined yet")
 
-    if st.button("Close", use_container_width=True):
+    if st.button("Close", width="stretch"):
         close_dialog(variable_idx)
         st.rerun()
 
@@ -543,12 +543,12 @@ def delete_variable_dialog(variable_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Yes, Delete", use_container_width=True, type="primary"):
+        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
             st.session_state.input_variables.pop(variable_idx)
             close_dialog(variable_idx)
             st.rerun()
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_dialog, args=(variable_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
             pass
 
 @st.dialog("Add Fuzzy Term")
@@ -621,7 +621,7 @@ def add_term_dialog(variable_idx, variable):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Add Term", use_container_width=True, type="primary"):
+        if st.button("✓ Add Term", width="stretch", type="primary"):
             if term_name and term_name not in [t['name'] for t in variable['terms']]:
                 st.session_state.input_variables[variable_idx]['terms'].append({
                     'name': term_name,
@@ -636,7 +636,7 @@ def add_term_dialog(variable_idx, variable):
                 st.error("Term name already exists")
 
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_dialog, args=(variable_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
             pass
 
 # ========== RULE DIALOGS ==========
@@ -703,7 +703,7 @@ def edit_rule_dialog(rule_idx):
 
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("✓ Save Changes", use_container_width=True, type="primary"):
+            if st.button("✓ Save Changes", width="stretch", type="primary"):
                 # Check for duplicate rules (excluding current rule)
                 rule_exists = any(
                     i != rule_idx and r['antecedents'] == new_antecedents and r['consequents'] == new_consequents
@@ -721,7 +721,7 @@ def edit_rule_dialog(rule_idx):
                     st.rerun()
 
         with col2:
-            if st.button("Cancel", use_container_width=True, on_click=close_rule_dialog, args=(rule_idx,)):
+            if st.button("Cancel", width="stretch", on_click=close_rule_dialog, args=(rule_idx,)):
                 pass
 
 @st.dialog("Delete Fuzzy Rule")
@@ -742,13 +742,13 @@ def delete_rule_dialog(rule_idx):
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Yes, Delete", use_container_width=True, type="primary"):
+        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
             st.session_state.fuzzy_rules.pop(rule_idx)
             close_rule_dialog(rule_idx)
             st.rerun()
 
     with col2:
-        if st.button("Cancel", use_container_width=True, on_click=close_rule_dialog, args=(rule_idx,)):
+        if st.button("Cancel", width="stretch", on_click=close_rule_dialog, args=(rule_idx,)):
             pass
 
 @st.dialog("Edit Rule (Table View)")
@@ -769,12 +769,12 @@ def edit_rule_table_dialog():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✏️ Edit Selected", use_container_width=True, type="primary"):
+        if st.button("✏️ Edit Selected", width="stretch", type="primary"):
             st.session_state.editing_rule_idx = selected
             st.rerun()
 
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             st.rerun()
 
 @st.dialog("Delete Rules (Table View)")
@@ -796,7 +796,7 @@ def delete_rules_table_dialog():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Delete Selected", use_container_width=True, type="primary", disabled=len(to_delete)==0):
+        if st.button("🗑️ Delete Selected", width="stretch", type="primary", disabled=len(to_delete)==0):
             # Delete in reverse order to maintain indices
             for idx in sorted(to_delete, reverse=True):
                 st.session_state.fuzzy_rules.pop(idx)
@@ -804,7 +804,7 @@ def delete_rules_table_dialog():
             st.rerun()
 
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             st.rerun()
 
 def format_rule_compact(rule):
@@ -832,7 +832,7 @@ def new_fis_dialog():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Create FIS", use_container_width=True, type="primary"):
+        if st.button("✓ Create FIS", width="stretch", type="primary"):
             if fis_name:
                 # Check if name already exists
                 if fis_name in [fis['name'] for fis in st.session_state.fis_list]:
@@ -854,7 +854,7 @@ def new_fis_dialog():
                 st.error("Please enter a FIS name")
 
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             st.rerun()
 
 @st.dialog("Rename FIS")
@@ -870,7 +870,7 @@ def rename_fis_dialog():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✓ Rename", use_container_width=True, type="primary"):
+        if st.button("✓ Rename", width="stretch", type="primary"):
             if new_name and new_name != active_fis['name']:
                 # Check if name already exists
                 if new_name in [fis['name'] for i, fis in enumerate(st.session_state.fis_list) if i != st.session_state.active_fis_idx]:
@@ -883,7 +883,7 @@ def rename_fis_dialog():
                 st.error("Please enter a name")
 
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             st.rerun()
 
 @st.dialog("Delete FIS")
@@ -902,7 +902,7 @@ def delete_fis_dialog():
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🗑️ Yes, Delete", use_container_width=True, type="primary"):
+        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
             st.session_state.fis_list.pop(st.session_state.active_fis_idx)
 
             # Adjust active index
@@ -923,7 +923,7 @@ def delete_fis_dialog():
             st.rerun()
 
     with col2:
-        if st.button("Cancel", use_container_width=True):
+        if st.button("Cancel", width="stretch"):
             st.rerun()
 
 @st.dialog("Load FIS from JSON")
@@ -967,7 +967,7 @@ def load_fis_dialog():
 
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("✓ Import FIS", use_container_width=True, type="primary"):
+                if st.button("✓ Import FIS", width="stretch", type="primary"):
                     # Convert JSON to internal format
                     fis_name = json_data.get('name', 'Imported FIS')
                     system_type = json_data.get('system_type', 'MamdaniSystem')
@@ -1053,7 +1053,7 @@ def load_fis_dialog():
                     st.rerun()
 
             with col2:
-                if st.button("Cancel", use_container_width=True):
+                if st.button("Cancel", width="stretch"):
                     st.rerun()
 
         except json.JSONDecodeError:
@@ -1164,7 +1164,7 @@ def export_fis_dialog():
             data=json_string,
             file_name=filename,
             mime="application/json",
-            use_container_width=True,
+            width="stretch",
             type="primary"
         )
 
@@ -1172,12 +1172,12 @@ def export_fis_dialog():
 
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Copy to Clipboard", use_container_width=True):
+            if st.button("Copy to Clipboard", width="stretch"):
                 # Note: Clipboard API requires user interaction in browser
                 st.info("💡 Use the download button or manually copy from the preview above")
 
         with col2:
-            if st.button("Close", use_container_width=True):
+            if st.button("Close", width="stretch"):
                 st.rerun()
 
     except Exception as e:
@@ -1227,9 +1227,9 @@ def run():
 
         # New FIS and Load FIS buttons in columns
        
-        if st.button("New FIS", use_container_width=True):
+        if st.button("New FIS", width="stretch"):
                 new_fis_dialog()
-        if st.button("Load FIS", use_container_width=True):
+        if st.button("Load FIS", width="stretch"):
                 load_fis_dialog()
 
         # Only show FIS management controls if there's at least one FIS
@@ -1254,9 +1254,9 @@ def run():
 
             # FIS actions
             
-            if st.button("Rename FIS", use_container_width=True):
+            if st.button("Rename FIS", width="stretch"):
                 rename_fis_dialog()
-            if st.button("Delete FIS", use_container_width=True, disabled=len(st.session_state.fis_list)==1):
+            if st.button("Delete FIS", width="stretch", disabled=len(st.session_state.fis_list)==1):
                 delete_fis_dialog()
 
             st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 1rem 0;'>", unsafe_allow_html=True)
@@ -1274,11 +1274,11 @@ def run():
             st.markdown("**Actions**")
 
             # Save/Export button
-            if st.button("💾 Export JSON", use_container_width=True):
+            if st.button("💾 Export JSON", width="stretch"):
                 export_fis_dialog()
 
             # Reset button
-            if st.button("🔄 Reset FIS", use_container_width=True):
+            if st.button("🔄 Reset FIS", width="stretch"):
                 # Reset current FIS
                 st.session_state.fis_list[st.session_state.active_fis_idx] = {
                     'name': active_fis['name'],
@@ -1388,7 +1388,7 @@ def run():
                 st.session_state['new_var_min_input'] = var_min
                 st.session_state['new_var_max_input'] = var_max
     
-                if st.button("✓ Add Variable", use_container_width=True, key="add_var_btn", on_click=add_variable):
+                if st.button("✓ Add Variable", width="stretch", key="add_var_btn", on_click=add_variable):
                     if not var_name:
                         st.error("Please enter a variable name")
                     elif var_name in [v['name'] for v in st.session_state.input_variables]:
@@ -1473,7 +1473,7 @@ def run():
                                     height=350
                                 )
 
-                                st.plotly_chart(fig, use_container_width=True,key=f"input_chart_for_{variable['name']}")
+                                st.plotly_chart(fig, width="stretch",key=f"input_chart_for_{variable['name']}")
                                 
                                 for t_idx, term in enumerate(variable['terms']):
                                     col_t1, col_t2 = st.columns([3, 1])
@@ -1546,7 +1546,7 @@ def run():
                 st.session_state['new_output_var_min_input'] = var_min
                 st.session_state['new_output_var_max_input'] = var_max
     
-                if st.button("✓ Add Variable", use_container_width=True, key="add_output_var_btn", on_click=add_output_variable):
+                if st.button("✓ Add Variable", width="stretch", key="add_output_var_btn", on_click=add_output_variable):
                     if not var_name:
                         st.error("Please enter a variable name")
                     elif var_name in [v['name'] for v in st.session_state.output_variables]:
@@ -1631,7 +1631,7 @@ def run():
                                     height=350
                                 )
 
-                                st.plotly_chart(fig, use_container_width=True,key=f"output_chart_for_{variable['name']}")
+                                st.plotly_chart(fig, width="stretch",key=f"output_chart_for_{variable['name']}")
 
 
                                 for t_idx, term in enumerate(variable['terms']):
@@ -1744,7 +1744,7 @@ def run():
     
                         st.markdown("---")
     
-                        if st.button("✓ Add Rule", type="primary", use_container_width=True):
+                        if st.button("✓ Add Rule", type="primary", width="stretch"):
                             # Check for duplicate rules
                             rule_exists = any(
                                 r['antecedents'] == antecedents and r['consequents'] == consequents
@@ -1810,7 +1810,7 @@ def run():
                         # Display dataframe
                         st.dataframe(
                             df,
-                            use_container_width=True,
+                            width="stretch",
                             hide_index=True
                         )
     
@@ -1825,11 +1825,11 @@ def run():
                             # Actions below table - only show if not editing
                             col1, col2 = st.columns(2)
                             with col1:
-                                if st.button("✏️ Edit Rule", use_container_width=True):
+                                if st.button("✏️ Edit Rule", width="stretch"):
                                     edit_rule_table_dialog()
     
                             with col2:
-                                if st.button("🗑️ Delete Rules", use_container_width=True):
+                                if st.button("🗑️ Delete Rules", width="stretch"):
                                     delete_rules_table_dialog()
     
                     else:
@@ -1911,7 +1911,7 @@ def run():
                             )
 
                     # Compute inference button
-                    if st.button("⚡ Run Inference", type="primary", use_container_width=True):
+                    if st.button("⚡ Run Inference", type="primary", width="stretch"):
                         try:
                             # Compute output
                             result = engine.evaluate(input_values)
@@ -1968,7 +1968,7 @@ def run():
                                         height=350
                                     )
 
-                                    st.plotly_chart(fig, use_container_width=True)
+                                    st.plotly_chart(fig, width="stretch")
 
                                     # Show membership degrees
                                     st.markdown("**Membership Degrees:**")

@@ -431,7 +431,7 @@ def render_metrics_evolution(model):
         )
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Summary statistics
     st.markdown("**Training Summary**")
@@ -527,7 +527,7 @@ def render_metaheuristic_convergence(model):
             height=350
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         # Log scale
@@ -569,7 +569,7 @@ def render_metaheuristic_convergence(model):
             height=350
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # Early stopping info
     if meta_hist.get('early_stopped', False):
@@ -609,7 +609,7 @@ def render_regularization_plots(model):
             height=300
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         # L1 penalty
@@ -632,7 +632,7 @@ def render_regularization_plots(model):
             height=300
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col3:
         # L2 penalty
@@ -655,7 +655,7 @@ def render_regularization_plots(model):
             height=300
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # Regularization type info
     st.markdown("")
@@ -735,7 +735,7 @@ def render_error_history(model):
         height=400
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Show convergence statistics
     col1, col2, col3 = st.columns(3)
@@ -839,7 +839,7 @@ def render_classification_comparison():
 
     df_comparison = pd.DataFrame(comparison_data)
 
-    st.dataframe(df_comparison, use_container_width=True, hide_index=True)
+    st.dataframe(df_comparison, width="stretch", hide_index=True)
 
     # Visual comparison
     st.markdown("**Visual Comparison**")
@@ -867,7 +867,7 @@ def render_classification_comparison():
         height=400
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_regression_comparison():
@@ -912,7 +912,7 @@ def render_regression_comparison():
 
     st.dataframe(
         df_comparison,
-        use_container_width=True,
+        width="stretch",
         hide_index=True
     )
 
@@ -947,7 +947,7 @@ def render_regression_comparison():
             height=300
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         # R² comparison
@@ -970,7 +970,7 @@ def render_regression_comparison():
             showlegend=False
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 def render_scatter_plots():
@@ -1062,7 +1062,7 @@ def render_scatter_plots():
                     showlegend=True
                 )
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
 
 def render_residual_analysis():
@@ -1128,7 +1128,7 @@ def render_residual_analysis():
                 height=350
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
             # Residual histogram
@@ -1151,7 +1151,7 @@ def render_residual_analysis():
                 showlegend=False
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         # Residual statistics
         st.markdown("**Residual Statistics**")
@@ -1368,7 +1368,7 @@ def render_confusion_matrix(y_true, y_pred, classes, dataset_name='Training'):
         yaxis={'autorange': 'reversed'}
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Show metrics per class
     st.caption("💡 **Diagonal values** show correct predictions. **Off-diagonal values** show misclassifications.")
@@ -1425,6 +1425,6 @@ def render_classification_report(y_true, y_pred, classes):
 
     df_report = pd.DataFrame(report_data)
 
-    st.dataframe(df_report, use_container_width=True, hide_index=True)
+    st.dataframe(df_report, width="stretch", hide_index=True)
 
     st.caption("💡 **Support** shows the number of samples for each class in the training set.")
