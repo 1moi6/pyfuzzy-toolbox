@@ -127,6 +127,40 @@ def render_sidebar():
 
             st.success(f"{icon} **{task_label} Model**\n\n{n_rules} rules generated")
 
+            # Export button (only when trained)
+            st.markdown("")
+            if st.button("📤 Export to Mamdani", use_container_width=True,
+                        help="Export this FIS to the Inference (Mamdani) page"):
+                from modules.wang_mendel import training_tab
+                training_tab.export_fis_to_mamdani()
+                st.success("✓ Exported to Inference page!")
+                st.rerun()
+
+        st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 0.75rem 0;'>",
+                   unsafe_allow_html=True)
+
+        # Reset button
+        st.markdown("#### Actions")
+        if st.button("🔄 Reset All", use_container_width=True,
+                    help="Clear all data and start fresh"):
+            # Reset all Wang-Mendel session state
+            keys_to_reset = [
+                'wm_model', 'wm_system', 'wm_trained', 'wm_dataset', 'wm_dataset_name',
+                'wm_X_train', 'wm_y_train', 'wm_X_val', 'wm_y_val', 'wm_X_test', 'wm_y_test',
+                'wm_scaler_X', 'wm_scaler_y', 'wm_feature_names', 'wm_target_name',
+                'wm_training_stats', 'wm_y_pred_train', 'wm_y_pred_val', 'wm_y_pred_test',
+                'wm_manual_prediction_result', 'wm_manual_prediction_class',
+                'wm_manual_prediction_prob', 'wm_manual_prediction_inputs',
+                'wm_batch_prediction_results', 'wm_batch_is_classification',
+                'wm_dataset_source', 'wm_dataset_source_prev',
+                'wm_classic_dataset_choice', 'wm_classic_dataset_prev'
+            ]
+            for key in keys_to_reset:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.success("✓ Reset complete!")
+            st.rerun()
+
         st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 0.75rem 0;'>",
                    unsafe_allow_html=True)
 

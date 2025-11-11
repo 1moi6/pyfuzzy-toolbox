@@ -16,6 +16,135 @@ def close_summary_dialog():
     st.session_state['summary_options_control'] = None
 
 
+def export_fis_to_mamdani():
+    """Export Wang-Mendel FIS to Mamdani/Inference page"""
+
+    system = st.session_state.get('wm_system')
+    if system is None:
+        st.error("No FIS to export!")
+        return
+
+    # Initialize fis_list in session_state if it doesn't exist
+    if 'fis_list' not in st.session_state:
+        st.session_state.fis_list = []
+
+    # Generate unique name
+    fis_name = "Wang-Mendel FIS"
+    existing_names = [fis['name'] for fis in st.session_state.fis_list]
+    if fis_name in existing_names:
+        counter = 2
+        while f"{fis_name} ({counter})" in existing_names:
+            counter += 1
+        fis_name = f"{fis_name} ({counter})"
+
+    # Extract metadata for UI display (but system object will be used for inference)
+    # Input variables metadata
+    input_variables = []
+    for var_name, var in system.input_variables.items():
+        terms = []
+        for term_name, mf in var.terms.items():
+            # Simple metadata - just name and type for display
+            # Detect type by checking attributes
+            if hasattr(mf, 'a') and hasattr(mf, 'b') and hasattr(mf, 'c') and hasattr(mf, 'd'):
+                mf_type = 'trapezoidal'
+                params = [mf.a, mf.b, mf.c, mf.d]
+            elif hasattr(mf, 'a') and hasattr(mf, 'b') and hasattr(mf, 'c'):
+                mf_type = 'triangular'
+                params = [mf.a, mf.b, mf.c]
+            elif hasattr(mf, 'mean') and hasattr(mf, 'std'):
+                mf_type = 'gaussian'
+                params = [mf.mean, mf.std]
+            else:
+                mf_type = 'triangular'
+                params = []
+
+            terms.append({
+                'name': term_name,
+                'mf_type': mf_type,
+                'params': params
+            })
+
+        input_variables.append({
+            'name': var_name,
+            'min': var.universe[0],
+            'max': var.universe[1],
+            'terms': terms
+        })
+
+    # Output variables metadata
+    output_variables = []
+    for var_name, var in system.output_variables.items():
+        terms = []
+        for term_name, mf in var.terms.items():
+            # Detect type by checking attributes
+            if hasattr(mf, 'a') and hasattr(mf, 'b') and hasattr(mf, 'c') and hasattr(mf, 'd'):
+                mf_type = 'trapezoidal'
+                params = [mf.a, mf.b, mf.c, mf.d]
+            elif hasattr(mf, 'a') and hasattr(mf, 'b') and hasattr(mf, 'c'):
+                mf_type = 'triangular'
+                params = [mf.a, mf.b, mf.c]
+            elif hasattr(mf, 'mean') and hasattr(mf, 'std'):
+                mf_type = 'gaussian'
+                params = [mf.mean, mf.std]
+            else:
+                mf_type = 'triangular'
+                params = []
+
+            terms.append({
+                'name': term_name,
+                'mf_type': mf_type,
+                'params': params
+            })
+
+        output_variables.append({
+            'name': var_name,
+            'min': var.universe[0],
+            'max': var.universe[1],
+            'terms': terms
+        })
+
+    # Rules metadata
+    fuzzy_rules = []
+    for rule in system.rule_base.rules:
+        antecedents = {}
+        for var_name, term_value in rule.antecedents.items():
+            # Extract term name
+            if isinstance(term_value, tuple) and len(term_value) == 2:
+                _, term_name = term_value
+            else:
+                term_name = str(term_value)
+            antecedents[var_name] = term_name
+
+        consequents = {}
+        for var_name, term_value in rule.consequent.items():
+            # Extract term name
+            if isinstance(term_value, tuple) and len(term_value) == 2:
+                _, term_name = term_value
+            else:
+                term_name = str(term_value)
+            consequents[var_name] = term_name
+
+        fuzzy_rules.append({
+            'antecedents': antecedents,
+            'consequents': consequents,
+            'weight': 1.0
+        })
+
+    # Create FIS entry with both system object AND metadata for UI
+    new_fis = {
+        'name': fis_name,
+        'type': 'Mamdani',
+        'system': system,  # MamdaniSystem object for inference (no conversion needed!)
+        'input_variables': input_variables,  # Metadata for UI display
+        'output_variables': output_variables,  # Metadata for UI display
+        'fuzzy_rules': fuzzy_rules  # Metadata for UI display
+    }
+
+    # Add to fis_list and set as active
+    st.session_state.fis_list.append(new_fis)
+    st.session_state.active_fis_idx = len(st.session_state.fis_list) - 1
+
+
 
 def render():
     """Render combined configuration and training tab"""
@@ -68,7 +197,7 @@ def render_fis_configuration():
             render_manual_config()
         
         if st.session_state.get('wm_system', None) is not None:
-            selection = st.segmented_control("Summary Options", ['System Summary','Membership Functions','Variable Details'],default=None, 
+            selection = st.segmented_control("Summary Options", ['System Summary','Membership Functions','Variable Details'],default=None,
                                                 selection_mode="single",
                                                 width='stretch',
                                                 label_visibility = 'hidden',
@@ -463,68 +592,70 @@ def render_system_summary(type):
 
     # Visualize membership functions
     if type=='Membership Functions':
+        st.markdown("**Membership Functions** - Linguistic Terms")
+
         try:
             # Get all variables
             all_vars = list(system.input_variables.items()) + list(system.output_variables.items())
             n_vars = len(all_vars)
 
-            # Calculate subplot layout
-            n_cols = min(2, n_vars)
-            n_rows = (n_vars + n_cols - 1) // n_cols
+            # Display in columns (max 2 per row)
+            if n_vars <= 2:
+                cols = st.columns(n_vars)
+            else:
+                cols = st.columns(2)
 
-            # Create subplots
-            fig = make_subplots(
-                rows=n_rows,
-                cols=n_cols,
-                subplot_titles=[name for name, _ in all_vars],
-                vertical_spacing=0.12,
-                horizontal_spacing=0.1
-            )
-
-            # Plot each variable
+            # Plot each variable in separate figures
             for idx, (var_name, var) in enumerate(all_vars):
-                row = idx // n_cols + 1
-                col = idx % n_cols + 1
+                col_idx = idx % len(cols)
 
-                # Create points for plotting
-                x_range = var.universe
-                x_points = np.linspace(x_range[0], x_range[1], 200)
+                with cols[col_idx]:
+                    st.markdown(f"**{var_name}**")
 
-                # Plot each membership function
-                for term_name, mf in var.terms.items():
-                    y_points = mf.membership(x_points)
+                    # Create individual figure
+                    fig = go.Figure()
 
-                    fig.add_trace(
-                        go.Scatter(
-                            x=x_points,
-                            y=y_points,
-                            mode='lines',
-                            name=term_name,
-                            showlegend=(idx == 0),  # Only show legend for first subplot
-                            hovertemplate=f'<b>{term_name}</b><br>x=%{{x:.3f}}<br>μ=%{{y:.3f}}<extra></extra>'
+                    # Create points for plotting
+                    x_range = var.universe
+                    x_points = np.linspace(x_range[0], x_range[1], 200)
+
+                    # Plot each membership function
+                    for term_name, mf in var.terms.items():
+                        y_points = mf.membership(x_points)
+
+                        fig.add_trace(
+                            go.Scatter(
+                                x=x_points,
+                                y=y_points,
+                                mode='lines',
+                                name=term_name,
+                                hovertemplate=f'<b>{term_name}</b><br>x=%{{x:.3f}}<br>μ=%{{y:.3f}}<extra></extra>'
+                            )
+                        )
+
+                    # Update layout
+                    fig.update_layout(
+                        xaxis_title=var_name,
+                        yaxis_title='Membership (μ)',
+                        yaxis_range=[0, 1.05],
+                        height=300,
+                        template='plotly_white',
+                        showlegend=True,
+                        legend=dict(
+                            orientation="v",
+                            yanchor="top",
+                            y=1,
+                            xanchor="right",
+                            x=1.15
                         ),
-                        row=row,
-                        col=col
+                        margin=dict(l=40, r=80, t=20, b=40)
                     )
 
-                # Update axes
-                fig.update_xaxes(title_text=var_name, row=row, col=col)
-                fig.update_yaxes(title_text='μ', row=row, col=col, range=[0, 1])
+                    st.plotly_chart(fig, use_container_width=True, key=f'mf_{var_name}')
 
-            fig.update_layout(
-                height=300 * n_rows,
-                template='plotly_white',
-                showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=-0.15,
-                    xanchor="center",
-                    x=0.5
-                )
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
+                    # Add caption with details
+                    st.caption(f"Universe: [{x_range[0]:.2f}, {x_range[1]:.2f}] | "
+                              f"Terms: {len(var.terms)}")
 
         except Exception as e:
             st.error(f"Error plotting membership functions: {str(e)}")

@@ -1229,8 +1229,11 @@ def run():
        
         if st.button("New FIS", width="stretch"):
                 new_fis_dialog()
-        if st.button("Load FIS", width="stretch"):
+        
+        if not has_fis:
+            if st.button("Load FIS", width="stretch"):
                 load_fis_dialog()
+            
 
         # Only show FIS management controls if there's at least one FIS
         if has_fis:
@@ -1254,10 +1257,7 @@ def run():
 
             # FIS actions
             
-            if st.button("Rename FIS", width="stretch"):
-                rename_fis_dialog()
-            if st.button("Delete FIS", width="stretch", disabled=len(st.session_state.fis_list)==1):
-                delete_fis_dialog()
+            
 
             st.markdown("<hr style='border: none; border-top: 1px solid #e5e7eb; margin: 1rem 0;'>", unsafe_allow_html=True)
 
@@ -1273,12 +1273,20 @@ def run():
             # Action buttons
             st.markdown("**Actions**")
 
+
+            if st.button("Rename FIS", width="stretch"):
+                rename_fis_dialog()
+            if st.button("Delete FIS", width="stretch", disabled=len(st.session_state.fis_list)==1):
+                delete_fis_dialog()
+
+            if st.button("Load FIS", width="stretch"):
+                load_fis_dialog()
             # Save/Export button
-            if st.button("💾 Export JSON", width="stretch"):
+            if st.button("Export JSON", width="stretch"):
                 export_fis_dialog()
 
             # Reset button
-            if st.button("🔄 Reset FIS", width="stretch"):
+            if st.button("Reset FIS", width="stretch"):
                 # Reset current FIS
                 st.session_state.fis_list[st.session_state.active_fis_idx] = {
                     'name': active_fis['name'],
@@ -1404,31 +1412,32 @@ def run():
                 dialog_opened = False
     
                 for idx, variable in enumerate(st.session_state.input_variables):
-                    with st.container():
-                        st.markdown(f"""
-                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #667eea;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #667eea;">{variable['name']}</h4>
-                            <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
-                                Range: [{variable['min']}, {variable['max']}] | Terms: {len(variable['terms'])}
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                    with st.expander(f"**:blue-badge[{variable['name']}]** - Range: [{variable['min']}, {variable['max']}] | Terms: {len(variable['terms'])}" ):
+                        # st.markdown(f"""
+                        # <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #667eea;">
+                        #     <h4 style="margin: 0 0 0.5rem 0; color: #667eea;">{variable['name']}</h4>
+                        #     <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
+                        #         Range: [{variable['min']}, {variable['max']}] | Terms: {len(variable['terms'])}
+                        #     </p>
+                        # </div>
+                        # """, unsafe_allow_html=True)
     
                         # Action buttons using icons
                         action_icons = {
                             # "view": "👁️ View",
-                            "edit": "✏️ Edit",
-                            "add_term": "➕ Add Term",
-                            "delete": "🗑️ Delete"
+                            "edit": "Edit Linguistic Variable",
+                            "add_term": "Add Term to Variable",
+                            "delete": "Delete Linguistic Variable"
                         }
     
                         action = st.segmented_control(
                             f"Actions for {variable['name']}",
                             options=list(action_icons.keys()),
-                            format_func=lambda x: action_icons[x],
+                            format_func=lambda x:f"**{action_icons[x]}**",
                             selection_mode="single",
                             key=f"actions_{idx}",
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
+                            width = 'stretch'
                         )
     
                         # Open dialog only if no other dialog has been opened yet
@@ -1448,61 +1457,69 @@ def run():
     
                         # Display terms in expander
                         if variable['terms']:
-                            with st.expander(f"📋 Terms ({len(variable['terms'])})", expanded=False):
+                            # with st.popover(f"📋 Terms ({len(variable['terms'])})"):
                                 # var_data = next(v for v in active_fis['input_variables'] if v['name'] == var_name)
-                                engine = InferenceEngine(active_fis)
-                                fig = go.Figure()
+                            engine = InferenceEngine(active_fis)
+                            fig = go.Figure()
 
-                                # Plot each term
-                                for term in variable['terms']:
-                                    x, y = engine.get_term_membership_curve(variable['name'], term['name'])
-                                    fig.add_trace(go.Scatter(
-                                        x=x, y=y,
-                                        mode='lines',
-                                        name=term['name'],
-                                        hovertemplate=f"{term['name']}<br>x=%{{x:.2f}}<br>μ=%{{y:.3f}}<extra></extra>"
-                                    ))
+                            # Plot each term
+                            for term in variable['terms']:
+                                x, y = engine.get_term_membership_curve(variable['name'], term['name'])
+                                fig.add_trace(go.Scatter(
+                                    x=x, y=y,
+                                    mode='lines',
+                                    name=term['name'],
+                                    hovertemplate=f"{term['name']}<br>x=%{{x:.2f}}<br>μ=%{{y:.3f}}<extra></extra>"
+                                ))
 
-                                
+                            
 
-                                fig.update_layout(
-                                    title=f"Membership Functions - {variable['name']}",
-                                    xaxis_title=var_name,
-                                    yaxis_title="Membership Degree (μ)",
-                                    hovermode='closest',
-                                    height=350
-                                )
+                            fig.update_layout(
+                                title=f"Membership Functions - {variable['name']}",
+                                xaxis_title=var_name,
+                                yaxis_title="Membership Degree (μ)",
+                                hovermode='closest',
+                                height=350
+                            )
 
-                                st.plotly_chart(fig, width="stretch",key=f"input_chart_for_{variable['name']}")
-                                
-                                for t_idx, term in enumerate(variable['terms']):
-                                    col_t1, col_t2 = st.columns([3, 1])
-                                    with col_t1:
-                                        st.markdown(f"**{term['name']}**")
-                                        st.caption(f"`{term['mf_type']}` {term['params']}")
-                                    with col_t2:
-                                        term_action_icons = {
-                                            "edit": "✏️",
-                                            "delete": "🗑️"
-                                        }
+                            st.plotly_chart(fig, width="stretch",key=f"input_chart_for_{variable['name']}")
+                            
+                            for t_idx, term in enumerate(variable['terms']):
+                                col_t1, col_t2 = st.columns([3, 1])
+                                with col_t1:
+                                    st.markdown(f"""
+                                <div style="background: #f8f9fa; padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid #667eea; font-size: 0.85rem;">
+                                    <span style="font-weight: 600;">{term['name']}</span>
+                                    <span style="font-weight: 300;"> - </span>
+                                    <span style="font-weight: 300;">{term['mf_type']} - [{', '.join([str(round(a, 2)) for a in term['params']])}]</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                    # st.markdown(f"**{term['name']}**")
+                                    # st.caption(f"`{term['mf_type']}` {term['params']}")
+                                with col_t2:
+                                    term_action_icons = {
+                                        "edit": "Edit Term",
+                                        "delete": "Delete Term"
+                                    }
 
-                                        term_action = st.segmented_control(
-                                            f"Actions for term {term['name']}",
-                                            options=list(term_action_icons.keys()),
-                                            format_func=lambda x: term_action_icons[x],
-                                            selection_mode="single",
-                                            key=f"term_actions_{idx}_{t_idx}",
-                                            label_visibility="collapsed"
-                                        )
+                                    term_action = st.segmented_control(
+                                        f"Actions for term {term['name']}",
+                                        options=list(term_action_icons.keys()),
+                                        format_func=lambda x: term_action_icons[x],
+                                        selection_mode="single",
+                                        key=f"term_actions_{idx}_{t_idx}",
+                                        label_visibility="collapsed",
+                                        width = 'stretch'
+                                    )
 
-                                        # Open dialog only if no other dialog has been opened yet
-                                        if not dialog_opened and term_action:
-                                            if term_action == "edit":
-                                                edit_term_dialog(idx, t_idx)
-                                                dialog_opened = True
-                                            elif term_action == "delete":
-                                                delete_term_dialog(idx, t_idx)
-                                                dialog_opened = True
+                                    # Open dialog only if no other dialog has been opened yet
+                                    if not dialog_opened and term_action:
+                                        if term_action == "edit":
+                                            edit_term_dialog(idx, t_idx)
+                                            dialog_opened = True
+                                        elif term_action == "delete":
+                                            delete_term_dialog(idx, t_idx)
+                                            dialog_opened = True
             else:
                 st.info("No input variables configured. Click '➕ Add New Input Variable' to get started.")
     
@@ -1562,31 +1579,32 @@ def run():
                 dialog_opened = False
     
                 for idx, variable in enumerate(st.session_state.output_variables):
-                    with st.container():
-                        st.markdown(f"""
-                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #10b981;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #10b981;">{variable['name']}</h4>
-                            <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
-                                Range: [{variable['min']}, {variable['max']}] | Terms: {len(variable['terms'])}
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                    with st.expander(f"**:green-badge[{variable['name']}]** - Range: [{variable['min']}, {variable['max']}] | Terms: {len(variable['terms'])}" ):
+                        # st.markdown(f"""
+                        # <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #10b981;">
+                        #     <h4 style="margin: 0 0 0.5rem 0; color: #10b981;">{variable['name']}</h4>
+                        #     <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">
+                        #         Range: [{variable['min']}, {variable['max']}] | Terms: {len(variable['terms'])}
+                        #     </p>
+                        # </div>
+                        # """, unsafe_allow_html=True)
     
                         # Action buttons using icons
                         action_icons = {
                             # "view": "👁️ View",
-                            "edit": "✏️ Edit",
-                            "add_term": "➕ Add Term",
-                            "delete": "🗑️ Delete"
+                            "edit": "Edit Linguistic Variable",
+                            "add_term": "Add Term",
+                            "delete": "Delete Linguistic Variable"
                         }
     
                         action = st.segmented_control(
                             f"Actions for {variable['name']}",
                             options=list(action_icons.keys()),
-                            format_func=lambda x: action_icons[x],
+                            format_func=lambda x: f"**{action_icons[x]}**",
                             selection_mode="single",
                             key=f"output_actions_{idx}",
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
+                            width = 'stretch'
                         )
     
                         # Open dialog only if no other dialog has been opened yet
@@ -1606,62 +1624,70 @@ def run():
     
                         # Display terms in expander
                         if variable['terms']:
-                            with st.expander(f"📋 Terms ({len(variable['terms'])})", expanded=False):
+                            # with st.expander(f"📋 Terms ({len(variable['terms'])})", expanded=False):
 
-                                engine = InferenceEngine(active_fis)
-                                fig = go.Figure()
+                            engine = InferenceEngine(active_fis)
+                            fig = go.Figure()
 
-                                # Plot each term
-                                for term in variable['terms']:
-                                    x, y = engine.get_term_membership_curve(variable['name'], term['name'])
-                                    fig.add_trace(go.Scatter(
-                                        x=x, y=y,
-                                        mode='lines',
-                                        name=term['name'],
-                                        hovertemplate=f"{term['name']}<br>x=%{{x:.2f}}<br>μ=%{{y:.3f}}<extra></extra>"
-                                    ))
+                            # Plot each term
+                            for term in variable['terms']:
+                                x, y = engine.get_term_membership_curve(variable['name'], term['name'])
+                                fig.add_trace(go.Scatter(
+                                    x=x, y=y,
+                                    mode='lines',
+                                    name=term['name'],
+                                    hovertemplate=f"{term['name']}<br>x=%{{x:.2f}}<br>μ=%{{y:.3f}}<extra></extra>"
+                                ))
 
-                                
+                            
 
-                                fig.update_layout(
-                                    title=f"Membership Functions - {variable['name']}",
-                                    xaxis_title=var_name,
-                                    yaxis_title="Membership Degree (μ)",
-                                    hovermode='closest',
-                                    height=350
-                                )
+                            fig.update_layout(
+                                title=f"Membership Functions - {variable['name']}",
+                                xaxis_title=var_name,
+                                yaxis_title="Membership Degree (μ)",
+                                hovermode='closest',
+                                height=350
+                            )
 
-                                st.plotly_chart(fig, width="stretch",key=f"output_chart_for_{variable['name']}")
+                            st.plotly_chart(fig, width="stretch",key=f"output_chart_for_{variable['name']}")
 
 
-                                for t_idx, term in enumerate(variable['terms']):
-                                    col_t1, col_t2 = st.columns([3, 1])
-                                    with col_t1:
-                                        st.markdown(f"**{term['name']}**")
-                                        st.caption(f"`{term['mf_type']}` {term['params']}")
-                                    with col_t2:
-                                        term_action_icons = {
-                                            "edit": "✏️",
-                                            "delete": "🗑️"
-                                        }
+                            for t_idx, term in enumerate(variable['terms']):
+                                col_t1, col_t2 = st.columns([3, 1])
+                                with col_t1:
+                                    st.markdown(f"""
+                                <div style="background: #f8f9fa; padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid #059669; font-size: 0.85rem;">
+                                    <span style="font-weight: 600;">{term['name']}</span>
+                                    <span style="font-weight: 300;"> - </span>
+                                    <span style="font-weight: 300;">{term['mf_type']} - [{', '.join([str(round(a, 2)) for a in term['params']])}]</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                    # st.markdown(f"**{term['name']}**")
+                                    # st.caption(f"`{term['mf_type']}` {term['params']}")
+                                with col_t2:
+                                    term_action_icons = {
+                                        "edit": "Edit Term",
+                                        "delete": "Delete Term"
+                                    }
 
-                                        term_action = st.segmented_control(
-                                            f"Actions for term {term['name']}",
-                                            options=list(term_action_icons.keys()),
-                                            format_func=lambda x: term_action_icons[x],
-                                            selection_mode="single",
-                                            key=f"output_term_actions_{idx}_{t_idx}",
-                                            label_visibility="collapsed"
-                                        )
+                                    term_action = st.segmented_control(
+                                        f"Actions for term {term['name']}",
+                                        options=list(term_action_icons.keys()),
+                                        format_func=lambda x: term_action_icons[x],
+                                        selection_mode="single",
+                                        key=f"output_term_actions_{idx}_{t_idx}",
+                                        label_visibility="collapsed",
+                                        width = 'stretch'
+                                    )
 
-                                        # Open dialog only if no other dialog has been opened yet
-                                        if not dialog_opened and term_action:
-                                            if term_action == "edit":
-                                                edit_output_term_dialog(idx, t_idx)
-                                                dialog_opened = True
-                                            elif term_action == "delete":
-                                                delete_output_term_dialog(idx, t_idx)
-                                                dialog_opened = True
+                                    # Open dialog only if no other dialog has been opened yet
+                                    if not dialog_opened and term_action:
+                                        if term_action == "edit":
+                                            edit_output_term_dialog(idx, t_idx)
+                                            dialog_opened = True
+                                        elif term_action == "delete":
+                                            delete_output_term_dialog(idx, t_idx)
+                                            dialog_opened = True
             else:
                 st.info("No output variables configured. Click '➕ Add New Output Variable' to get started.")
     
@@ -1773,8 +1799,8 @@ def run():
                     with col_header2:
                         # Toggle between view modes
                         view_icons = {
-                            "compact": "📝",
-                            "table": "📊"
+                            "compact": "Rules",
+                            "table": "Table"
                         }
                         view_mode = st.segmented_control(
                             "View mode",
@@ -1783,7 +1809,8 @@ def run():
                             default="compact",
                             selection_mode="single",
                             key="rule_view_mode",
-                            label_visibility="collapsed"
+                            label_visibility="collapsed",
+                            width = 'stretch'
                         )
     
                     if view_mode == "table":
@@ -1858,8 +1885,8 @@ def run():
                             with col2:
                                 # Action segmented control
                                 action_icons = {
-                                    "edit": "✏️",
-                                    "delete": "🗑️"
+                                    "edit": "Edit Rule",
+                                    "delete": "Delete Rule"
                                 }
     
                                 action = st.segmented_control(
@@ -1868,7 +1895,8 @@ def run():
                                     format_func=lambda x: action_icons[x],
                                     selection_mode="single",
                                     key=f"rule_actions_{idx}",
-                                    label_visibility="collapsed"
+                                    label_visibility="collapsed",
+                                    width = 'stretch'
                                 )
     
                                 if action == "edit":

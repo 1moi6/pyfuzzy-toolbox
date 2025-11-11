@@ -99,8 +99,12 @@ def render_sidebar_controls():
 
     st.markdown("### Dataset Source")
 
+    # Initialize default if not set
+    if 'wm_dataset_source' not in st.session_state:
+        st.session_state.wm_dataset_source = "Upload CSV"
+
     # Get previous source to detect changes
-    previous_source = st.session_state.get('wm_dataset_source_selected', None)
+    previous_source = st.session_state.get('wm_dataset_source_prev', None)
 
     dataset_source = st.selectbox(
         "Choose data source",
@@ -117,14 +121,19 @@ def render_sidebar_controls():
             del st.session_state.wm_dataset_name
         reset_dataset_state()
 
-    st.session_state.wm_dataset_source_selected = dataset_source
+    # Store current value as previous for next run
+    st.session_state.wm_dataset_source_prev = dataset_source
 
     # Classic dataset selector
     if dataset_source == "Classic Datasets":
         st.markdown("---")
 
+        # Initialize default if not set
+        if 'wm_classic_dataset_choice' not in st.session_state:
+            st.session_state.wm_classic_dataset_choice = list(CLASSIC_DATASETS.keys())[0]
+
         # Get previous selection to detect changes
-        previous_classic = st.session_state.get('wm_selected_classic', None)
+        previous_classic = st.session_state.get('wm_classic_dataset_prev', None)
 
         selected_dataset = st.selectbox(
             "Select dataset",
@@ -142,7 +151,8 @@ def render_sidebar_controls():
                 del st.session_state.wm_dataset_name
             reset_dataset_state()
 
-        st.session_state.wm_selected_classic = selected_dataset
+        # Store current value as previous for next run
+        st.session_state.wm_classic_dataset_prev = selected_dataset
 
         info = CLASSIC_DATASETS[selected_dataset]
         st.caption(f"{info['samples']} samples × {info['features']} features")
@@ -152,7 +162,7 @@ def render_sidebar_controls():
 def render():
     """Render dataset management tab"""
 
-    source = st.session_state.get('wm_dataset_source_selected', 'Upload CSV')
+    source = st.session_state.get('wm_dataset_source', 'Upload CSV')
 
     # Render appropriate section
     if source == "Upload CSV":
@@ -210,7 +220,7 @@ def render_upload_section():
 def render_classic_dataset_section():
     """Render classic dataset section"""
 
-    selected = st.session_state.get('wm_selected_classic', 'Iris')
+    selected = st.session_state.get('wm_classic_dataset_choice', 'Iris')
     info = CLASSIC_DATASETS[selected]
 
     st.markdown(f"##### {info['icon']} {selected} - {info['description']}")

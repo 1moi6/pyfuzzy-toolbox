@@ -219,6 +219,80 @@ def render_manual_prediction(model, n_inputs, feature_names, target_name, task, 
                     unsafe_allow_html=True
                 )
 
+        # Show membership degrees
+        if 'wm_manual_prediction_inputs' in st.session_state:
+            st.markdown("")
+            st.markdown("---")
+            st.markdown("**Membership Degrees** - Linguistic Term Activations")
+
+            # Get input values
+            input_values = st.session_state.wm_manual_prediction_inputs
+            X_input = np.array([input_values])
+
+            # Scale if needed
+            if scaler_X is not None:
+                X_input_scaled = scaler_X.transform(X_input)
+            else:
+                X_input_scaled = X_input
+
+            # Get membership degrees
+            try:
+                memberships = model.predict_membership(X_input_scaled)
+
+                # Display in columns
+                system = st.session_state.wm_system
+                output_names = list(memberships.keys())
+                n_outputs = len(output_names)
+
+                if n_outputs <= 3:
+                    cols = st.columns(n_outputs)
+                else:
+                    cols = st.columns(3)
+
+                for idx, output_name in enumerate(output_names):
+                    col_idx = idx % len(cols)
+                    with cols[col_idx]:
+                        st.markdown(f"**{output_name}**")
+
+                        membership_values = memberships[output_name][0]  # First sample
+                        output_var = system.output_variables[output_name]
+                        term_names = list(output_var.terms.keys())
+
+                        # Create bar chart for memberships
+                        fig = go.Figure()
+
+                        colors = ['#667eea' if membership_values[i] == max(membership_values)
+                                 else '#a0aec0' for i in range(len(term_names))]
+
+                        fig.add_trace(go.Bar(
+                            x=term_names,
+                            y=membership_values,
+                            marker_color=colors,
+                            text=[f'{val:.3f}' for val in membership_values],
+                            textposition='outside',
+                            hovertemplate='%{x}<br>μ = %{y:.3f}<extra></extra>'
+                        ))
+
+                        fig.update_layout(
+                            yaxis_title='Membership (μ)',
+                            yaxis_range=[0, 1.1],
+                            height=250,
+                            template='plotly_white',
+                            showlegend=False,
+                            margin=dict(l=20, r=20, t=20, b=20)
+                        )
+
+                        st.plotly_chart(fig, use_container_width=True, key=f'membership_{output_name}')
+
+                        # Show dominant term
+                        dominant_idx = np.argmax(membership_values)
+                        dominant_term = term_names[dominant_idx]
+                        dominant_value = membership_values[dominant_idx]
+                        st.caption(f"🎯 Dominant: **{dominant_term}** (μ = {dominant_value:.3f})")
+
+            except Exception as e:
+                st.warning(f"Could not compute membership degrees: {str(e)}")
+
         # Show normalization info if used
         if scaler_X is not None or scaler_y is not None:
             st.markdown("")

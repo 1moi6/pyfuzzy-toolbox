@@ -23,9 +23,10 @@ class InferenceEngine:
             FIS data from st.session_state containing:
             - name: str
             - type: str ('Mamdani' or 'Sugeno (TSK)')
-            - input_variables: list
-            - output_variables: list
-            - fuzzy_rules: list
+            - input_variables: list (optional if 'system' is provided)
+            - output_variables: list (optional if 'system' is provided)
+            - fuzzy_rules: list (optional if 'system' is provided)
+            - system: MamdaniSystem or SugenoSystem (optional - if provided, skips building)
         """
         self.fis_data = fis_data
         self.system = None
@@ -34,6 +35,13 @@ class InferenceEngine:
     def _build_system(self):
         """Build the pyfuzzy-toolbox FIS from Streamlit data"""
         try:
+            # Check if a pre-built system is provided
+            if 'system' in self.fis_data and self.fis_data['system'] is not None:
+                # Use the provided system directly (e.g., from Wang-Mendel or ANFIS)
+                self.system = self.fis_data['system']
+                return
+
+            # Otherwise, build from dictionary data
             # Determine system type
             if 'Sugeno' in self.fis_data['type'] or 'TSK' in self.fis_data['type']:
                 self.system = fs.SugenoSystem()
