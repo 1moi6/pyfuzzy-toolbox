@@ -4,6 +4,7 @@ Interactive interface for creating Mamdani and Sugeno fuzzy systems
 """
 
 import streamlit as st
+import numpy as np
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -11,8 +12,46 @@ from plotly.subplots import make_subplots
 from modules.inference_engine import InferenceEngine
 
 def close_dialog(variable_idx):
-    """Callback to reset action selection"""
     st.session_state[f"actions_{variable_idx}"] = None
+
+def reset_all_segment_controls():
+    """Reset all segment control states efficiently (for on_dismiss callback)"""
+    # Reset input variable actions
+    if 'input_variables' in st.session_state:
+        for idx in range(len(st.session_state.input_variables)):
+            # Reset variable-level actions
+            key = f"actions_{idx}"
+            if key in st.session_state and st.session_state[key] is not None:
+                st.session_state[key] = None
+
+            # Reset term-level actions
+            var = st.session_state.input_variables[idx]
+            if 'terms' in var:
+                for t_idx in range(len(var['terms'])):
+                    key = f"term_actions_{idx}_{t_idx}"
+                    if key in st.session_state and st.session_state[key] is not None:
+                        st.session_state[key] = None
+
+    # Reset output variable actions
+    if 'output_variables' in st.session_state:
+        for idx in range(len(st.session_state.output_variables)):
+            key = f"output_actions_{idx}"
+            if key in st.session_state and st.session_state[key] is not None:
+                st.session_state[key] = None
+
+            var = st.session_state.output_variables[idx]
+            if 'terms' in var:
+                for t_idx in range(len(var['terms'])):
+                    key = f"output_term_actions_{idx}_{t_idx}"
+                    if key in st.session_state and st.session_state[key] is not None:
+                        st.session_state[key] = None
+
+    # Reset rule actions
+    if 'fuzzy_rules' in st.session_state:
+        for idx in range(len(st.session_state.fuzzy_rules)):
+            key = f"rule_actions_{idx}"
+            if key in st.session_state and st.session_state[key] is not None:
+                st.session_state[key] = None
 
 def rescale_term_params(old_min, old_max, new_min, new_max, params, mf_type):
     """Rescale term parameters when variable domain changes"""
@@ -61,7 +100,7 @@ def close_output_term_dialog(variable_idx, term_idx):
 
 # ========== OUTPUT VARIABLE DIALOGS ==========
 
-@st.dialog("Edit Output Variable")
+@st.dialog("Edit Output Variable", on_dismiss=reset_all_segment_controls)
 def edit_output_variable_dialog(variable_idx):
     """Dialog for editing an output variable"""
     variable = st.session_state.output_variables[variable_idx]
@@ -79,8 +118,8 @@ def edit_output_variable_dialog(variable_idx):
     if domain_changed and variable['terms']:
         st.warning(f"⚠️ Changing the domain will automatically rescale all {len(variable['terms'])} term(s) parameters.")
 
-    col1, col2 = st.columns(2)
-    with col1:
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
         if st.button("✓ Save Changes", width="stretch", type="primary"):
             if new_name and (new_name == variable['name'] or new_name not in [v['name'] for v in st.session_state.output_variables]):
                 st.session_state.output_variables[variable_idx]['name'] = new_name
@@ -102,11 +141,11 @@ def edit_output_variable_dialog(variable_idx):
                 st.error("Please enter a variable name")
             else:
                 st.error("Variable name already exists")
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
-            pass
+    # with col2:
+    #     if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
+    #         pass
 
-@st.dialog("View Output Variable Details")
+@st.dialog("View Output Variable Details", on_dismiss=reset_all_segment_controls)
 def view_output_variable_dialog(variable_idx):
     """Dialog for viewing output variable details"""
     variable = st.session_state.output_variables[variable_idx]
@@ -129,7 +168,7 @@ def view_output_variable_dialog(variable_idx):
         close_output_dialog(variable_idx)
         st.rerun()
 
-@st.dialog("Delete Output Variable")
+@st.dialog("Delete Output Variable", on_dismiss=reset_all_segment_controls)
 def delete_output_variable_dialog(variable_idx):
     """Dialog for confirming output variable deletion"""
     variable = st.session_state.output_variables[variable_idx]
@@ -138,17 +177,14 @@ def delete_output_variable_dialog(variable_idx):
     if variable['terms']:
         st.error(f"This will also delete {len(variable['terms'])} term(s)!")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Yes, Delete!", width="stretch", type="primary"):
             st.session_state.output_variables.pop(variable_idx)
             close_output_dialog(variable_idx)
             st.rerun()
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
-            pass
-
-@st.dialog("Add Output Term")
+    
+@st.dialog("Add Output Term", on_dismiss=reset_all_segment_controls)
 def add_output_term_dialog(variable_idx, variable):
     """Dialog for adding a new fuzzy term to output variable"""
 
@@ -215,9 +251,9 @@ def add_output_term_dialog(variable_idx, variable):
             p2 = st.number_input("c (center)", value=(variable['min'] + variable['max'])/2)
         params = (p1, p2)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✓ Add Term", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Add Linguistic Term", width="stretch", type="primary"):
             if term_name and term_name not in [t['name'] for t in variable['terms']]:
                 st.session_state.output_variables[variable_idx]['terms'].append({
                     'name': term_name,
@@ -231,11 +267,11 @@ def add_output_term_dialog(variable_idx, variable):
             else:
                 st.error("Term name already exists")
 
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
-            pass
+    # with col2:
+    #     if st.button("Cancel", width="stretch", on_click=close_output_dialog, args=(variable_idx,)):
+    #         pass
 
-@st.dialog("Edit Output Term")
+@st.dialog("Edit Output Term", on_dismiss=reset_all_segment_controls)
 def edit_output_term_dialog(variable_idx, term_idx):
     """Dialog for editing an output fuzzy term"""
     variable = st.session_state.output_variables[variable_idx]
@@ -306,9 +342,9 @@ def edit_output_term_dialog(variable_idx, term_idx):
             p2 = st.number_input("c (center)", value=float(current_params[1]) if current_params else (variable['min'] + variable['max'])/2)
         params = (p1, p2)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✓ Save Changes", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Save Changes", width="stretch", type="primary"):
             other_terms = [t['name'] for i, t in enumerate(variable['terms']) if i != term_idx]
             if new_term_name and new_term_name not in other_terms:
                 st.session_state.output_variables[variable_idx]['terms'][term_idx] = {
@@ -322,12 +358,12 @@ def edit_output_term_dialog(variable_idx, term_idx):
                 st.error("Please enter a term name")
             else:
                 st.error("Term name already exists")
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            close_output_term_dialog(variable_idx, term_idx)
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         close_output_term_dialog(variable_idx, term_idx)
+    #         st.rerun()
 
-@st.dialog("Delete Output Term")
+@st.dialog("Delete Output Term", on_dismiss=reset_all_segment_controls)
 def delete_output_term_dialog(variable_idx, term_idx):
     """Dialog for confirming output term deletion"""
     variable = st.session_state.output_variables[variable_idx]
@@ -336,18 +372,18 @@ def delete_output_term_dialog(variable_idx, term_idx):
     st.warning(f"Are you sure you want to delete term **'{term['name']}'**?")
     st.caption(f"Type: {term['mf_type']} | Parameters: {term['params']}")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Yes, Delete!", width="stretch", type="primary"):
             st.session_state.output_variables[variable_idx]['terms'].pop(term_idx)
             close_output_term_dialog(variable_idx, term_idx)
             st.rerun()
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            close_output_term_dialog(variable_idx, term_idx)
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         close_output_term_dialog(variable_idx, term_idx)
+    #         st.rerun()
 
-@st.dialog("Edit Term")
+@st.dialog("Edit Term", on_dismiss=reset_all_segment_controls)
 def edit_term_dialog(variable_idx, term_idx):
     """Dialog for editing a fuzzy term"""
     variable = st.session_state.input_variables[variable_idx]
@@ -420,9 +456,9 @@ def edit_term_dialog(variable_idx, term_idx):
             p2 = st.number_input("c (center)", value=float(current_params[1]) if current_params else (variable['min'] + variable['max'])/2)
         params = (p1, p2)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✓ Save Changes", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Save Changes", width="stretch", type="primary"):
             other_terms = [t['name'] for i, t in enumerate(variable['terms']) if i != term_idx]
             if new_term_name and new_term_name not in other_terms:
                 st.session_state.input_variables[variable_idx]['terms'][term_idx] = {
@@ -436,12 +472,12 @@ def edit_term_dialog(variable_idx, term_idx):
                 st.error("Please enter a term name")
             else:
                 st.error("Term name already exists")
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            close_term_dialog(variable_idx, term_idx)
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         close_term_dialog(variable_idx, term_idx)
+    #         st.rerun()
 
-@st.dialog("Delete Term")
+@st.dialog("Delete Term", on_dismiss=reset_all_segment_controls)
 def delete_term_dialog(variable_idx, term_idx):
     """Dialog for confirming term deletion"""
     variable = st.session_state.input_variables[variable_idx]
@@ -450,18 +486,18 @@ def delete_term_dialog(variable_idx, term_idx):
     st.warning(f"Are you sure you want to delete term **'{term['name']}'**?")
     st.caption(f"Type: {term['mf_type']} | Parameters: {term['params']}")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Yes, Delete!", width="stretch", type="primary"):
             st.session_state.input_variables[variable_idx]['terms'].pop(term_idx)
             close_term_dialog(variable_idx, term_idx)
             st.rerun()
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            close_term_dialog(variable_idx, term_idx)
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         close_term_dialog(variable_idx, term_idx)
+    #         st.rerun()
 
-@st.dialog("Edit Variable")
+@st.dialog("Edit Variable", on_dismiss=reset_all_segment_controls)
 def edit_variable_dialog(variable_idx):
     """Dialog for editing a variable"""
     variable = st.session_state.input_variables[variable_idx]
@@ -480,8 +516,8 @@ def edit_variable_dialog(variable_idx):
     if domain_changed and variable['terms']:
         st.warning(f"⚠️ Changing the domain will automatically rescale all {len(variable['terms'])} term(s) parameters.")
 
-    col1, col2 = st.columns(2)
-    with col1:
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
         if st.button("✓ Save Changes", width="stretch", type="primary"):
             if new_name and (new_name == variable['name'] or new_name not in [v['name'] for v in st.session_state.input_variables]):
                 # Update name and domain
@@ -505,11 +541,11 @@ def edit_variable_dialog(variable_idx):
                 st.error("Please enter a variable name")
             else:
                 st.error("Variable name already exists")
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
-            pass
+    # with col2:
+    #     if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
+    #         pass
 
-@st.dialog("View Variable Details")
+@st.dialog("View Variable Details", on_dismiss=reset_all_segment_controls)
 def view_variable_dialog(variable_idx):
     """Dialog for viewing variable details"""
     variable = st.session_state.input_variables[variable_idx]
@@ -532,7 +568,7 @@ def view_variable_dialog(variable_idx):
         close_dialog(variable_idx)
         st.rerun()
 
-@st.dialog("Delete Variable")
+@st.dialog("Delete Variable", on_dismiss=reset_all_segment_controls)
 def delete_variable_dialog(variable_idx):
     """Dialog for confirming variable deletion"""
     variable = st.session_state.input_variables[variable_idx]
@@ -541,17 +577,17 @@ def delete_variable_dialog(variable_idx):
     if variable['terms']:
         st.error(f"This will also delete {len(variable['terms'])} term(s)!")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Yes, Delete!", width="stretch", type="primary"):
             st.session_state.input_variables.pop(variable_idx)
             close_dialog(variable_idx)
             st.rerun()
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
-            pass
+    # with col2:
+    #     if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
+    #         pass
 
-@st.dialog("Add Fuzzy Term")
+@st.dialog("Add Fuzzy Term", on_dismiss=reset_all_segment_controls)
 def add_term_dialog(variable_idx, variable):
     """Dialog for adding a new fuzzy term to a variable"""
 
@@ -619,9 +655,9 @@ def add_term_dialog(variable_idx, variable):
             p2 = st.number_input("c (center)", value=(variable['min'] + variable['max'])/2)
         params = (p1, p2)
 
-    col1, col2 = st.columns(2)
+    cols = st.columns([0.1,0.8,0.1])
     with col1:
-        if st.button("✓ Add Term", width="stretch", type="primary"):
+        if st.button("Add Term", width="stretch", type="primary"):
             if term_name and term_name not in [t['name'] for t in variable['terms']]:
                 st.session_state.input_variables[variable_idx]['terms'].append({
                     'name': term_name,
@@ -635,9 +671,9 @@ def add_term_dialog(variable_idx, variable):
             else:
                 st.error("Term name already exists")
 
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
-            pass
+    # with col2:
+    #     if st.button("Cancel", width="stretch", on_click=close_dialog, args=(variable_idx,)):
+    #         pass
 
 # ========== RULE DIALOGS ==========
 
@@ -645,7 +681,7 @@ def close_rule_dialog(rule_idx):
     """Callback to reset rule action selection"""
     st.session_state[f"rule_actions_{rule_idx}"] = None
 
-@st.dialog("Edit Fuzzy Rule")
+@st.dialog("Edit Fuzzy Rule", on_dismiss=reset_all_segment_controls)
 def edit_rule_dialog(rule_idx):
     """Dialog for editing a fuzzy rule"""
     rule = st.session_state.fuzzy_rules[rule_idx]
@@ -701,9 +737,9 @@ def edit_rule_dialog(rule_idx):
 
         st.markdown("---")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✓ Save Changes", width="stretch", type="primary"):
+        cols= st.columns([0.1,0.8,0.1])
+        with cols[1]:
+            if st.button("Save Changes", width="stretch", type="primary"):
                 # Check for duplicate rules (excluding current rule)
                 rule_exists = any(
                     i != rule_idx and r['antecedents'] == new_antecedents and r['consequents'] == new_consequents
@@ -720,11 +756,11 @@ def edit_rule_dialog(rule_idx):
                     close_rule_dialog(rule_idx)
                     st.rerun()
 
-        with col2:
-            if st.button("Cancel", width="stretch", on_click=close_rule_dialog, args=(rule_idx,)):
-                pass
+        # with col2:
+        #     if st.button("Cancel", width="stretch", on_click=close_rule_dialog, args=(rule_idx,)):
+        #         pass
 
-@st.dialog("Delete Fuzzy Rule")
+@st.dialog("Delete Fuzzy Rule", on_dismiss=reset_all_segment_controls)
 def delete_rule_dialog(rule_idx):
     """Dialog for confirming rule deletion"""
     rule = st.session_state.fuzzy_rules[rule_idx]
@@ -740,18 +776,18 @@ def delete_rule_dialog(rule_idx):
 
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Yes, Delete!", width="stretch", type="primary"):
             st.session_state.fuzzy_rules.pop(rule_idx)
             close_rule_dialog(rule_idx)
             st.rerun()
 
-    with col2:
-        if st.button("Cancel", width="stretch", on_click=close_rule_dialog, args=(rule_idx,)):
-            pass
+    # with col2:
+    #     if st.button("Cancel", width="stretch", on_click=close_rule_dialog, args=(rule_idx,)):
+    #         pass
 
-@st.dialog("Edit Rule (Table View)")
+@st.dialog("Edit Rule (Table View)", on_dismiss=reset_all_segment_controls)
 def edit_rule_table_dialog():
     """Dialog for selecting a rule to edit in table view"""
     st.markdown("**Select a rule to edit:**")
@@ -767,17 +803,17 @@ def edit_rule_table_dialog():
 
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-    with col1:
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
         if st.button("✏️ Edit Selected", width="stretch", type="primary"):
             st.session_state.editing_rule_idx = selected
             st.rerun()
 
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         st.rerun()
 
-@st.dialog("Delete Rules (Table View)")
+@st.dialog("Delete Rules (Table View)", on_dismiss=reset_all_segment_controls)
 def delete_rules_table_dialog():
     """Dialog for selecting multiple rules to delete in table view"""
     st.markdown("**Select rules to delete:**")
@@ -794,18 +830,18 @@ def delete_rules_table_dialog():
     if to_delete:
         st.warning(f"⚠️ You are about to delete {len(to_delete)} rule(s)")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Delete Selected", width="stretch", type="primary", disabled=len(to_delete)==0):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Delete Selected", width="stretch", type="primary", disabled=len(to_delete)==0):
             # Delete in reverse order to maintain indices
             for idx in sorted(to_delete, reverse=True):
                 st.session_state.fuzzy_rules.pop(idx)
             st.success(f"✓ Deleted {len(to_delete)} rule(s)")
             st.rerun()
 
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         st.rerun()
 
 def format_rule_compact(rule):
     """Format a rule in compact form for display"""
@@ -815,7 +851,7 @@ def format_rule_compact(rule):
 
 # ========== FIS MANAGEMENT DIALOGS ==========
 
-@st.dialog("New Fuzzy Inference System")
+@st.dialog("New Fuzzy Inference System", on_dismiss=reset_all_segment_controls)
 def new_fis_dialog():
     """Dialog for creating a new FIS"""
     st.markdown("**Create a new Fuzzy Inference System**")
@@ -830,8 +866,8 @@ def new_fis_dialog():
 
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-    with col1:
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
         if st.button("✓ Create FIS", width="stretch", type="primary"):
             if fis_name:
                 # Check if name already exists
@@ -853,11 +889,11 @@ def new_fis_dialog():
             else:
                 st.error("Please enter a FIS name")
 
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         st.rerun()
 
-@st.dialog("Rename FIS")
+@st.dialog("Rename FIS", on_dismiss=reset_all_segment_controls)
 def rename_fis_dialog():
     """Dialog for renaming the active FIS"""
     active_fis = st.session_state.fis_list[st.session_state.active_fis_idx]
@@ -868,25 +904,25 @@ def rename_fis_dialog():
 
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✓ Rename", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Rename", width="stretch", type="primary"):
             if new_name and new_name != active_fis['name']:
                 # Check if name already exists
                 if new_name in [fis['name'] for i, fis in enumerate(st.session_state.fis_list) if i != st.session_state.active_fis_idx]:
                     st.error("A FIS with this name already exists!")
                 else:
                     st.session_state.fis_list[st.session_state.active_fis_idx]['name'] = new_name
-                    st.success(f"✓ Renamed to: {new_name}")
+                    st.success(f"Renamed to: {new_name}")
                     st.rerun()
             elif not new_name:
                 st.error("Please enter a name")
 
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         st.rerun()
 
-@st.dialog("Delete FIS")
+@st.dialog("Delete FIS", on_dismiss=reset_all_segment_controls)
 def delete_fis_dialog():
     """Dialog for deleting the active FIS"""
     active_fis = st.session_state.fis_list[st.session_state.active_fis_idx]
@@ -900,9 +936,9 @@ def delete_fis_dialog():
 
     st.markdown("---")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Yes, Delete", width="stretch", type="primary"):
+    cols = st.columns([0.1,0.8,0.1])
+    with cols[1]:
+        if st.button("Yes, Delete!", width="stretch", type="primary"):
             st.session_state.fis_list.pop(st.session_state.active_fis_idx)
 
             # Adjust active index
@@ -919,14 +955,14 @@ def delete_fis_dialog():
             elif st.session_state.active_fis_idx >= len(st.session_state.fis_list):
                 st.session_state.active_fis_idx = len(st.session_state.fis_list) - 1
 
-            st.success("✓ FIS deleted")
+            st.success("FIS deleted")
             st.rerun()
 
-    with col2:
-        if st.button("Cancel", width="stretch"):
-            st.rerun()
+    # with col2:
+    #     if st.button("Cancel", width="stretch"):
+    #         st.rerun()
 
-@st.dialog("Load FIS from JSON")
+@st.dialog("Load FIS from JSON", on_dismiss=reset_all_segment_controls)
 def load_fis_dialog():
     """Dialog for loading FIS from exported JSON file"""
     import json
@@ -965,9 +1001,9 @@ def load_fis_dialog():
 
             st.markdown("---")
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✓ Import FIS", width="stretch", type="primary"):
+            cols = st.columns([0.1,0.8,0.1])
+            with cols[1]:
+                if st.button("Import FIS", width="stretch", type="primary"):
                     # Convert JSON to internal format
                     fis_name = json_data.get('name', 'Imported FIS')
                     system_type = json_data.get('system_type', 'MamdaniSystem')
@@ -1052,9 +1088,9 @@ def load_fis_dialog():
                     st.success(f"✓ Imported FIS: {new_fis['name']}")
                     st.rerun()
 
-            with col2:
-                if st.button("Cancel", width="stretch"):
-                    st.rerun()
+            # with col2:
+            #     if st.button("Cancel", width="stretch"):
+            #         st.rerun()
 
         except json.JSONDecodeError:
             st.error("❌ Invalid JSON file")
@@ -1063,7 +1099,7 @@ def load_fis_dialog():
     else:
         st.info("👆 Upload a JSON file to import a FIS")
 
-@st.dialog("Export FIS to JSON")
+@st.dialog("Export FIS to JSON", on_dismiss=reset_all_segment_controls)
 def export_fis_dialog():
     """Dialog for exporting FIS to JSON format compatible with MamdaniSystem/SugenoSystem"""
     import json
@@ -1182,6 +1218,233 @@ def export_fis_dialog():
 
     except Exception as e:
         st.error(f"❌ Error generating JSON: {str(e)}")
+
+
+def render_rules_visual_matrix(rules, input_variables, output_variables, colormap='blues', fontsize=9):
+    """
+    Render fuzzy rules as a visual colored matrix using Plotly.
+
+    Parameters:
+    -----------
+    rules : list
+        List of fuzzy rules with 'antecedents' and 'consequents'
+    input_variables : list
+        List of input variable dictionaries
+    output_variables : list
+        List of output variable dictionaries
+    colormap : str
+        Plotly colorscale name (default: 'blues')
+    fontsize : int
+        Font size for cell text (default: 9)
+    """
+    import pandas as pd
+
+    if not rules:
+        st.info("No rules to display in matrix view.")
+        return
+
+    # Prepare data for matrix
+    n_rules = len(rules)
+    n_inputs = len(input_variables)
+    n_outputs = len(output_variables)
+    n_cols = n_inputs + n_outputs
+
+    # Create column headers
+    col_headers = [f"{v['name']}" for v in input_variables] + \
+                  [f"{v['name']}" for v in output_variables]
+
+    # Create row headers
+    row_headers = [f"R{i+1}" for i in range(n_rules)]
+
+    # Build matrix data and text
+    matrix_data = np.zeros((n_rules, n_cols))
+    cell_text = [['' for _ in range(n_cols)] for _ in range(n_rules)]
+
+    for i, rule in enumerate(rules):
+        # Process inputs (antecedents)
+        for j, var in enumerate(input_variables):
+            term = rule['antecedents'].get(var['name'], None)
+            if term:
+                # Find term index for coloring
+                term_idx = next((idx for idx, t in enumerate(var['terms']) if t['name'] == term), 0)
+                matrix_data[i, j] = term_idx + 1  # +1 to avoid zero (white)
+                cell_text[i][j] = term
+            else:
+                cell_text[i][j] = '-'
+
+        # Process outputs (consequents)
+        for j, var in enumerate(output_variables):
+            col_idx = n_inputs + j
+            term = rule['consequents'].get(var['name'], None)
+            if term:
+                term_idx = next((idx for idx, t in enumerate(var['terms']) if t['name'] == term), 0)
+                matrix_data[i, col_idx] = term_idx + 1
+                cell_text[i][col_idx] = term
+            else:
+                cell_text[i][col_idx] = '-'
+
+    # Create heatmap with Plotly
+    fig = go.Figure(data=go.Heatmap(
+        z=matrix_data,
+        x=col_headers,
+        y=row_headers,
+        text=cell_text,
+        texttemplate='%{text}',
+        textfont={"size": fontsize,'weight':'bold'},
+        colorscale=colormap,
+        showscale=False,
+        hovertemplate='<b>%{y}</b><br>%{x}: %{text}<extra></extra>',
+        xgap=2,
+        ygap=2
+    ))
+
+    # Update layout
+    fig.update_layout(
+        title={
+            'text': f'Fuzzy Rules Matrix ({n_rules} rules)',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 14}
+        },
+        xaxis={
+            'side': 'top',
+            'tickangle': 0,
+            'tickfont': {'size': 10,'weight':'bold'}
+        },
+        yaxis={
+            'tickfont': {'size': 10},
+            'autorange': 'reversed'
+        },
+        height=max(400, n_rules * 25 + 100),
+        margin=dict(l=60, r=20, t=100, b=20)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # # Add statistics
+    # col1, col2, col3 = st.columns(3)
+    # with col1:
+    #     st.metric("Total Rules", n_rules)
+    # with col2:
+    #     st.metric("Input Variables", n_inputs)
+    # with col3:
+    #     st.metric("Output Variables", n_outputs)
+
+
+def render_rules_matrix_view():
+    """Render rules as visual colored matrix with customization options"""
+
+    # st.markdown("**Visual Rules Matrix**")
+    # st.caption("Color-coded matrix showing antecedents and consequents for each rule")
+
+    # Initialize colormap and font size in session state
+    if 'matrix_colormap' not in st.session_state:
+        st.session_state.matrix_colormap = 'blues'
+    if 'matrix_fontsize' not in st.session_state:
+        st.session_state.matrix_fontsize = 9
+
+    # Add color palette and font size selector in popover
+    
+    st.markdown("")
+
+    # Check if suitable for matrix visualization
+    n_inputs = len(st.session_state.input_variables)
+    n_outputs = len(st.session_state.output_variables)
+
+    if n_inputs > 5:
+        st.info(f"Visual matrix works best with ≤5 inputs. Your system has {n_inputs} inputs.\n\n"
+                "Consider using Table View for better readability.")
+
+    try:
+        render_rules_visual_matrix(
+            st.session_state.fuzzy_rules,
+            st.session_state.input_variables,
+            st.session_state.output_variables,
+            colormap=st.session_state.matrix_colormap,
+            fontsize=st.session_state.matrix_fontsize
+        )
+    except Exception as e:
+        st.error(f"❌ Error generating visual matrix: {str(e)}")
+        import traceback
+        with st.expander("See error details"):
+            st.code(traceback.format_exc())
+
+    with st.popover("Control Appearance", use_container_width=True):
+        st.markdown("**Select Color Scheme**")
+
+        # Plotly colorscales organized by category
+        sequential_cmaps = [
+            'blues', 'greens', 'oranges', 'purples', 'reds', 'greys',
+            'ylorbr', 'ylorrd', 'orrd', 'purd', 'rdpu', 'redor',
+            'bupu', 'gnbu', 'pubu', 'ylgnbu', 'pubugn', 'bugn', 'ylgn', 'blugrn',
+            'teal', 'mint', 'emrld', 'bluyl', 'peach', 'pinkyl', 'purp', 'purpor',
+            'aggrnyl', 'agsunset', 'brwnyl', 'burgyl', 'burg', 'oryel', 'oxy',
+            'tealgrn', 'darkmint', 'magenta', 'solar', 'amp', 'speed'
+        ]
+
+        diverging_cmaps = [
+            'rdylbu', 'rdylgn', 'spectral', 'rdbu', 'rdgy',
+            'piyg', 'prgn', 'puor', 'brbg', 'picnic', 'portland',
+            'armyrose', 'fall', 'geyser', 'temps', 'tealrose',
+            'balance', 'curl', 'delta', 'icefire', 'tropic'
+        ]
+
+        pastel_soft_cmaps = [
+            'peach', 'pinkyl', 'mint', 'teal', 'purp', 'sunset', 'sunsetdark',
+            'twilight', 'phase', 'mrybm', 'mygbm', 'earth', 'edge'
+        ]
+
+        other_cmaps = [
+            'viridis', 'plasma', 'inferno', 'magma', 'cividis',
+            'turbo', 'rainbow', 'jet', 'hot', 'electric', 'blackbody', 'bluered',
+            'thermal', 'ice', 'haline', 'hsv', 'plotly3',
+            'deep', 'dense', 'matter', 'algae', 'tempo', 'turbid', 'gray'
+        ]
+
+        # All palettes combined for single selector
+        all_palettes = {
+            '── Sequential ──': None,
+            **{name: name for name in sequential_cmaps},
+            '── Diverging ──': None,
+            **{name: name for name in diverging_cmaps},
+            '── Pastel & Soft ──': None,
+            **{name: name for name in pastel_soft_cmaps},
+            '── Other ──': None,
+            **{name: name for name in other_cmaps}
+        }
+
+        # Get current colormap index
+        palette_list = [k for k in all_palettes.keys() if all_palettes[k] is not None]
+        try:
+            current_idx = palette_list.index(st.session_state.matrix_colormap)
+        except ValueError:
+            current_idx = 0
+
+        # Single selectbox with all options
+        st.session_state.matrix_colormap = st.selectbox(
+            "Color palette",
+            options=palette_list,
+            index=current_idx,
+            key='colormap_selector',
+            help="Choose a color scheme for the rule matrix"
+        )
+
+        st.markdown("")
+        st.caption("💡 **Tip:** Sequential palettes (like blues) work best for rules visualization")
+
+        st.markdown("---")
+
+        # Font size selector
+        st.markdown("**Text Size**")
+        st.session_state.matrix_fontsize = st.slider(
+            "Font size",
+            min_value=6,
+            max_value=14,
+            value=st.session_state.matrix_fontsize,
+            step=1,
+            key='fontsize_slider',
+            help="Adjust the size of text in the matrix cells"
+        )
 
 def run():
     """Render inference systems page"""
@@ -1350,10 +1613,10 @@ def run():
 
         # Tabs for different stages
         tab1, tab2, tab3, tab4 = st.tabs([
-            "📥 Input Variables",
-            "📤 Output Variables",
-            "📜 Fuzzy Rules",
-            "⚡ Inference"
+            "**Input Variables**",
+            "**Output Variables**",
+            "**Fuzzy Rules**",
+            "**Inference**"
         ])
 
         with tab1:
@@ -1793,18 +2056,19 @@ def run():
     
                 # Display existing rules
                 if st.session_state.fuzzy_rules:
-                    col_header1, col_header2 = st.columns([3, 1])
+                    col_header1, col_header2 = st.columns([3, 2])
                     with col_header1:
                         st.markdown(f"**Fuzzy Rules ({len(st.session_state.fuzzy_rules)})**")
                     with col_header2:
                         # Toggle between view modes
                         view_icons = {
                             "compact": "Rules",
-                            "table": "Table"
+                            "table": "Table",
+                            "matrix": "Matrix"
                         }
                         view_mode = st.segmented_control(
                             "View mode",
-                            options=["compact", "table"],
+                            options=["compact", "table", "matrix"],
                             format_func=lambda x: view_icons[x],
                             default="compact",
                             selection_mode="single",
@@ -1858,7 +2122,11 @@ def run():
                             with col2:
                                 if st.button("🗑️ Delete Rules", width="stretch"):
                                     delete_rules_table_dialog()
-    
+
+                    elif view_mode == "matrix":
+                        # Matrix view - Visual colored matrix
+                        render_rules_matrix_view()
+
                     else:
                         # Compact view - Smaller cards
                         for idx, rule in enumerate(st.session_state.fuzzy_rules):
