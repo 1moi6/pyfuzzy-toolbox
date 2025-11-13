@@ -1309,10 +1309,10 @@ def render_rules_visual_matrix(rules, input_variables, output_variables, colorma
         xaxis={
             'side': 'top',
             'tickangle': 0,
-            'tickfont': {'size': 10,'weight':'bold'}
+            'tickfont': {'size': st.session_state.labels_fontsize,'weight':'bold'}
         },
         yaxis={
-            'tickfont': {'size': 10},
+            'tickfont': {'size': st.session_state.labels_fontsize},
             'autorange': 'reversed'
         },
         height=max(400, n_rules * 25 + 100),
@@ -1342,7 +1342,8 @@ def render_rules_matrix_view():
         st.session_state.matrix_colormap = 'blues'
     if 'matrix_fontsize' not in st.session_state:
         st.session_state.matrix_fontsize = 9
-
+    if 'labels_fontsize' not in st.session_state:
+        st.session_state.labels_fontsize = 10
     # Add color palette and font size selector in popover
     
     st.markdown("")
@@ -1370,8 +1371,7 @@ def render_rules_matrix_view():
             st.code(traceback.format_exc())
 
     with st.popover("Control Appearance", use_container_width=True):
-        st.markdown("**Select Color Scheme**")
-
+        
         # Plotly colorscales organized by category
         sequential_cmaps = [
             'blues', 'greens', 'oranges', 'purples', 'reds', 'greys',
@@ -1420,31 +1420,41 @@ def render_rules_matrix_view():
         except ValueError:
             current_idx = 0
 
+        cols = st.columns(2)
         # Single selectbox with all options
-        st.session_state.matrix_colormap = st.selectbox(
-            "Color palette",
-            options=palette_list,
-            index=current_idx,
-            key='colormap_selector',
-            help="Choose a color scheme for the rule matrix"
-        )
+        with cols[0]:
+            st.markdown("**Select Color Scheme**")
 
-        st.markdown("")
-        st.caption("💡 **Tip:** Sequential palettes (like blues) work best for rules visualization")
+            st.selectbox(
+                "Color palette",
+                options=palette_list,
+                index=current_idx,
+                key='matrix_colormap',
+                help="Choose a color scheme for the rule matrix"
+            )
 
-        st.markdown("---")
+            st.markdown("**Labels Size**")
+            st.number_input(
+                "Labels Font size",
+                min_value=6,
+                max_value=28,
+                value=st.session_state.labels_fontsize,
+                step=1,
+                key='labels_fontsize',
+                help="Adjust the size of label's text")
 
-        # Font size selector
-        st.markdown("**Text Size**")
-        st.session_state.matrix_fontsize = st.slider(
-            "Font size",
-            min_value=6,
-            max_value=14,
-            value=st.session_state.matrix_fontsize,
-            step=1,
-            key='fontsize_slider',
-            help="Adjust the size of text in the matrix cells"
-        )
+        with cols[1]:
+            # Font size selector
+            st.markdown("**Text Size**")
+            st.number_input(
+                "Cells Font size",
+                min_value=6,
+                max_value=28,
+                value=st.session_state.matrix_fontsize,
+                step=1,
+                key='matrix_fontsize',
+                help="Adjust the size of text in the matrix cells"
+            )
 
 def run():
     """Render inference systems page"""
