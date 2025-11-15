@@ -32,6 +32,8 @@ INSTALL_REQUIRES = [
     'numpy>=1.20.0',
     'matplotlib>=3.3.0',
     'scipy>=1.6.0',
+    'typer[all]>=0.9.0',  # CLI interface
+    'rich>=13.0.0',       # CLI formatting
 ]
 
 # Dependências opcionais
@@ -56,8 +58,6 @@ EXTRAS_REQUIRE = {
     'ui': [
         'streamlit>=1.20.0',
         'plotly>=5.0.0',
-        'typer[all]>=0.9.0',
-        'rich>=13.0.0',
     ],
 }
 
