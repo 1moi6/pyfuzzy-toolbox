@@ -1,0 +1,426 @@
+{
+  "imports": [
+    "fuzzy_systems",
+    "fuzzy_systems.MamdaniSystem",
+    "fuzzy_systems.SugenoSystem",
+    "fuzzy_systems.core.FuzzySet",
+    "fuzzy_systems.core.LinguisticVariable",
+    "fuzzy_systems.dynamics.PFuzzyContinuous",
+    "fuzzy_systems.dynamics.PFuzzyDiscrete",
+    "fuzzy_systems.inference.MamdaniSystem",
+    "fuzzy_systems.learning.ANFIS",
+    "fuzzy_systems.learning.MamdaniLearning",
+    "fuzzy_systems.learning.WangMendelLearning"
+  ],
+  "classes_by_module": {
+    "other": [
+      "A",
+      "ALTA",
+      "AND",
+      "B",
+      "BAIXA",
+      "CONFORTO",
+      "Chance",
+      "Class",
+      "Classification",
+      "Comida",
+      "Confidence",
+      "ConfusionMatrixDisplay",
+      "Controle",
+      "Cost",
+      "Dados",
+      "DataFrame",
+      "Dataset",
+      "Desempenho",
+      "Discurso",
+      "Distribution",
+      "Entrada",
+      "Erro",
+      "Escolaridade",
+      "Familiar",
+      "Fase",
+      "Features",
+      "Fitness",
+      "Fria",
+      "Fuzzy",
+      "FuzzyODESolver",
+      "Gorjeta",
+      "Iris",
+      "Length",
+      "LinearRegression",
+      "MA",
+      "MAE",
+      "MB",
+      "MSE",
+      "Matrix",
+      "Nota",
+      "OR",
+      "OneHotEncoder",
+      "Plot",
+      "PolynomialFeatures",
+      "Ponderada",
+      "Predadores",
+      "Predicted",
+      "Presa",
+      "Presas",
+      "Quente",
+      "REGRAS",
+      "RMSE",
+      "RandomForestRegressor",
+      "Regra",
+      "Regras",
+      "Regression",
+      "Renda",
+      "Samples",
+      "Shape",
+      "StandardScaler",
+      "Temperatura",
+      "Tempo",
+      "Temporal",
+      "Treino",
+      "Umidade",
+      "Votar",
+      "Width"
+    ],
+    "inference": [
+      "MamdaniSystem",
+      "SugenoSystem"
+    ],
+    "dynamics": [
+      "PFuzzyContinuous",
+      "PFuzzyDiscrete"
+    ],
+    "learning": [
+      "ANFIS",
+      "MamdaniLearning",
+      "WangMendelLearning"
+    ],
+    "core": [
+      "FuzzySet",
+      "LinguisticVariable"
+    ]
+  },
+  "common_methods": [
+    "abs",
+    "abspath",
+    "add_gridspec",
+    "add_input",
+    "add_output",
+    "add_rules",
+    "add_subplot",
+    "add_term",
+    "annotate",
+    "arange",
+    "argmax",
+    "array",
+    "astype",
+    "axhline",
+    "axis",
+    "axvline",
+    "bar",
+    "capitalize",
+    "colorbar",
+    "contour",
+    "contourf",
+    "cos",
+    "evaluate",
+    "evaluate_detailed",
+    "export_rules",
+    "figure",
+    "fill_between",
+    "filterwarnings",
+    "fit",
+    "fit_metaheuristic",
+    "fit_rules",
+    "fit_transform",
+    "flatten",
+    "fuzzify",
+    "get_cost",
+    "get_height",
+    "get_history",
+    "get_training_stats",
+    "get_width",
+    "get_x",
+    "getcwd",
+    "grid",
+    "head",
+    "hist",
+    "import_rules",
+    "imshow",
+    "info",
+    "insert",
+    "items",
+    "join"
+  ],
+  "notebook_analysis": {
+    "04_dynamics/03_pfuzzy_discrete_population.ipynb": {
+      "imports": [
+        "fuzzy_systems.dynamics.PFuzzyContinuous",
+        "fuzzy_systems.dynamics.PFuzzyDiscrete",
+        "fuzzy_systems.inference.MamdaniSystem"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "PFuzzyContinuous",
+        "PFuzzyDiscrete",
+        "Tempo",
+        "Regras"
+      ]
+    },
+    "04_dynamics/05_fuzzy_ode_holling_tanner.ipynb": {
+      "imports": [],
+      "classes": [
+        "Tempo",
+        "FuzzyODESolver"
+      ]
+    },
+    "04_dynamics/04_fuzzy_ode_logistic.ipynb": {
+      "imports": [],
+      "classes": [
+        "Tempo",
+        "FuzzyODESolver"
+      ]
+    },
+    "04_dynamics/01_pfuzzy_discrete_predator_prey.ipynb": {
+      "imports": [
+        "fuzzy_systems.dynamics.PFuzzyDiscrete",
+        "fuzzy_systems.MamdaniSystem",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "REGRAS",
+        "MA",
+        "Presas",
+        "Presa",
+        "Temporal",
+        "Fase",
+        "Predadores",
+        "PFuzzyDiscrete",
+        "A",
+        "Tempo",
+        "MB",
+        "B"
+      ]
+    },
+    "04_dynamics/02_pfuzzy_continuous_predator_prey.ipynb": {
+      "imports": [
+        "fuzzy_systems.dynamics.PFuzzyContinuous",
+        "fuzzy_systems",
+        "fuzzy_systems.inference.MamdaniSystem"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "REGRAS",
+        "MA",
+        "Presas",
+        "Predadores",
+        "PFuzzyContinuous",
+        "A",
+        "MB",
+        "B"
+      ]
+    },
+    "02_inference/01_mamdani_tipping.ipynb": {
+      "imports": [
+        "fuzzy_systems.MamdaniSystem",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "Gorjeta",
+        "Fuzzy",
+        "Comida",
+        "Controle"
+      ]
+    },
+    "02_inference/03_sugeno_first_order.ipynb": {
+      "imports": [
+        "fuzzy_systems.SugenoSystem",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "Entrada",
+        "SugenoSystem"
+      ]
+    },
+    "02_inference/04_voting_prediction.ipynb": {
+      "imports": [
+        "fuzzy_systems.MamdaniSystem",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "Renda",
+        "ALTA",
+        "Familiar",
+        "BAIXA",
+        "Chance",
+        "Escolaridade",
+        "Votar",
+        "Regras"
+      ]
+    },
+    "02_inference/02_sugeno_zero_order.ipynb": {
+      "imports": [
+        "fuzzy_systems.SugenoSystem",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "Desempenho",
+        "Ponderada",
+        "Regra",
+        "Nota",
+        "SugenoSystem",
+        "Regras"
+      ]
+    },
+    "03_learning/07_rules_optimization_iris.ipynb": {
+      "imports": [
+        "fuzzy_systems.MamdaniSystem"
+      ],
+      "classes": [
+        "StandardScaler",
+        "MamdaniSystem",
+        "MamdaniLearning",
+        "Cost",
+        "Width",
+        "Shape",
+        "Dataset",
+        "Features",
+        "ConfusionMatrixDisplay",
+        "Length"
+      ]
+    },
+    "03_learning/01_wang_mendel_nonlinear.ipynb": {
+      "imports": [
+        "fuzzy_systems",
+        "fuzzy_systems.learning.WangMendelLearning",
+        "fuzzy_systems.inference.MamdaniSystem"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "RMSE",
+        "MAE",
+        "WangMendelLearning",
+        "Shape",
+        "Erro",
+        "MSE",
+        "Treino"
+      ]
+    },
+    "03_learning/03_wang_mendel_iris.ipynb": {
+      "imports": [
+        "fuzzy_systems",
+        "fuzzy_systems.learning.WangMendelLearning",
+        "fuzzy_systems.inference.MamdaniSystem"
+      ],
+      "classes": [
+        "OneHotEncoder",
+        "MamdaniSystem",
+        "Width",
+        "Samples",
+        "WangMendelLearning",
+        "Shape",
+        "Confidence",
+        "Plot",
+        "Iris",
+        "Matrix",
+        "Length",
+        "Class"
+      ]
+    },
+    "03_learning/05_rules_optimization.ipynb": {
+      "imports": [
+        "fuzzy_systems.learning.MamdaniLearning",
+        "fuzzy_systems.MamdaniSystem",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "Dados",
+        "MamdaniSystem",
+        "Fitness",
+        "MamdaniLearning"
+      ]
+    },
+    "03_learning/04_anfis_iris.ipynb": {
+      "imports": [
+        "fuzzy_systems.learning.ANFIS",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "StandardScaler",
+        "Classification",
+        "Width",
+        "Shape",
+        "DataFrame",
+        "Features",
+        "ConfusionMatrixDisplay",
+        "Length",
+        "ANFIS"
+      ]
+    },
+    "03_learning/02_wang_mendel_linear.ipynb": {
+      "imports": [
+        "fuzzy_systems",
+        "fuzzy_systems.learning.WangMendelLearning",
+        "fuzzy_systems.inference.MamdaniSystem"
+      ],
+      "classes": [
+        "MamdaniSystem",
+        "RMSE",
+        "MAE",
+        "WangMendelLearning",
+        "Shape",
+        "Erro",
+        "MSE",
+        "Treino"
+      ]
+    },
+    "03_learning/06_anfis_regression.ipynb": {
+      "imports": [
+        "fuzzy_systems.learning.ANFIS"
+      ],
+      "classes": [
+        "Distribution",
+        "LinearRegression",
+        "PolynomialFeatures",
+        "Predicted",
+        "RandomForestRegressor",
+        "Regression",
+        "ANFIS"
+      ]
+    },
+    "01_fundamentals/01_membership_functions.ipynb": {
+      "imports": [
+        "fuzzy_systems.core.LinguisticVariable",
+        "fuzzy_systems.core.FuzzySet",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "Fria",
+        "Quente",
+        "AND",
+        "LinguisticVariable",
+        "FuzzySet",
+        "A",
+        "Temperatura",
+        "Discurso",
+        "B"
+      ]
+    },
+    "01_fundamentals/02_thermal_comfort.ipynb": {
+      "imports": [
+        "fuzzy_systems.core.LinguisticVariable",
+        "fuzzy_systems"
+      ],
+      "classes": [
+        "LinguisticVariable",
+        "Umidade",
+        "Temperatura",
+        "CONFORTO",
+        "OR"
+      ]
+    }
+  }
+}
