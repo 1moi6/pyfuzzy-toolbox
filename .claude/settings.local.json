@@ -59,7 +59,10 @@
       "Bash(pyfuzzy:*)",
       "Bash(python -m zipfile:*)",
       "Bash(kill:*)",
-      "Bash(.gitignore)"
+      "Bash(.gitignore)",
+      "Bash(pip3 install:*)",
+      "Bash(timeout 10 python3:*)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []
