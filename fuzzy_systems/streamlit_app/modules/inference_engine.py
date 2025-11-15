@@ -259,6 +259,63 @@ class InferenceEngine:
         except Exception as e:
             raise ValueError(f"Error computing membership curve: {str(e)}")
 
+    def get_aggregated_output(self, var_name: str, inputs: Dict[str, float],
+                             n_points: int = 200) -> tuple:
+        """
+        Get aggregated fuzzy output for a variable (for Mamdani systems)
+
+        Parameters
+        ----------
+        var_name : str
+            Output variable name
+        inputs : dict
+            Dictionary mapping input variable names to values
+        n_points : int
+            Number of points for universe
+
+        Returns
+        -------
+        tuple
+            (x_values, aggregated_y_values) representing the aggregated fuzzy set
+        """
+        if self.system is None:
+            raise ValueError("System not built.")
+
+        # Only works for Mamdani systems
+        if not isinstance(self.system, fs.MamdaniSystem):
+            raise ValueError("Aggregated output is only available for Mamdani systems")
+
+        try:
+            # Get universe for output variable
+            x = self.get_universe(var_name, n_points)
+
+            # Initialize aggregated output (max aggregation)
+            aggregated = np.zeros(n_points)
+
+            # Get rule activations
+            activations = self.get_rule_activations(inputs)
+
+            # For each activated rule
+            for rule_idx, activation, rule in activations:
+                if activation > 0.001:  # Only consider significantly activated rules
+                    # Check if this rule has consequent for this output variable
+                    if var_name in rule['consequents']:
+                        term_name = rule['consequents'][var_name]
+
+                        # Get membership function for this consequent term
+                        var = self.system.output_variables[var_name]
+                        term = var.terms[term_name]
+
+                        # Compute clipped membership function (implication)
+                        clipped = np.array([min(activation, term.membership(xi)) for xi in x])
+
+                        # Aggregate using max
+                        aggregated = np.maximum(aggregated, clipped)
+
+            return x, aggregated
+        except Exception as e:
+            raise ValueError(f"Error computing aggregated output: {str(e)}")
+
     def validate_fis(self) -> tuple:
         """
         Validate if FIS is ready for inference
