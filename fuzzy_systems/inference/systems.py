@@ -2283,6 +2283,296 @@ class FuzzyInferenceSystem:
         self.to_json(filename, **kwargs)
 
     @classmethod
+    def from_fis(cls, fis_file: str) -> 'FuzzyInferenceSystem':
+        """
+        Carrega um sistema fuzzy de arquivo .fis do MATLAB.
+
+        Importa sistemas Mamdani ou Sugeno salvos no formato .fis
+        do MATLAB Fuzzy Logic Toolbox.
+
+        Parameters
+        ----------
+        fis_file : str
+            Caminho para o arquivo .fis
+
+        Returns
+        -------
+        FuzzyInferenceSystem
+            Sistema fuzzy reconstruído (MamdaniSystem ou SugenoSystem)
+
+        Raises
+        ------
+        FileNotFoundError
+            Se arquivo não existe
+        ValueError
+            Se formato .fis inválido ou não suportado
+
+        Examples
+        --------
+        >>> fis = MamdaniSystem.from_fis('meu_sistema.fis')
+        >>> result = fis.evaluate({'input1': 0.5})
+
+        >>> # Também funciona com Sugeno
+        >>> tsk = SugenoSystem.from_fis('sistema_tsk.fis')
+
+        Notes
+        -----
+        - Suporta tipos: 'mamdani' e 'sugeno'
+        - Funções de pertinência: trimf, trapmf, gaussmf, gbellmf, sigmf
+        - Operadores: min, max, prod, probor
+        - Defuzzificação: centroid, bisector, mom, som, lom
+        """
+        import os
+        import re
+
+        if not os.path.exists(fis_file):
+            raise FileNotFoundError(f"Arquivo não encontrado: {fis_file}")
+
+        # Ler arquivo
+        with open(fis_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Parse das seções
+        sections = {}
+        current_section = None
+
+        for line in content.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            # Detectar nova seção
+            if line.startswith('[') and line.endswith(']'):
+                current_section = line[1:-1]
+                sections[current_section] = []
+            elif current_section:
+                sections[current_section].append(line)
+
+        # ==================== Parse System Section ====================
+        system_info = {}
+        for line in sections.get('System', []):
+            if '=' in line:
+                key, value = line.split('=', 1)
+                system_info[key] = value.strip()
+
+        system_type = system_info.get('Type', 'mamdani').strip("'\"").lower()
+        system_name = system_info.get('Name', 'Imported_FIS').strip("'\"")
+
+        # ==================== Criar sistema apropriado ====================
+        if system_type == 'mamdani':
+            from fuzzy_systems.inference import MamdaniSystem
+            fis = MamdaniSystem(name=system_name)
+        elif system_type in ['sugeno', 'tsk']:
+            from fuzzy_systems.inference import SugenoSystem
+            fis = SugenoSystem(name=system_name)
+        else:
+            raise ValueError(f"Tipo de sistema não suportado: {system_type}")
+
+        # ==================== Parse Inputs ====================
+        num_inputs = int(system_info.get('NumInputs', 0))
+
+        for i in range(1, num_inputs + 1):
+            section_name = f'Input{i}'
+            if section_name not in sections:
+                continue
+
+            input_info = {}
+            for line in sections[section_name]:
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    input_info[key] = value.strip()
+
+            # Criar variável de entrada
+            var_name = input_info['Name'].strip("'\"")
+            range_str = input_info['Range'].strip('[]')
+            var_min, var_max = map(float, range_str.split())
+
+            var = fis.add_input(var_name, (var_min, var_max))
+
+            # Parse membership functions
+            num_mfs = int(input_info.get('NumMFs', 0))
+            for mf_idx in range(1, num_mfs + 1):
+                mf_key = f'MF{mf_idx}'
+                if mf_key in input_info:
+                    # Parse: 'NOME':'tipo',[params]
+                    mf_str = input_info[mf_key]
+                    match = re.match(r"'([^']+)':'([^']+)',\[([\d\.\s-]+)\]", mf_str)
+                    if match:
+                        mf_name, mf_type, params_str = match.groups()
+                        params = [float(p) for p in params_str.split()]
+
+                        # Mapear tipo de MF do MATLAB para pyfuzzy-toolbox
+                        mf_type_map = {
+                            'trimf': 'triangular',
+                            'trapmf': 'trapezoidal',
+                            'gaussmf': 'gaussian',
+                            'gbellmf': 'generalized_bell',
+                            'sigmf': 'sigmoid'
+                        }
+
+                        py_mf_type = mf_type_map.get(mf_type, 'triangular')
+                        var.add_term(mf_name, py_mf_type, params)
+
+        # ==================== Parse Outputs ====================
+        num_outputs = int(system_info.get('NumOutputs', 0))
+
+        for i in range(1, num_outputs + 1):
+            section_name = f'Output{i}'
+            if section_name not in sections:
+                continue
+
+            output_info = {}
+            for line in sections[section_name]:
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    output_info[key] = value.strip()
+
+            # Criar variável de saída
+            var_name = output_info['Name'].strip("'\"")
+            range_str = output_info['Range'].strip('[]')
+            var_min, var_max = map(float, range_str.split())
+
+            var = fis.add_output(var_name, (var_min, var_max))
+
+            # Parse membership functions (só para Mamdani)
+            if system_type == 'mamdani':
+                num_mfs = int(output_info.get('NumMFs', 0))
+                for mf_idx in range(1, num_mfs + 1):
+                    mf_key = f'MF{mf_idx}'
+                    if mf_key in output_info:
+                        mf_str = output_info[mf_key]
+                        match = re.match(r"'([^']+)':'([^']+)',\[([\d\.\s-]+)\]", mf_str)
+                        if match:
+                            mf_name, mf_type, params_str = match.groups()
+                            params = [float(p) for p in params_str.split()]
+
+                            mf_type_map = {
+                                'trimf': 'triangular',
+                                'trapmf': 'trapezoidal',
+                                'gaussmf': 'gaussian',
+                                'gbellmf': 'generalized_bell',
+                                'sigmf': 'sigmoid'
+                            }
+
+                            py_mf_type = mf_type_map.get(mf_type, 'triangular')
+                            var.add_term(mf_name, py_mf_type, params)
+
+        # ==================== Parse Rules ====================
+        if 'Rules' in sections:
+            input_var_names = list(fis.input_variables.keys())
+            output_var_names = list(fis.output_variables.keys())
+
+            for rule_line in sections['Rules']:
+                if not rule_line or rule_line.startswith('%'):
+                    continue
+
+                # Parse: "1 2 3, 4 (0.5) : 1"
+                # Formato: antecedentes, consequentes (peso) : operador
+                parts = rule_line.split(',')
+                if len(parts) != 2:
+                    continue
+
+                # Antecedentes
+                antecedent_indices = [int(x) for x in parts[0].strip().split()]
+
+                # Consequentes, peso e operador
+                # Split para obter operador: "4 (0.5) : 1" -> ["4 (0.5) ", " 1"]
+                operator_split = parts[1].split(':')
+                consequent_part = operator_split[0].strip()
+
+                # Parse operador (1=AND, 2=OR no formato MATLAB)
+                operator = 'AND'  # default
+                if len(operator_split) > 1:
+                    operator_code = int(operator_split[1].strip())
+                    operator = 'AND' if operator_code == 1 else 'OR'
+
+                # Parse "4 (0.5)" ou apenas "4"
+                if '(' in consequent_part:
+                    cons_str, weight_str = consequent_part.split('(')
+                    consequent_indices = [int(x) for x in cons_str.strip().split()]
+                    weight = float(weight_str.strip(')'))
+                else:
+                    consequent_indices = [int(x) for x in consequent_part.strip().split()]
+                    weight = 1.0
+
+                # Construir antecedentes
+                antecedents = {}
+                for var_idx, term_idx in enumerate(antecedent_indices):
+                    if var_idx >= len(input_var_names):
+                        continue
+                    if term_idx > 0:  # 0 significa "não usado"
+                        var_name = input_var_names[var_idx]
+                        var = fis.input_variables[var_name]
+                        term_names = list(var.terms.keys())
+                        if term_idx - 1 < len(term_names):
+                            term_name = term_names[term_idx - 1]
+                            antecedents[var_name] = term_name
+
+                # Construir consequentes
+                consequents = {}
+                for var_idx, term_idx in enumerate(consequent_indices):
+                    if var_idx >= len(output_var_names):
+                        continue
+                    if term_idx > 0:
+                        var_name = output_var_names[var_idx]
+
+                        if system_type == 'mamdani':
+                            var = fis.output_variables[var_name]
+                            term_names = list(var.terms.keys())
+                            if term_idx - 1 < len(term_names):
+                                term_name = term_names[term_idx - 1]
+                                consequents[var_name] = term_name
+                        else:
+                            # Para Sugeno, consequentes são valores numéricos
+                            consequents[var_name] = float(term_idx)
+
+                # Adicionar regra
+                if antecedents and consequents:
+                    # Combinar antecedentes e consequentes em um único dict
+                    rule_dict = {**antecedents, **consequents}
+                    fis.add_rule(rule_dict, operator, weight)
+
+        # ==================== Configurar métodos de inferência ====================
+        if hasattr(fis, 'inference_engine'):
+            # Mapear métodos do MATLAB
+            and_method = system_info.get('AndMethod', 'min').lower()
+            or_method = system_info.get('OrMethod', 'max').lower()
+
+            from fuzzy_systems.core.operators import TNorm, SNorm
+
+            and_map = {'min': TNorm.MIN, 'prod': TNorm.PRODUCT}
+            or_map = {'max': SNorm.MAX, 'probor': SNorm.PROBABILISTIC}
+
+            if and_method in and_map:
+                fis.inference_engine.fuzzy_op.and_method = and_map[and_method]
+            if or_method in or_map:
+                fis.inference_engine.fuzzy_op.or_method = or_map[or_method]
+
+        # Configurar defuzzificação (Mamdani)
+        if system_type == 'mamdani' and hasattr(fis, 'set_defuzzification_method'):
+            defuzz = system_info.get('DefuzzMethod', 'centroid').lower()
+
+            from fuzzy_systems.core.defuzzification import DefuzzMethod
+            defuzz_map = {
+                'centroid': DefuzzMethod.CENTROID,
+                'bisector': DefuzzMethod.BISECTOR,
+                'mom': DefuzzMethod.MOM,
+                'som': DefuzzMethod.SOM,
+                'lom': DefuzzMethod.LOM
+            }
+
+            if defuzz in defuzz_map:
+                fis.set_defuzzification_method(defuzz_map[defuzz])
+
+        print(f"✅ Sistema '{system_name}' carregado de {fis_file}")
+        print(f"   - Tipo: {system_type.capitalize()}")
+        print(f"   - {num_inputs} entrada(s)")
+        print(f"   - {num_outputs} saída(s)")
+        print(f"   - {len(fis.rule_base.rules)} regra(s)")
+
+        return fis
+
+    @classmethod
     def load(cls, filename: str, **kwargs) -> 'FuzzyInferenceSystem':
         """
         Alias para from_json() - carrega sistema de arquivo.

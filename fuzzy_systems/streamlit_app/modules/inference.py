@@ -1023,16 +1023,44 @@ def load_fis_dialog():
         expected_type = 'Mamdani'
         page_display = 'Mamdani'
 
-    st.markdown(f"**Upload a {page_display} FIS JSON file**")
+    st.markdown(f"**Upload a {page_display} FIS file**")
     st.caption(f"You are on the {page_display} page - only {page_display} FIS files can be loaded here")
-    st.markdown("Upload a JSON file exported from MamdaniSystem or SugenoSystem")
+    st.markdown("Upload a JSON file (from pyfuzzy-toolbox) or FIS file (from MATLAB)")
 
-    uploaded_file = st.file_uploader("Choose JSON file", type=['json'])
+    uploaded_file = st.file_uploader("Choose FIS file", type=['json', 'fis'])
 
     if uploaded_file is not None:
         try:
-            # Read and parse JSON
-            json_data = json.loads(uploaded_file.getvalue().decode('utf-8'))
+            # Detect file type
+            file_extension = uploaded_file.name.split('.')[-1].lower()
+
+            if file_extension == 'fis':
+                # Import FIS file using from_fis
+                import tempfile
+                import os
+                from fuzzy_systems.inference import MamdaniSystem, SugenoSystem
+
+                # Save uploaded file to temporary location
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.fis', delete=False) as tmp_file:
+                    tmp_file.write(uploaded_file.getvalue().decode('utf-8'))
+                    tmp_path = tmp_file.name
+
+                try:
+                    # Load using from_fis
+                    if expected_type == 'Mamdani':
+                        fis_system = MamdaniSystem.from_fis(tmp_path)
+                    else:
+                        fis_system = SugenoSystem.from_fis(tmp_path)
+
+                    # Convert to JSON format for internal use
+                    json_str = fis_system.to_json()
+                    json_data = json.loads(json_str)
+                finally:
+                    # Clean up temp file
+                    os.unlink(tmp_path)
+            else:
+                # Read and parse JSON
+                json_data = json.loads(uploaded_file.getvalue().decode('utf-8'))
 
             # Display preview
             st.success("✓ File loaded successfully!")
