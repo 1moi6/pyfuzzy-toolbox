@@ -1,0 +1,6762 @@
+{
+  "system_type": "MamdaniSystem",
+  "name": "ASFALTO-5",
+  "metadata": {
+    "created_at": "2025-11-19",
+    "version": "2.0",
+    "library": "fuzzy_systems",
+    "source": "Converted from ASFALTO.fis"
+  },
+  "defuzzification_method": "centroid",
+  "inference_config": {
+    "and_method": "min",
+    "or_method": "max",
+    "implication_method": "min",
+    "aggregation_method": "max"
+  },
+  "input_variables": {
+    "UMIDADE": {
+      "universe": [
+        0,
+        1
+      ],
+      "terms": {
+        "SECO": {
+          "mf_type": "trapmf",
+          "params": [
+            0,
+            0,
+            0.05,
+            0.2
+          ]
+        },
+        "POUCO-UMIDO": {
+          "mf_type": "trimf",
+          "params": [
+            0.05,
+            0.2,
+            0.4
+          ]
+        },
+        "UMIDO": {
+          "mf_type": "trimf",
+          "params": [
+            0.2,
+            0.45,
+            0.725
+          ]
+        },
+        "MUITO-UMIDO": {
+          "mf_type": "trimf",
+          "params": [
+            0.45,
+            0.725,
+            0.9
+          ]
+        },
+        "COMP-MOLHADO": {
+          "mf_type": "trapmf",
+          "params": [
+            0.725,
+            0.9,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "TEXTURA": {
+      "universe": [
+        0,
+        1.4
+      ],
+      "terms": {
+        "MUITO-LISA": {
+          "mf_type": "trapmf",
+          "params": [
+            0,
+            0,
+            0.1,
+            0.3
+          ]
+        },
+        "LISA": {
+          "mf_type": "trimf",
+          "params": [
+            0.1,
+            0.3,
+            0.6
+          ]
+        },
+        "NORMAL": {
+          "mf_type": "trimf",
+          "params": [
+            0.3,
+            0.6,
+            1
+          ]
+        },
+        "RUGOSA": {
+          "mf_type": "trimf",
+          "params": [
+            0.6,
+            1,
+            1.2
+          ]
+        },
+        "MUITO-RUGOSA": {
+          "mf_type": "trapmf",
+          "params": [
+            1,
+            1.2,
+            1.4,
+            1.4
+          ]
+        }
+      }
+    },
+    "SUJEIRA": {
+      "universe": [
+        0,
+        1
+      ],
+      "terms": {
+        "LIMPO": {
+          "mf_type": "trimf",
+          "params": [
+            0,
+            0,
+            0.333333333333333
+          ]
+        },
+        "POUCO-SUJO": {
+          "mf_type": "trimf",
+          "params": [
+            0,
+            0.333333333333333,
+            0.666666666666667
+          ]
+        },
+        "SUJO": {
+          "mf_type": "trimf",
+          "params": [
+            0.333333333333333,
+            0.666666666666667,
+            1
+          ]
+        },
+        "MUITO-SUJO": {
+          "mf_type": "trimf",
+          "params": [
+            0.666666666666667,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "PNEU": {
+      "universe": [
+        0,
+        12
+      ],
+      "terms": {
+        "COMP-CARECA": {
+          "mf_type": "trimf",
+          "params": [
+            0,
+            0,
+            1.6
+          ]
+        },
+        "CARECA": {
+          "mf_type": "trimf",
+          "params": [
+            0,
+            1.6,
+            4.5
+          ]
+        },
+        "REGULAR": {
+          "mf_type": "trimf",
+          "params": [
+            1.6,
+            4.5,
+            6
+          ]
+        },
+        "BOM": {
+          "mf_type": "trimf",
+          "params": [
+            4.5,
+            6,
+            9
+          ]
+        },
+        "NOVO": {
+          "mf_type": "trapmf",
+          "params": [
+            6,
+            9,
+            12,
+            12
+          ]
+        }
+      }
+    }
+  },
+  "output_variables": {
+    "CA": {
+      "universe": [
+        0,
+        1.2
+      ],
+      "terms": {
+        "MUITO-BAIXO": {
+          "mf_type": "trapmf",
+          "params": [
+            0,
+            0,
+            0.260774194,
+            0.4
+          ]
+        },
+        "BAIXO": {
+          "mf_type": "trimf",
+          "params": [
+            0.2,
+            0.45593985,
+            0.6
+          ]
+        },
+        "MEDIO": {
+          "mf_type": "trimf",
+          "params": [
+            0.4,
+            0.636592593,
+            0.8
+          ]
+        },
+        "ALTO": {
+          "mf_type": "trimf",
+          "params": [
+            0.6,
+            0.813648649,
+            1
+          ]
+        },
+        "MUITO-ALTO": {
+          "mf_type": "trapmf",
+          "params": [
+            0.8,
+            0.95,
+            1.2,
+            1.2
+          ]
+        }
+      }
+    }
+  },
+  "rules": [
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "SECO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "POUCO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "ALTO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "MUITO-UMIDO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "LISA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "NORMAL",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "LIMPO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "POUCO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "MEDIO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "COMP-CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "CARECA"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "REGULAR"
+      },
+      "consequents": {
+        "CA": "MUITO-BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "BOM"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    },
+    {
+      "antecedents": {
+        "UMIDADE": "COMP-MOLHADO",
+        "TEXTURA": "MUITO-RUGOSA",
+        "SUJEIRA": "MUITO-SUJO",
+        "PNEU": "NOVO"
+      },
+      "consequents": {
+        "CA": "BAIXO"
+      },
+      "operator": "AND",
+      "weight": 1.0
+    }
+  ]
+}

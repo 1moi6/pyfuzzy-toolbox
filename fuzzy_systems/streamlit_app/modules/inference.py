@@ -1519,6 +1519,52 @@ def render_rules_matrix_view():
                 help="Adjust the size of text in the matrix cells"
             )
 
+@st.cache_data(show_spinner=False)
+def create_cached_inference_engine(_fis_data):
+    """Create and cache InferenceEngine to avoid recreating on every interaction
+
+    The _fis_data parameter uses underscore prefix to prevent hashing the entire FIS,
+    instead we'll use a hash of the structure.
+    """
+    return InferenceEngine(_fis_data)
+
+
+def get_fis_hash(fis_data):
+    """Generate a hash of FIS structure for caching"""
+    import hashlib
+    import json
+    # Create a simple string representation for hashing
+    hash_str = json.dumps({
+        'inputs': len(fis_data.get('input_variables', [])),
+        'outputs': len(fis_data.get('output_variables', [])),
+        'rules': len(fis_data.get('fuzzy_rules', [])),
+        'type': fis_data.get('type', ''),
+        'name': fis_data.get('name', '')
+    }, sort_keys=True)
+    return hashlib.md5(hash_str.encode()).hexdigest()
+
+
+def get_cached_engine(fis_data):
+    """Get or create cached InferenceEngine based on FIS hash"""
+    fis_hash = get_fis_hash(fis_data)
+
+    # Check if we have a cached engine for this FIS structure
+    if 'engine_cache' not in st.session_state:
+        st.session_state.engine_cache = {}
+
+    if fis_hash not in st.session_state.engine_cache:
+        # Create new engine and cache it
+        st.session_state.engine_cache[fis_hash] = InferenceEngine(fis_data)
+
+    return st.session_state.engine_cache[fis_hash]
+
+
+def invalidate_engine_cache():
+    """Clear the InferenceEngine cache - call this when FIS structure changes"""
+    if 'engine_cache' in st.session_state:
+        st.session_state.engine_cache = {}
+
+
 def run():
     """Render inference systems page"""
 
@@ -1831,7 +1877,7 @@ def run():
                         if variable['terms']:
                             # with st.popover(f"📋 Terms ({len(variable['terms'])})"):
                                 # var_data = next(v for v in active_fis['input_variables'] if v['name'] == var_name)
-                            engine = InferenceEngine(active_fis)
+                            engine = get_cached_engine(active_fis)
                             fig = go.Figure()
 
                             # Plot each term
@@ -2001,7 +2047,7 @@ def run():
                             # Only plot membership functions for Mamdani systems
                             # Sugeno systems use constant/linear functions instead
                             if 'Mamdani' in system_type:
-                                engine = InferenceEngine(active_fis)
+                                engine = get_cached_engine(active_fis)
                                 fig = go.Figure()
 
                                 # Plot each term
@@ -2753,7 +2799,7 @@ def run():
             
             # Validate FIS
             try:
-                engine = InferenceEngine(active_fis)
+                engine = get_cached_engine(active_fis)
                 is_valid, message = engine.validate_fis()
 
                 if not is_valid:
