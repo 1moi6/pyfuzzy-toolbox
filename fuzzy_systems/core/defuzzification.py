@@ -36,8 +36,8 @@ def centroid(x: np.ndarray, mf: np.ndarray) -> float:
         COG = ∫ x·μ(x) dx / ∫ μ(x) dx
     """
     # Calcula área sob a curva usando integração trapezoidal
-    numerator = np.trapz(x * mf, x)
-    denominator = np.trapz(mf, x)
+    numerator = np.trapezoid(x * mf, x)
+    denominator = np.trapezoid(mf, x)
 
     if denominator == 0:
         # Se área é zero, retorna o centro do universo
@@ -58,7 +58,7 @@ def bisector(x: np.ndarray, mf: np.ndarray) -> float:
         Valor crisp que divide a área em duas partes iguais
     """
     # Calcula área total
-    total_area = np.trapz(mf, x)
+    total_area = np.trapezoid(mf, x)
 
     if total_area == 0:
         return (x[0] + x[-1]) / 2
@@ -66,7 +66,7 @@ def bisector(x: np.ndarray, mf: np.ndarray) -> float:
     # Calcula área acumulada
     cumulative_area = np.zeros_like(x)
     for i in range(1, len(x)):
-        cumulative_area[i] = cumulative_area[i-1] + np.trapz(mf[i-1:i+1], x[i-1:i+1])
+        cumulative_area[i] = cumulative_area[i-1] + np.trapezoid(mf[i-1:i+1], x[i-1:i+1])
 
     # Encontra ponto onde área acumulada é metade da área total
     half_area = total_area / 2
